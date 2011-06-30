@@ -10,7 +10,6 @@ import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
-import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,12 +27,13 @@ public class ChronosHandler extends SimpleChannelUpstreamHandler {
         logger.info(">> enter");
         Object message = e.getMessage();
 
-        if (message instanceof HttpRequest) {
-            HttpRequest request = (HttpRequest) e.getMessage();
-            HttpResponse response = dispatcher.dispatcher(request);
-            writeResponse(e, response);
+        if (message instanceof ServiceResquest) {
+            ServiceResquest serviceResquest = (ServiceResquest) message;
+            ServiceResponse serviceResponse = dispatcher.dispatcher(serviceResquest);
+            writeResponse(e, serviceResquest, serviceResponse);
         } else {
-            logger.warn("message is not an instance of HttpRequest");
+            ctx.sendUpstream(e);
+            logger.warn("message is not an instance of ServiceResquest: %s", message.getClass());
         }
         logger.info("<< exit");
     }
@@ -44,9 +44,10 @@ public class ChronosHandler extends SimpleChannelUpstreamHandler {
         e.getChannel().close();
     }
 
-    private void writeResponse(MessageEvent e, HttpResponse response) {
+    private void writeResponse(MessageEvent e, ServiceResquest serviceRequest, ServiceResponse serviceResponse) {
+        HttpResponse response = serviceResponse.httpResponse;
         response.setHeader(CONTENT_TYPE, "text/plain; charset=UTF-8");
-        boolean keepAlive = isKeepAlive((HttpRequest) e.getMessage());
+        boolean keepAlive = isKeepAlive(serviceRequest.httpRequest);
         if (keepAlive) {
             response.setHeader(CONTENT_LENGTH, response.getContent().readableBytes());
         }
