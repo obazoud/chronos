@@ -208,6 +208,10 @@ function warmupLoop () {
   redisBalancer.getSlave(balancerToken).hmget("context", "numberOfPlayers", function(err, numberOfPlayers) {
     var now = new Date().getTime();
     if (parseInt(numberOfPlayers) >= parseInt(gameState.nbusersthreshold) || now >= gameState.warmupEndDate) {
+      logger.log("numberOfPlayers: " + numberOfPlayers);
+      logger.log("gameState.nbusersthreshold: " + gameState.nbusersthreshold);
+      logger.log("now: " + now);
+      logger.log("gameState.warmupEndDate: " + gameState.warmupEndDate);
       emitter.emit("warmupEnd");
     } else {
       // TODO : timeout ?
