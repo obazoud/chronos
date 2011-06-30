@@ -89,6 +89,10 @@ exports.login = function(req, res, params) {
   .on('complete', function (data, response) {
     // console.log('data: ' + data);
     // console.log('response: ' + response.headers['set-cookie']);
+    // TODO: You can keep using this token for 10 minutes by default. 
+    // After 10 minutes you need to authenticate your user again. 
+    // The token lifetime can be configured with the timeout (in seconds) setting in the couch_httpd_auth configuration section.
+    // http://guide.couchdb.org/draft/security.html
     var cookie = response.headers['set-cookie'][0].split('=')[1].split(';')[0];
     res.send(201, {"session_key":cookie}, data);
   });
