@@ -310,12 +310,9 @@ exports.getQuestion = function(n, login, success, fail) {
     logger.log("failed for question : " + n);
     fail();
   }
-
 }
 
-/*
-
-*/
+/** Answer Question N **/
 exports.answerQuestion = function(n, login, success, fail) {
   var now = new Date().getTime();
   redis.hmget("context", "questionEncours", function(err, params) {
@@ -350,6 +347,7 @@ emitter.on("endOfGame",function() {
   logger.log("event endOfGame recu.");
 });
 
+/** Get Score **/
 exports.getScore = function(login, options) {
   redis.hget("players", login + ":score", function(err, reply) {
     if (err) {
@@ -369,6 +367,7 @@ exports.getScore = function(login, options) {
   });
 }
 
+/** Updationg Score with good/bad answer question and bonus **/
 exports.updatingScore = function(lastname, firstname, login, question, reponse, correct, questionValue, options) {
   redis.hmget("players", login + ":score", login + ':lastbonus', function(err, replies) {
     if (err) {
@@ -439,9 +438,7 @@ exports.getAnswer = function(login, n, options) {
 };
 
 
-/**
-Enregistre les users logues
-*/
+/** Register users **/
 exports.login = function(mail, options) {
   redis.hset('players', mail + ':login', "1", function(err, reply) {
     if (err) {
@@ -457,6 +454,7 @@ exports.login = function(mail, options) {
   });
 }
 
+/** Is a user logged ? **/
 exports.isLogin = function(mail, options) {
   return redis.hexists('players', mail + ':login', function(err, reply) {
     if (err) {
@@ -523,6 +521,7 @@ exports.getNumberOfPlayers = function(options) {
   });
 };
 
+/** Get all answers **/
 exports.getAnswers = function(login, options) {
   redis.hmget("players",
     login + ':q:1',
