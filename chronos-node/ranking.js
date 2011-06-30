@@ -6,7 +6,7 @@ client.on("error", function (err) {
     console.log("Error " + err);
 });
 
-exports.addUser = function addUser(lastname,firstname,mail,callback){
+function addUser(lastname,firstname,mail,callback){
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
     client.zadd("scores",0,token,function(err,added){
         // added == 1 if the element was added.
@@ -14,22 +14,27 @@ exports.addUser = function addUser(lastname,firstname,mail,callback){
         callback(err,added);
     });
 };
+exports.addUser = addUser;
 
-exports.updateScore = function updateScore(lastname,firstname,mail,newScore,callback){
+function updateScore(lastname,firstname,mail,newScore,callback){
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
     client.zadd("scores",-newScore,token,function(err,updated) {
         callback(err,updated);
     });
 };
+exports.updateScore = updateScore;
 
-exports.getScore = function getScore(lastname,firstname,mail,callback){
+/*
+function getScore(lastname,firstname,mail,callback){
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
     client.zscore("scores",token,function(err,reply){
         callback(reply);
     });    
 };
+exports.getScore = getScore;
+*/
 
-exports.ranking = function ranking(lastname,firstname,mail,topN,range,callback){
+function ranking(lastname,firstname,mail,topN,range,callback){
     topN = topN - 1;
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
     var ranking = {
@@ -40,155 +45,98 @@ exports.ranking = function ranking(lastname,firstname,mail,topN,range,callback){
     client.zcard("scores",function(err,totalNumberOfUsers){
         totalNumberOfUsers = totalNumberOfUsers - 1;
         if (topN > totalNumberOfUsers) { topN = totalNumberOfUsers; }
-        //console.log("totalNumberOfUsers = " + (totalNumberOfUsers + 1));
         client.zscore("scores",token,function(err,userScore){
             ranking.score = -parseInt(userScore);
             client.zrank("scores",token,function(err,userRank){
-                //console.log("user: " + firstname + ", rank: " + userRank);
+                zrange(ranking,ranking.top_scores,0,topN,function(err,ranking){
+                    if (totalNumberOfUsers == 0) { callback(err,ranking); }
+                    else {
+                        var minBeforeRank = userRank - range;
+                        if (minBeforeRank < 0){ minBeforeRank = 0; }
+                        var maxBeforeRank = userRank - 1;
 
-                // top_scores
-                client.zrange("scores",0,topN,"withscores",function(err,topRange) {
-                    //console.log("top_scores(0," + topN + "): " + topRange);
-                    topRange.forEach(function(topUserOrTopScore,i){
-                        if (i%2 == 0) {
-                            var topUserObject = JSON.parse(topUserOrTopScore);
-                            ranking.top_scores.mail.push(topUserObject.mail);
-                            ranking.top_scores.firstname.push(topUserObject.firstname);
-                            ranking.top_scores.lastname.push(topUserObject.lastname);
-                            ranking.top_scores.scores.push(-parseInt(topRange[i+1]));
+                        var maxAfterRank = userRank + range;
+                        if (maxAfterRank > totalNumberOfUsers) { maxAfterRank = totalNumberOfUsers; }
+                        var minAfterRank = userRank + 1;
+
+                        if (userRank == totalNumberOfUsers) {
+                            // l'utilisateur est le dernier
+                            // pas d'after
+                            zrange(ranking,ranking.before,minBeforeRank,maxBeforeRank,callback);
                         }
-                        if (i == topN ) {
-                            // TODO factoriser
-                            if (totalNumberOfUsers == 0) { callback(ranking); }
-                            // before
-                            else if (userRank == totalNumberOfUsers) {
-                                // l'utilisateur est le dernier
-                                // pas d'after
-                                var minBeforeRank = userRank - range;
-                                if (minBeforeRank < 0){ minBeforeRank = 0; }
-                                var maxBeforeRank = userRank - 1;
-                                client.zrange("scores",minBeforeRank,maxBeforeRank,"withscores",function(err,beforeRange) {
-                                    //console.log("before(" + minBeforeRank + "," + maxBeforeRank + ")");
-                                    beforeRange.forEach(function(beforeUser,k) {
-                                        if (k%2 == 0) {
-                                            var beforeUserObject = JSON.parse(beforeUser);
-                                            ranking.before.mail.push(beforeUserObject.mail);
-                                            ranking.before.firstname.push(beforeUserObject.firstname);
-                                            ranking.before.lastname.push(beforeUserObject.lastname);
-                                            ranking.before.scores.push(-parseInt(beforeRange[k+1]));
-                                        }
-                                        if (k == beforeRange.length -1) {
-                                            callback(ranking);
-                                        }
-                                    });
-                                });
-                            }
-                            else if (userRank == 0) {
-                                // l'utilisateur est le premier
-                                // pas de before
-                                var maxAfterRank = userRank + range;
-                                if (maxAfterRank > totalNumberOfUsers) { maxAfterRank = totalNumberOfUsers; }
-                                var minAfterRank = userRank + 1;
-                                client.zrange("scores",minAfterRank,maxAfterRank,"withscores",function(err,afterRange) {
-                                    //console.log("after first user(" + minAfterRank + "," + maxAfterRank + "): " + afterRange);
-                                    afterRange.forEach(function(afterUser,j) {
-                                        if (j%2 == 0) {
-                                            var afterUserObject = JSON.parse(afterUser);
-                                            ranking.after.mail.push(afterUserObject.mail);
-                                            ranking.after.firstname.push(afterUserObject.firstname);
-                                            ranking.after.lastname.push(afterUserObject.lastname);
-                                            ranking.after.scores.push(-parseInt(afterRange[j+1]));
-                                        }
-                                        if (j == afterRange.length - 1) {
-                                            callback(ranking);
-                                        }
-                                    });
-                                });
-                            }
-                            else {
-                                // after
-                                var maxAfterRank = userRank + range;
-                                if (maxAfterRank > totalNumberOfUsers) { maxAfterRank = totalNumberOfUsers; }
-                                var minAfterRank = userRank + 1;
-                                client.zrange("scores",minAfterRank,maxAfterRank,"withscores",function(err,afterRange) {
-                                    //console.log("after(" + minAfterRank + "," + maxAfterRank + ")");
-                                    afterRange.forEach(function(afterUser,j) {
-                                        if (j%2 == 0) {
-                                            var afterUserObject = JSON.parse(afterUser);
-                                            ranking.after.mail.push(afterUserObject.mail);
-                                            ranking.after.firstname.push(afterUserObject.firstname);
-                                            ranking.after.lastname.push(afterUserObject.lastname);
-                                            ranking.after.scores.push(-parseInt(afterRange[j+1]));
-                                        }
-                                        if (j == afterRange.length - 1) {
-                                            // before
-                                            if (userRank == 0) { callback(ranking); }
-                                            else {
-                                                minBeforeRank = userRank - range;
-                                                if (minBeforeRank < 0){ minBeforeRank = 0; }
-                                                maxBeforeRank = userRank - 1;
-                                                client.zrange("scores",minBeforeRank,maxBeforeRank,"withscores",function(err,beforeRange) {
-                                                    //console.log("before(" + minBeforeRank + "," + maxBeforeRank + ")");
-                                                    beforeRange.forEach(function(beforeUser,k) {
-                                                        if (k%2 == 0) {
-                                                            var beforeUserObject = JSON.parse(beforeUser);
-                                                            ranking.before.mail.push(beforeUserObject.mail);
-                                                            ranking.before.firstname.push(beforeUserObject.firstname);
-                                                            ranking.before.lastname.push(beforeUserObject.lastname);
-                                                            ranking.before.scores.push(-parseInt(beforeRange[k+1]));
-                                                        }
-                                                        if (k == beforeRange.length - 1) {
-                                                            callback(ranking);
-                                                        }
-                                                    });
-                                                });
-                                            }
-                                        }
-                                    });
-                                });
-                            }
+                        else if (userRank == 0) {
+                            // l'utilisateur est le premier
+                            // pas de before
+                            zrange(ranking,ranking.after,minAfterRank,maxAfterRank,callback);
                         }
-                    });
+                        else {
+                            zrange(ranking,ranking.before,minBeforeRank,maxBeforeRank,function(err,ranking) {
+                                zrange(ranking,ranking.after,minAfterRank,maxAfterRank,callback);
+                            });
+                        }
+                    }
                 });
             });
         });
     });
 };
+exports.ranking = ranking;
 
-exports.reset = function reset(callback) {
+function zrange(ranking,rankingField,min,max,callback) {
+    client.zrange("scores",min,max,"withscores",function(err,zrange) {
+        if (err) {
+            callback(err,ranking);
+        }
+        zrange.forEach(function(user,i) {
+            if (i%2 == 0) {
+                var userObject = JSON.parse(user);
+                rankingField.mail.push(userObject.mail);
+                rankingField.firstname.push(userObject.firstname);
+                rankingField.lastname.push(userObject.lastname);
+                rankingField.scores.push(-parseInt(zrange[i+1]));
+            }
+            if (i == zrange.length - 1) {
+                callback(err,ranking);
+            }
+        });
+    });
+}
+
+function reset(callback) {
     client.zrangebyscore("scores",1,'+inf',function(err,users) {
         if (users.length == 0) {
             callback();
         } else {
             users.forEach(function(user) {
-                client.zadd("scores",0,user,function(err,score) {
+                client.zadd("scores",0,user,function(err,updated) {
                     callback(err,updated);
                 });
             });
         }
     });
 };
+exports.reset = reset;
 
 /*
 addUser("bazoud","olivier","olivier@gmail.com",function(err,reply){});
 addUser("mage","pierre","pierre@gmail.com",function(err,reply){});
 addUser("tebourbi","slim","slim@gmail.com",function(err,reply){});
 
-updateScore("bazoud","olivier","olivier@gmail.com",10);
-updateScore("mage","pierre","pierre@gmail.com",1);
-updateScore("tebourbi","slim","slim@gmail.com",5);
+updateScore("bazoud","olivier","olivier@gmail.com",10,function(err,reply){});
+updateScore("mage","pierre","pierre@gmail.com",1,function(err,reply){});
+updateScore("tebourbi","slim","slim@gmail.com",5,function(err,reply){});
 
-ranking ("mage","pierre","pierre@gmail.com",100,5,function(ranking){
+ranking ("mage","pierre","pierre@gmail.com",100,5,function(err,ranking){
     console.log("pierre");
     console.log("\t ranking:" + JSON.stringify(ranking));
 });
 
-ranking ("bazoud","olivier","olivier@gmail.com",100,5,function(ranking){
+ranking ("bazoud","olivier","olivier@gmail.com",100,5,function(err,ranking){
     console.log("olivier");
     console.log("\t ranking:" + JSON.stringify(ranking));
 });
 
-ranking ("tebourbi","slim","slim@gmail.com",100,5,function(ranking){
+ranking ("tebourbi","slim","slim@gmail.com",100,5,function(err,ranking){
     console.log("slim");
     console.log("\t ranking:" + JSON.stringify(ranking));
 });

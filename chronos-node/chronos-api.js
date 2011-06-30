@@ -259,7 +259,9 @@ exports.answerQuestion = function(req, res, n, params) {
                   if (err) {
                     res.send(400, {}, err);
                   }
-                  res.send(200, {}, answer);
+                  else {
+                    res.send(200, {}, answer);
+                  }
                 });
               }
             });
@@ -285,9 +287,13 @@ exports.getRanking = function(req, res) {
       twitterapi.tweet('Notre application supporte ' + game.gamesession.parameters.nbusersthreshold + ' joueurs #challengeUSI2011');
     }
   });
-  // TODO: send error if failed
-  ranking.ranking(req.jsonUser.lastname, req.jsonUser.firstname, req.jsonUser.login, 100, 5, function(ranking) {
-    res.send(200, {}, ranking);
+  ranking.ranking(req.jsonUser.lastname, req.jsonUser.firstname, req.jsonUser.login, 100, 5, function(err,ranking) {
+    if (err) {
+      res.send(400, {}, err);
+    }
+    else {
+      res.send(200, {}, ranking);
+    }
   });
 };
 
@@ -303,8 +309,13 @@ exports.getScore = function(req, res, params) {
     },
     success: function(userDoc) {
       var userDocJson = JSON.parse(userDoc);
-      ranking.ranking(userDocJson.lastname, userDocJson.firstname,userDocJson.mail,100,5,function(ranking) {
-        res.send(200, {}, ranking);
+      ranking.ranking(userDocJson.lastname, userDocJson.firstname,userDocJson.mail,100,5,function(err,ranking) {
+        if (err) {
+          res.send(400, {}, err);
+        }
+        else {
+          res.send(200, {}, ranking);
+        }
       });
     }
   });
