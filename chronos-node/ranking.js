@@ -55,12 +55,20 @@ function ranking(lastname,firstname,mail,topN,range,callback){
 
                         if (userRank == totalNumberOfUsers) {
                             // l'utilisateur est le dernier
-                            // pas d'after
+                            // pas d'after, tsung wants 'null'
+                            ranking.after.mail.push('null');
+                            ranking.after.firstname.push('null');
+                            ranking.after.lastname.push('null');
+                            ranking.after.scores.push('null');
                             zrange(ranking,ranking.before,minBeforeRank,maxBeforeRank,callback);
                         }
                         else if (userRank == 0) {
                             // l'utilisateur est le premier
-                            // pas de before
+                            // pas de before, tsung wants 'null'
+                            ranking.before.mail.push('null');
+                            ranking.before.firstname.push('null');
+                            ranking.before.lastname.push('null');
+                            ranking.before.scores.push('null');
                             zrange(ranking,ranking.after,minAfterRank,maxAfterRank,callback);
                         }
                         else {
