@@ -3,8 +3,6 @@ var xml2json = require('./xml2json.js');
 var sys = require('sys');
 var chronosCouch = require('./chronos-couchdb-api.js');
 var security = require('./security.js');
-var redis = require('redis');
-var redisClient = redis.createClient();
 
 exports.ping = function(req, res) {
   res.send(201, {}, 'pong');
@@ -166,10 +164,6 @@ tweet = function(message, options) {
     }
   });
 };
-
-redisClient.on('error', function(err) {
-    console.log('redisClient error: ' + err);
-});
 
 exports.getRanking = function(req, res) {
   // Clé de session non reconnue : 401

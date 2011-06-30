@@ -15,12 +15,14 @@ git clone git://github.com/ajaxorg/cloud9.git
 git co -b devel remotes/origin/devel
 ./bin/cloud9.sh
 
-# restler
+# nmp
 curl http://npmjs.org/install.sh | sudo sh
-sudo npm install restler
-
-# node_hash
+npm install restler
+npm install journey
+npm install twitter
 npm install node_hash
+nmp install redis
+ 
 
 npm install journey
 
