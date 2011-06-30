@@ -234,7 +234,9 @@ emitter.on('warmupEnd', function(success) {
     logger.log("warmup timer stopped");
     gameState.warmupEnds(now);
 
-    success();
+    if (success) {
+      success();
+    }
 
     var message = {
       'event': 'warmupEnds',
