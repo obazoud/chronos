@@ -1,0 +1,3 @@
+{
+    "couch-ring":["localhost:5001","localhost:5002","localhost:5984"]
+}
