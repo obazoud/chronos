@@ -2,46 +2,46 @@ var restler = require('restler');
 var querystring = require('querystring');
 var xml2json = require('./xml2json.js');
 var sys = require('sys');
+var hash = require('node_hash');
 
 var host = '127.0.0.1';
 var port = 5984;
 var couchdbaseburl = 'http://' + host + ':' + port;
 var couchdburl = couchdbaseburl + '/thechallenge';
-var couchdAdminburl = 'http://' + host + ':' + port + '/_config/admins/';
 var username = 'superadmin';
 var password = 'supersecret';
+var saltvalue = '1';
 
 exports.createUser = function(req, res, params) {
-  var url = couchdAdminburl + params.mail;
-  // console.log('url: ' + url);
-  // org.couchdb.user ?
-  restler.put(url, {
-        username: username,
-        password: password,
-        data: JSON.stringify(params.password)
-      }
-    )
-   .on('error', function(data) {
+  var url = couchdbaseburl + '/_users';
+  var password_sha = hash.sha1(params.password + saltvalue);
+  sys.puts("password_sha: " + password_sha);
+  
+  restler.post(url, {
+    data: JSON.stringify({'_id':'org.couchdb.user:' + params.mail, 'type':'user', 'name':params.mail, 'roles':[], 'password_sha':password_sha, 'salt':saltvalue}),
+    headers: { 'Content-Type': 'application/json' }
+  })  
+  .on('error', function(data) {
+    res.send(400, {}, data);
+  })
+  .on('complete', function (data) {
+    var url = couchdburl + '/' + params.mail;
+    
+    restler.put(url, {
+      data: JSON.stringify({type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || ''}),
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .on('error', function(data) {
+      // if user already exists, couchdb sends: {"error":"conflict","reason":"Document update conflict."}
+      // so no need to test if a user exists via a HEAD request
+      // via _design/validate, errors occurs if one of the parameter is not valid
       res.send(400, {}, data);
     })
     .on('complete', function (data) {
-      var url = couchdburl + '/' + params.mail;
-      
-      restler.put(url, {
-        data: JSON.stringify({type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || ''}),
-        headers: { 'Content-Type': 'application/json' }
-      })
-      .on('error', function(data) {
-        // if user already exists, couchdb sends: {"error":"conflict","reason":"Document update conflict."}
-        // so no need to test if a user exists via a HEAD request
-        // via _design/validate, errors occurs if one of the parameter is not valid
-        res.send(400, {}, data);
-      })
-      .on('complete', function (data) {
-        console.log('data: ' + data);
-        res.send(201, {}, data);
-      });
+       //console.log('data: ' + data);
+      res.send(201, {}, data);
     });
+  });
 }
 
 exports.newGame = function(req, res, params) {
@@ -49,13 +49,13 @@ exports.newGame = function(req, res, params) {
   var gameXML = params.parameters.replace(/ xmlns:usi/g, " usi").replace(/ xmlns:xsi/g, " xsi").replace(/ xsi:schemaLocation/g, " schemaLocation").replace(/usi:/g, "");
   // console.log("XML: " + gameXML);
   gameXML = gameXML.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"");
-  sys.puts("XMLSys: " + gameXML);
+  // sys.puts("XMLSys: " + gameXML);
 
   var paramsJSON = xml2json.parse(gameXML);
   paramsJSON['type'] = 'game';
   paramsJSON['authentication_key'] = params.authentication_key || '';
   delete paramsJSON['value'];
-  console.log('paramsJSON: ' + paramsJSON);
+  // console.log('paramsJSON: ' + paramsJSON);
   restler.put(url, {
     data: JSON.stringify(paramsJSON),
     headers: { 'Content-Type': 'application/json' }
