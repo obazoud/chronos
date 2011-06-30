@@ -255,7 +255,7 @@ exports.answerQuestion = function(req, res, n, params) {
                 answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
                 answer.good_answer = q.choice[q.goodchoice - 1];
                 answer.score = score;
-                res.send(200, {}, answer);
+                res.send(201, {}, answer);
               }
             });
           }
@@ -282,7 +282,14 @@ exports.getRanking = function(req, res) {
       if (logged == 0) {
         gamemanager.getGame({
           success: function(gamejson) {
-            twitterapi.tweet('Notre application supporte ' + gamejson.gamesession.parameters.nbusersthreshold + ' joueurs #challengeUSI2011');
+            gamemanager.getNumberOfPlayers({
+              error: function(data) {
+                res.send(400, {}, data);
+              },
+              success: function(numberOfPlayers) {
+                twitterapi.tweet('Notre application supporte ' + numberOfPlayers + ' joueurs #challengeUSI2011');
+              }
+            });
           }
         });
       }
