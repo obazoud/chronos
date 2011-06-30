@@ -1,7 +1,7 @@
 // TODO integrer le mecanisme de fail-over
 var redis = require("redis").createClient();
 
-// TODO a virer lors de l integration du mecnaisme de fail over
+// TODO a virer lors de l integration du mecanisme de fail over
 redis.on("error", function (err) {
     logger.log("Error " + err);
 });
