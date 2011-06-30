@@ -232,7 +232,7 @@ emitter.on('warmupEnd', function(success) {
   }
 });
 
-// TODO merge these methods
+/** Callback getQuestion **/
 function setTimeoutForTimeFrame(timeout, login, n, success, fail) {
   setTimeout(setTimeoutForTimeFrameCB, timeout, login, n, success, fail);
 };
