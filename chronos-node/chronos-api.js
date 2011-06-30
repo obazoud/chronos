@@ -55,8 +55,16 @@ exports.createUser = function(req, res, params) {
           var player = {_id:params.mail, firstname:params.firstname || '', lastname:params.lastname || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }, cookies: {}};
           players.unshift(player);
           ranking.addUser(params.lastname,params.firstname,params.mail,function(err,added) {
+            if (err) {
+              res.send(400, {}, err);
+            } else {
+              if (added == 0) {
+                res.send(400, {}, "user already exist in redis");
+              } else {
+                res.send(201);
+              }
+            }
           });
-          res.send(201);
         }
       }
     });
