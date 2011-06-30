@@ -278,23 +278,7 @@ function questionTimer(k) {
     // TODO ctx.res.end();
   }
 
-  logger.log('Fire question: ' + k + ' phase 1 (' + count + ') in ' + (Date.now() - start) + ' ms.');
-  
-  process.nextTick(function() {
-    var j = 0;
-    var start = Date.now();
-    for (var i = 0; i < count; i++) {
-      var ctx = gameState.pendings[k][i];
-      if (!ctx.fired) {
-        j++;
-        // TODO ctx.req.resume();
-        ctx.res.send(200, {}, ctx.question);
-        // TODO ctx.res.end();
-      }
-    }
-    logger.log('Fire question: ' + k + ' phase 2 (' + j + ') in ' + (Date.now() - start) + ' ms.');
-    gameState.pendings[k] = [];
-  });
+  logger.log('Fire question: ' + k + ' (' + count + ') in ' + (Date.now() - start) + ' ms.');
 }
 
 /** get question N **/
@@ -325,7 +309,6 @@ exports.getQuestion = function(req, res, n) {
         logger.log('getQuestion ' + n + ' tooks ' + (Date.now() - now) + ' ms. ' + '[' + req.jsonUser.login + ']');
       }
     } else {
-      var that = this;
       this.getScore(req.jsonUser.login, {
         error: function(err) {
           res.send(400);
@@ -373,7 +356,7 @@ exports.answerQuestion = function(req, res, n, params) {
   var sessionNplus1 = gameState.sessions[n + 1];
 
   if (now >= sessionN && now <= (sessionNplus1 - gameState.synchrotime)) {
-    var q = gameState.game.gamesession.questions.question[n-1]
+    var q = gameState.game.gamesession.questions.question[n-1];
     this.updatingScore(req.jsonUser.lastname, req.jsonUser.firstname, login, n, params.answer, q.goodchoice, q.qvalue, {
       error: function(data) {
         res.send(400);
