@@ -1,5 +1,5 @@
 var journey = require('journey');
-var nodestatic = require('node-static');
+// var nodestatic = require('node-static');
 var api = require('./chronos-api.js');
 
 // Create a router
@@ -22,7 +22,7 @@ var gameStarted = false;
 
 // Create the htt server
 var http = require('http');
-var files = new(nodestatic.Server)('./public');
+// var files = new(nodestatic.Server)('./public');
 
 var server = http.createServer(function(req, res) {
 
