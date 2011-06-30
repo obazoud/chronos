@@ -1,4 +1,4 @@
-ps aux | grep -E (redis|couchdb|node)
+ps aux | grep -E "(redis|couchdb|node)"
 
 # vi ~/.bashrc
 # USI
