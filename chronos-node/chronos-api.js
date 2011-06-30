@@ -281,7 +281,6 @@ exports.getRanking = function(req, res) {
     success: function(logged) {
       // logger.log("> Http /api/ranking, logged:" + logged);
       if (logged == 0) {
-        var gamejson = gamemanager.getGame();
         gamemanager.getNumberOfPlayers({
           error: function(data) {
             res.send(400, {}, data);
@@ -307,7 +306,7 @@ exports.getRanking = function(req, res) {
 };
 
 exports.getScore = function(req, res, params) {
-  logger.log("> Http /api/score , login:" + params.user_mail);
+  // logger.log("> Http /api/score , login:" + params.user_mail);
   if (params.authentication_key != authentication_key) {
     res.send(401);
   }
@@ -322,7 +321,7 @@ exports.getScore = function(req, res, params) {
           res.send(400, {}, err);
         }
         else {
-          logger.log("< Http /api/score , login:" + params.user_mail +  JSON.stringify(ranking));
+          // logger.log("< Http /api/score , login:" + params.user_mail +  JSON.stringify(ranking));
           res.send(200, {}, ranking);
         }
       });
@@ -331,6 +330,7 @@ exports.getScore = function(req, res, params) {
 };
 
 exports.audit = function(req, res, params) {
+  // logger.log(Date.now() + "> Http /api/audit");
   if (params.authentication_key != authentication_key) {
     res.send(401);
   }
@@ -346,11 +346,12 @@ exports.audit = function(req, res, params) {
       audit.good_answers = new Array();
       var question = gamejson.gamesession.questions.question;
       for (i=0; i<question.length; i++) {
-        audit.good_answers.push(question[i].goodchoice);
+        audit.good_answers.push("" + question[i].goodchoice + "");
       }
       for (j=0; j<answers.length; j++) {
-        audit.user_answers.push(answers[j]);
+        audit.user_answers.push("" + answers[j] + "");
       }
+      // logger.log(Date.now() + " < Http /api/audit");
       res.send(200, {}, audit);
     }
   });
@@ -370,7 +371,7 @@ exports.auditN = function(req, res, n, params) {
       var audit = {};
       audit.good_answer = gamejson.gamesession.questions.question[n-1].goodchoice;
       audit.question = gamejson.gamesession.questions.question[n-1].label;
-      audit.user_answer = answer;
+      audit.user_answer = "" + answer + "";
       res.send(200, {}, audit);
     }
   });
