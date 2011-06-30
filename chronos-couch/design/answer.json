@@ -8,13 +8,16 @@
          
            if (reponse == correct) {
                 valeur=parseInt(req.query.valeur);
-                bonus=parseInt(req.query.bonus);
+                bonus= doc.lastbonus;
+                doc.lastbonus = doc.lastbonus + 1;
                 inc = valeur + bonus;
                 doc.score = doc.score + inc;
-           } 
+           } else {
+             doc.lastbonus = 0;
+           }
           doc.reponses.push(reponse);
           doc.questions.push(question);
-          return [doc, \"I incremented \" + doc._id + \" by \" + 1];
+          return [doc, doc.score + \"\"];
         }"
     }
 }

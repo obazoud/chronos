@@ -28,7 +28,7 @@ exports.createUser = function(req, res, params) {
     var url = couchdburl + '/' + params.mail;
     
     restler.put(url, {
-      data: JSON.stringify({type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:[ ], reponses:[ ], score:0}),
+      data: JSON.stringify({type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:[ ], reponses:[ ], score:0, lastbonus:0}),
       headers: { 'Content-Type': 'application/json' }
     })
     .on('error', function(data) {
@@ -153,10 +153,58 @@ exports.getQuestion = function(req, res, n) {
 }
 
 exports.answerQuestion = function(req, res, n, params) {
-  // Clé de session non reconnue : 401
-  // Autre erreur : 400
-  params.answer // number
-  res.send(201, {}, {are_u_right:true, good_answer:'good_answer', score:42});
+  restler.get(couchdbaseburl + '/_session', {
+    data: '',
+    headers: {
+      'Domain': '.chronos.fr',
+      'Cookie': req.headers.session_key
+    }
+  })
+  .on('error', function(data) {
+    res.send(400, {}, data);
+  })
+  .on('complete', function (data, response) {
+    var json = JSON.parse(data);
+    if (!json.userCtx.name) {
+      sys.puts(data);
+      res.send(401, {}, data);
+    } else {
+      restler.get(couchdburl + '/game', {
+        data: '',
+        headers: {
+          'Domain': '.chronos.fr',
+          'Cookie': req.headers.session_key
+        }
+      })
+      .on('error', function(data) {
+        res.send(400, {}, data);
+      })
+      .on('complete', function (data, response) {
+        var q = JSON.parse(data).gamesession.questions.question[n-1];
+
+        var url = couchdburl + '/_design/answer/_update/accumulate/' + json.userCtx.name + '?question=' + n + '&reponse=' + params.answer + '&correct=' + q.goodchoice + '&valeur=' + n;
+        sys.puts('url:' + url);
+        restler.put(url, {
+          data: '',
+          headers: {
+            'Domain': '.chronos.fr',
+            'Cookie': req.headers.session_key
+          }
+        })
+        .on('error', function(data) {
+          res.send(400, {}, data);
+        })
+        .on('complete', function (score, response) {
+          var q = JSON.parse(data).gamesession.questions.question[n-1];
+          var answer = {};
+          answer.are_u_right= (q.goodchoice == params.answer);
+          answer.good_answer=q.goodchoice;
+          answer.score=score;
+          res.send(200, {}, answer);
+        });
+      });
+    }
+  });
 }
 
 exports.getRanking = function(req, res) {
