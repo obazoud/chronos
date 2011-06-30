@@ -29,7 +29,9 @@ exports.initGame = function(config){
                           
     redis.hdel("context", "questionEncours");
     redis.hdel("context", "dateFinWarmup");
+
     redis.del("login");
+    redis.del("players");
 
     redis.save();
     /**
@@ -304,3 +306,129 @@ emitter.on("endOfGame",function(){
 	// TODO il faut libere/gerer ttes les demande joueurs pas encore traites.
 });
 
+exports.getScore = function(login, options) {
+  redis.hget("players", login + ":score", function(err, reply) {
+    if (err) {
+      if (options && options.error) {
+        options.error(err);
+      }
+    } else {
+      console.log("Get score: " + reply)
+      if (options && options.success) {
+        if (reply == null) {
+          options.success(0);
+        } else {
+          options.success(parseInt(reply));
+        }
+      }
+    }
+  });
+}
+
+exports.updatingScore = function(lastname, firstname, login, question, reponse, correct, questionValue, options) {
+  redis.hmget("players", login + ":score", login + ':lastbonus', function(err, replies) {
+    if (err) {
+      if (options && options.error) {
+        options.error(err);
+      }
+    } else {
+      var score = 0;
+      var lastbonus = 0;
+
+      if (replies[0]) {
+        score = parseInt(replies[0]);
+      }
+      if (replies[1]) {
+        lastbonus = parseInt(replies[1]);
+      }
+
+      if (reponse == correct) {
+        var bonus = lastbonus;
+        lastbonus = lastbonus + 1;
+        var inc = questionValue + bonus;
+        score = score + inc;
+      } else {
+        lastbonus = 0;
+      }
+      console.log("updatingScore: " + score)
+      redis.hmset("players", login + ":score", score, login + ':lastbonus', lastbonus, login + ':q:' + question, reponse);
+      var token = JSON.stringify({"lastname":lastname, "firstname":firstname, "mail":login});
+      redis.zadd("scores", -score, token, function(err, updated) {
+        if (err) {
+          if (options && options.error) {
+            options.error(err);
+          }
+        } else {
+          if (options && options.success) {
+            options.success(score);
+          }
+        }
+      });
+    }
+  });
+};
+
+exports.getAnswer = function(login, n, options) {
+  redis.hmget("players",
+    login + ':q:' + n,
+    function(err, reply) {
+      if (err) {
+        if (options && options.error) {
+          options.error(err);
+        }
+      } else {
+        if (options && options.success) {
+          if (reply == null) {
+            options.success(0);
+          } else {
+            options.success(parseInt(reply));
+          }
+        }
+      }
+    }
+  );
+};
+
+exports.getAnswers = function(login, options) {
+  redis.hmget("players",
+    login + ':q:1',
+    login + ':q:2',
+    login + ':q:3',
+    login + ':q:4',
+    login + ':q:5',
+    login + ':q:6',
+    login + ':q:7',
+    login + ':q:8',
+    login + ':q:9',
+    login + ':q:10',
+    login + ':q:11',
+    login + ':q:12',
+    login + ':q:13',
+    login + ':q:14',
+    login + ':q:15',
+    login + ':q:16',
+    login + ':q:17',
+    login + ':q:18',
+    login + ':q:19',
+    login + ':q:20',
+    function(err, replies) {
+      if (err) {
+        if (options && options.error) {
+          options.error(err);
+        }
+      } else {
+        if (options && options.success) {
+          var answers = new Array();
+          for (i = 0; i < 19; i++) {
+            if (replies[i] == null) {
+              answers[i] = 0;
+            } else {
+              answers[i] = parseInt(replies[i]);
+            }
+          }
+          options.success(answers);
+        }
+      }
+    }
+  );
+};

@@ -1,8 +1,6 @@
 #!/bin/bash 
 set -e
-set -x
-# https://github.com/zpoley/json-command
-# npm install json
+#set -x
 
 ./createdb.sh localhost 5984
 redis-cli flushdb
@@ -97,5 +95,11 @@ curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json
   assertEquals "Answer, http code" 200 $httpcode
   assertEquals "Score " 95 $(echo "$data" | json -C score)
 done
+
+curl -iX GET "http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/audit?user_mail=null@gmail.com&authentication_key=12IndR6r5V5618"
+
+curl -iX GET "http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/audit/1?user_mail=null@gmail.com&authentication_key=12IndR6r5V5618"
+curl -iX GET "http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/audit/2?user_mail=null@gmail.com&authentication_key=12IndR6r5V5618"
+
 
 

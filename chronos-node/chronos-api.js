@@ -53,7 +53,7 @@ exports.createUser = function(req, res, params) {
         if (id != null) {
           res.send(400, {}, data);
         } else {
-          var player = {_id:params.mail, firstname:params.firstname || '', lastname:params.lastname || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }};
+          var player = {_id:params.mail, firstname:params.firstname || '', lastname:params.lastname || '', password:params.password || ''};
           players.unshift(player);
           ranking.addUser(params.lastname,params.firstname,params.mail,function(err,added) {
             if (err) {
@@ -221,29 +221,24 @@ exports.login = function(req, res, params) {
 exports.getQuestion = function(req, res, n) {
   gamemanager.getQuestion(n, 
     function () {
-      chronosCouch.getDoc(req.jsonUser.login, {
+      chronosCouch.getDoc('game', {
         error: function(data) {
           res.send(400, {}, data);
         },
-        success: function(userDoc) {
-          chronosCouch.getDoc('game', {
-            error: function(data) {
-              res.send(400, {}, data);
+        success: function(game) {
+          gamemanager.getScore(req.jsonUser.login, {
+            error: function(err) {
+              res.send(400, {}, err);
             },
-            success: function(game) {
+            success: function(score) {
               var gamejson = JSON.parse(game);
               var q = gamejson.gamesession.questions.question[n-1];
-              var userDocjson = JSON.parse(userDoc);
               var question = {};
               question.question = q.label;
               for (i=0; i<q.choice.length;i++) {
                 question['answer_' + (i+1)] = q.choice[i];
               }
-              if (userDocjson.score[gamejson.game_id] == null) {
-                question.score = "0";
-              } else {
-                question.score = "" + userDocjson.score[gamejson.game_id] + "";
-              }
+              question.score = "" + score + "";
               res.send(200, {}, question);
             }
           });
@@ -266,23 +261,16 @@ exports.answerQuestion = function(req, res, n, params) {
           success: function(gameDoc) {
             var game = JSON.parse(gameDoc);
             var q = game.gamesession.questions.question[n-1];
-            chronosCouch.putDesign('/_design/answer/_update/accumulate/' + req.jsonUser.login + '?question=' + n + '&reponse=' + params.answer + '&correct=' + q.goodchoice + '&valeur=' + q.qvalue + '&game_id=' + game.game_id, {
+            gamemanager.updatingScore(req.jsonUser.lastname, req.jsonUser.fistname, req.jsonUser.login, n, params.answer, q.goodchoice, q.qvalue, {
               error: function(data) {
                 res.send(400, {}, data);
               },
-              success: function(scoreDoc) {
+              success: function(score) {
                 var answer = {};
                 answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
                 answer.good_answer = q.choice[q.goodchoice];
-                answer.score = scoreDoc;
-                ranking.updateScore(req.jsonUser.lastname,req.jsonUser.fistname,req.jsonUser.login,scoreDoc,function(err,updated){
-                  if (err) {
-                    res.send(400, {}, err);
-                  }
-                  else {
-                    res.send(200, {}, answer);
-                  }
-                });
+                answer.score = score;
+                res.send(200, {}, answer);
               }
             });
           }
@@ -343,15 +331,15 @@ exports.audit = function(req, res, params) {
   if (params.authentication_key != authentication_key) {
     res.send(401);
   }
-  chronosCouch.getDoc(params.user_mail, {
-    error: function(data) {
-      res.send(400, {}, data);
-    },
-    success: function(player) {
-      var playerJson = JSON.parse(player);
-      chronosCouch.getDoc('game', {
-        error: function(data) { res.send(400, {}, data); },
-        success: function(game) {
+
+  chronosCouch.getDoc('game', {
+    error: function(data) { res.send(400, {}, data); },
+    success: function(game) {
+      gamemanager.getAnswers(params.user_mail, {
+        error: function(data) {
+          res.send(400, {}, data);
+        },
+        success: function(answers) {
           var gameJson = JSON.parse(game);
           var audit = {};
           audit.user_answers = new Array();
@@ -360,13 +348,12 @@ exports.audit = function(req, res, params) {
           for (i=0; i<question.length; i++) {
             audit.good_answers.push(question[i].goodchoice);
           }
-          var user_questions = playerJson.questions[gameJson.game_id];
-          for (j=0; j<user_questions.length; j++) {
-            audit.user_answers[user_questions[j] - 1] = playerJson.reponses[gameJson.game_id][j];
+          for (j=0; j<answers.length; j++) {
+            audit.user_answers.push(answers[j]);
           }
           res.send(200, {}, audit);
         }
-      })
+      });
     }
   });
 };
@@ -375,28 +362,22 @@ exports.auditN = function(req, res, n, params) {
   if (params.authentication_key != authentication_key) {
     res.send(401);
   }
-  chronosCouch.getDoc(params.user_mail, {
+
+  chronosCouch.getDoc('game', {
     error: function(data) {
       res.send(400, {}, data);
     },
-    success: function(player) {
-      var playerJson = JSON.parse(player);
-      chronosCouch.getDoc('game', {
+    success: function(game) {
+      gamemanager.getAnswer(params.user_mail, n, {
         error: function(data) {
           res.send(400, {}, data);
         },
-        success: function(game) {
+        success: function(answer) {
           var gameJson = JSON.parse(game);
           var audit = {};
           audit.good_answer = gameJson.gamesession.questions.question[n-1].goodchoice;
           audit.question = gameJson.gamesession.questions.question[n-1].label;
-          var user_questions = playerJson.questions[gameJson.game_id];
-          for (i=0; i<user_questions.length; i++) {
-            if (user_questions[i] == n) {
-              audit.user_answer = playerJson.reponses[gameJson.game_id][i];
-              break;
-            }
-          }
+          audit.user_answer = answer;
           res.send(200, {}, audit);
         }
       });

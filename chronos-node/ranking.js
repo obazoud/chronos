@@ -16,24 +16,6 @@ function addUser(lastname,firstname,mail,callback){
 };
 exports.addUser = addUser;
 
-function updateScore(lastname,firstname,mail,newScore,callback){
-    var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
-    client.zadd("scores",-newScore,token,function(err,updated) {
-        callback(err,updated);
-    });
-};
-exports.updateScore = updateScore;
-
-/*
-function getScore(lastname,firstname,mail,callback){
-    var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
-    client.zscore("scores",token,function(err,reply){
-        callback(reply);
-    });    
-};
-exports.getScore = getScore;
-*/
-
 function ranking(lastname,firstname,mail,topN,range,callback){
     topN = topN - 1;
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
