@@ -57,11 +57,9 @@ module.exports = http.createServer(function(req, res) {
     router.handle(req, res, body, function(result) {
       result.headers['Server'] = 'Chronos/1.0';
       if (result.headers['Set-Cookie'] == null && req.headers['cookie'] != null) {
-        if (req.jsonUser) {
-          //logger.log("< User: " + JSON.stringify(req.jsonUser));
-          var data_key = security.encodeScore(req.jsonUser.firstname, req.jsonUser.lastname, req.jsonUser.score, req.jsonUser.lastbonus, req.jsonUser.lastquestion);
-          //logger.log("< cookieContent: " + session_key + ' / ' + data_key);
-          result.headers['Set-Cookie'] = ['session_key=' + req.session_key + '; path=/', 'data_key=' + data_key + '; path=/'];
+        if (req.session) {
+          //logger.log("< User: " + JSON.stringify(req.session));
+          result.headers['Set-Cookie'] = ['session_key=' + req.session_key + '; path=/'];
         }
       }
       result.headers["Date"] = new(Date)().toUTCString();

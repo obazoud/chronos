@@ -159,7 +159,7 @@ exports.login = function(req, res, body) {
           res.send(400);
         }
       } catch(err) {
-          logger.log("Something wrong here, is couchbd up ? " + err);
+          logger.log("Something wrong here, is couchdb up ? " + err);
           res.send(400);
       }
     },
@@ -179,11 +179,12 @@ exports.login = function(req, res, body) {
               // logger.log(params.mail + ": exists.");
               res.send(400);
             } else {
-              var session_key = security.encode(params.mail);
-              var data_key = security.encodeScore(userDocjson.firstname, userDocjson.lastname, 0, 0, 0);
-              res.send(201, {'Set-Cookie': ['session_key=' + session_key + '; path=/', 'data_key=' + data_key + '; path=/']}, '');
+              var session_key = security.newSession(req, params.mail);
+              // logger.log(req.session.mail);
+              req.session.jsonUser = {"login": params.mail, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname, "score": 0, "lastbonus": 0, "lastquestion": 0 };
+
+              res.send(201, {'Set-Cookie': 'session_key=' + session_key + '; path=/'}, '');
               gamemanager.warmup(res);
-              // TODO callback ?
               ranking.addUser(userDocjson.lastname, userDocjson.firstname, params.mail);
               // logger.log(Date.now() + " < Http /api/login/" + params.mail);
             }
@@ -238,7 +239,7 @@ exports.getRanking = function(req, res, body, query) {
     // logger.log("> Http /api/ranking, login:" + req.jsonUser.login);
 
     // TODO less call
-    gamemanager.logged(req.jsonUser.login, {
+    gamemanager.logged(req.session.jsonUser.login, {
       error: function(data) {
         res.send(400);
       },
@@ -262,11 +263,10 @@ exports.getRanking = function(req, res, body, query) {
         }
       }
     });
-    ranking.ranking(req.jsonUser.lastname, req.jsonUser.firstname, req.jsonUser.login, 100, 5, function(err, ranking) {
+    ranking.ranking(req.session.jsonUser.lastname, req.session.jsonUser.firstname, req.session.jsonUser.login, 100, 5, function(err, ranking) {
       if (err) {
         res.send(400);
-      }
-      else {
+      } else {
         // logger.log("< Http /api/ranking, login:" + req.jsonUser.login + ", " + JSON.stringify(ranking));
         res.send(200, {}, ranking);
       }
