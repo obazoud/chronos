@@ -98,16 +98,11 @@ function processGameXML(authentication_key, parameters) {
 exports.login = function(req, res, params) {
   chronosCouch.getDoc(params.mail, {
     error: function(data) {
-      if (data.error == 'unauthorized') {
-        console.log('unauthorized ' + data);
+      if (JSON.parse(data).error == 'not_found') {
+        console.log('user not found, ' + params.mail);
         res.send(401);
       } else {
-          if (JSON.parse(data).error == 'not_found') {
-            console.log('user not found, ' + params.mail);
-            res.send(401);
-          } else {
-            res.send(400);
-        }
+        res.send(400);
       }
     },
     success: function(data) {
@@ -125,8 +120,10 @@ exports.login = function(req, res, params) {
               res.send(400);
             } else {
               var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
+              userDocjson.cookies[gamejson.game_id] = sessionkey;
+              chronosCouch.putDoc(params.mail, userDocjson);
               res.send(201, {"session_key":sessionkey}, '');
-            
+            }
           }
         });
       }
