@@ -13,6 +13,7 @@ var events = require('events');
 var emitter = new events.EventEmitter();
 
 router.get('/test/warmup').bind(warmup);
+router.get('/test').bind(fake);
 
 var http = require('http');
 
@@ -37,20 +38,17 @@ var server = http.createServer(function(req, res) {
 server.listen(8080);
 console.log('Server running at http://127.0.0.1:8080/');
 
-var questionEnCours = 1;
-var responses = [][];
+var responses = [];
 
-var questionTimeFrameStart = 0;
-var questionTimeFrameEnd = 0;
-
-var synchroTimeFrameStart = 0;
-var synchroTimeFrameEnd = 0;
-
+function fake(req,resp){
+    resp.send(200,{},"c note, mais je suis un fake!") ;
+}
 
 function warmup(req,resp){
-     restler.get('https://twaud.io/')
+     restler.get('http://127.0.0.1:8080/test')
        .on('complete', function(data) {
             if(!gameStarted()){
+                responses[0] = [];
                 responses[0].push(resp);
             }else{
                 console.log("sending immediatly");
@@ -59,7 +57,8 @@ function warmup(req,resp){
         });
 }
 
-emitter.once('warmupEnd',function(timerId){
+
+emitter.on('warmupEnd',function(timerId){
     responses[0].forEach(function(resp){
         console.log("sending...");
         resp.send(200,{},"question 1");    
@@ -67,26 +66,29 @@ emitter.once('warmupEnd',function(timerId){
     responses[0] = [];// verfifier si avec le comportement asynch ca peux poser des problemes
     clearTimeout(timerId);
     console.log("warmup timer stopped");
+    
 });
 
 // les joueurs doivent repondre dans l intervalle questionTimeFrame
+/*
 emitter.on('questionTimeFrameStart',function(){
     questionTimeFrameStart = new Date().getTime();    
     questionEnCours++;
 });
+*/
 
-emitter.on('questionTimeFrameEnd');
+//emitter.on('questionTimeFrameEnd',function(){});
 
 // l application doit repondre dans l intervalle synchroTime
-emitter.on('synchroTimeFrameStart');
-emitter.on('synchroTimeFrameEnd');
+//emitter.on('synchroTimeFrameStart',function(){});
+//emitter.on('synchroTimeFrameEnd',function(){});
 
 
 
 
 var counter = 1;
 var timerId = setInterval(function(){
-        if(counter==50){
+        if(counter==25){
             emitter.emit('warmupEnd',timerId);
         }else{
             console.log("waiting... " + counter++);
@@ -94,6 +96,6 @@ var timerId = setInterval(function(){
 },1000);
 
 function gameStarted(){
-    return (counter==50);
+    return (counter==25);
 }
 
