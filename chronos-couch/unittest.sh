@@ -4,7 +4,7 @@ set -e
 # https://github.com/zpoley/json-command
 # npm install json
 
-./createdb.sh superadmin supersecret localhost 5984
+./createdb.sh localhost 5984
 
 CHRONOS_HOST=localhost
 CHRONOS_PORT=8080

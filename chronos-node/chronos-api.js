@@ -56,6 +56,9 @@ exports.login = function(req, res, params) {
       if (data.error == 'unauthorized') {
         res.send(401);
       }
+      if (JSON.parse(data).error == 'not_found') {
+        res.send(401);
+      }
       res.send(400);
     },
     success: function(data, response) {
