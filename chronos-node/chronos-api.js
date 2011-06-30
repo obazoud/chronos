@@ -265,7 +265,7 @@ exports.answerQuestion = function(req, res, n, params) {
     function() {
       var gamejson = gamemanager.getGame();
       var q = gamejson.gamesession.questions.question[n-1];
-      gamemanager.updatingScore(req.jsonUser.lastname, req.jsonUser.fistname, req.jsonUser.login, n, params.answer, q.goodchoice, q.qvalue, {
+      gamemanager.updatingScore(req.jsonUser.lastname, req.jsonUser.firstname, req.jsonUser.login, n, params.answer, q.goodchoice, q.qvalue, {
         error: function(data) {
           logger.log("FAILED(400)");
           res.send(400, {}, data);
@@ -343,7 +343,7 @@ exports.getScore = function(req, res, params) {
           res.send(400, {}, err);
         }
         else {
-          logger.log("< Http /api/score , login:" + params.user_mail);
+          logger.log("< Http /api/score , login:" + params.user_mail +  JSON.stringify(ranking));
           res.send(200, {}, ranking);
         }
       });
