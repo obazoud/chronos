@@ -2,6 +2,7 @@ var os = require('os');
 //var balancerToken = parseInt(os.hostname().match(/\d/)[0]); // TODO considerer les hostnames sans chiffre
 var balancerToken  = 1;
 var redisBalancer = require('./redis-balancer.js');
+redisBalancer.init();
 
 function initRanking(callback) {
     redisBalancer.getMaster().del("scores");

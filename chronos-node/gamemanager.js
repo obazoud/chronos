@@ -16,9 +16,35 @@ var os = require('os');
 //var balancerToken = parseInt(os.hostname().match(/\d/)[0]); // TODO considerer les hostnames sans chiffre
 var balancerToken  = 1;
 var redisBalancer = require('./redis-balancer.js');
+var channel = '#chronos';
 
-var subscriber = require("redis").createClient();
-var publisher = require("redis").createClient();
+redisBalancer.onSlaveCreation(function(client){
+    client.subscribe(channel);
+    client.on('message', function(channel, message) {
+        var json = JSON.parse(message);
+        switch (json.event) {
+            case 'initGame':
+                gameState.initGame(json.message);
+                break;
+            case 'warmupStarts':
+                gameState.warmupStarts(json.warmupStartDate);
+                break;
+            case 'warmupEnds':
+                gameState.warmupEnds(json.warmupEnd);
+                break;
+            default:
+                logger.log('Unknow event:' + json.event);
+                break;
+        }
+    });
+});
+
+redisBalancer.onMasterElection(function(client){
+    client.unsubscribe(channel);
+});
+
+
+redisBalancer.init();
 
 
 // state 0: RAS
@@ -132,36 +158,6 @@ var gameState = new GameState();
 // TODO or after a reboot
 gameState.retrieve();
 
-var channel = '#chronos';
-subscriber.subscribe(channel);
-
-subscriber.on("subscribe", function (channel, count) {
-  logger.log('Client subscribed to channel ' + channel + ', ' + count + ' total subscriptions.');
-});
-
-// TODO: unsubcribe on exit ?
-subscriber.on("unsubscribe", function (channel, count) {
-    console.log('Client unsubscribed from ' + channel + ', ' + count + ' total subscriptions.');
-});
-
-subscriber.on('message', function(channel, message) {
-  var json = JSON.parse(message);
-  switch (json.event) {
-    case 'initGame':
-        gameState.initGame(json.message);
-      break;
-    case 'warmupStarts':
-        gameState.warmupStarts(json.warmupStartDate);
-      break;
-    case 'warmupEnds':
-        gameState.warmupEnds(json.warmupEnd);
-      break;
-    default:
-      logger.log('Unknow event:' + json.event);
-      break;
-  }
-});
-
 /** Initialize game **/
 // TODO callback ?
 exports.initGame = function(game) {
@@ -178,7 +174,7 @@ exports.initGame = function(game) {
     'event': 'initGame',
     'message': game
   };
-  publisher.publish(channel, JSON.stringify(message));
+  redisBalancer.getPublisher().publish(channel, JSON.stringify(message));
 };
 
 /** Warmup quizz **/
@@ -203,7 +199,7 @@ emitter.once("warmupStarted", function() {
     'event': 'warmupStarts',
     'warmupStartDate': gameState.warmupStartDate
   };
-  publisher.publish(channel, JSON.stringify(message));
+  redisBalancer.getPublisher().publish(channel, JSON.stringify(message));
 
   warmupLoop();
 });
@@ -236,7 +232,7 @@ emitter.on('warmupEnd', function(success) {
       'warmupEnd': now
     };
 
-    publisher.publish(channel, JSON.stringify(message));
+    redisBalancer.getPublisher().publish(channel, JSON.stringify(message));
   } else {
     if (success) {
       success();
