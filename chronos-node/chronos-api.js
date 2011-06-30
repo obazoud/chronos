@@ -179,12 +179,12 @@ exports.login = function(req, res, params) {
       } else {
         gamemanager.login(params.mail, {
           error: function(err) {
-            logger.log(params.mail + ": failed !!" + err);
+            logger.log(params.mail + ": failed: " + err);
             res.send(400);
           },
           success: function(successful) {
             if (!successful) {
-              logger.log(params.mail + ": exists !!");
+              logger.log(params.mail + ": exists.");
               res.send(400);
             } else {
               var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
