@@ -6,6 +6,7 @@ var chronosCouch = require('./chronos-couchdb-api.js');
 var security = require('./security.js');
 var ranking = require("./ranking.js");
 var tools = require("./tools.js");
+var gamemanager = require('./gamemanager.js');
 
 var authentication_key = '12IndR6r5V5618';
 
@@ -96,6 +97,7 @@ function putGame(req, res, params, paramsJSON) {
       },
       success: function(data) {
         console.log(tools.toISO8601(new Date()) + ": game successfully added.");
+        gamemanager.initGame(paramsJSON);
         ranking.reset(function(err, incrementedScore) {
           console.log(tools.toISO8601(new Date()) + ": Redis: score to 0: OK " + incrementedScore);
           res.send(201);
