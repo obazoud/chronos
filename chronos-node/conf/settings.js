@@ -7,7 +7,7 @@ exports.create = function() {
   // Default settings
   var defaults = {
     hostname: '127.0.0.1',
-    port: 8080,
+    port: 8082,
     uncaughtException: true,
     tweet: true,
     cluster:  {
@@ -33,6 +33,13 @@ exports.create = function() {
     cluster:  {
       activate : false,
       workers: 2
+    },
+    proxy: {
+      port: 8080,
+      router: {
+        '/api/question' : '127.0.0.1:8081',
+        '/.*': '127.0.0.1:8082'
+      }
     }
   };
 
