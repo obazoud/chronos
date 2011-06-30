@@ -1,18 +1,19 @@
 package com.chronos.netty.service;
 
-import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
-import static org.jboss.netty.handler.codec.http.HttpResponseStatus.CREATED;
-import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
-
 import java.io.OutputStream;
 import java.util.Map;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.handler.codec.http.CookieEncoder;
 
 import com.chronos.biz.App;
 import com.chronos.biz.QuizzApi;
+
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.CREATED;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 
 /**
  * @author bazoud
@@ -30,6 +31,10 @@ public class ChronosDispatcher {
 
         if ("audit".equals(serviceResquest.method)) {
             return audit(serviceResquest);
+        }
+
+        if ("login".equals(serviceResquest.method)) {
+            return login(serviceResquest);
         }
 
         ServiceResponse serviceResponse = new ServiceResponse();
@@ -66,6 +71,29 @@ public class ChronosDispatcher {
             serviceResponse.httpResponseStatus = CREATED;
             serviceResponse.channelBuffer = channelBuffer;
             return serviceResponse;
+        } catch (Exception e) {
+            ServiceResponse serviceResponse = new ServiceResponse();
+            serviceResponse.httpResponseStatus = BAD_REQUEST;
+            return serviceResponse;
+        }
+    }
+
+    private ServiceResponse login(ServiceResquest serviceResquest) {
+        try {
+            Map<String, String> args = serviceResquest.args;
+            boolean auth = quizzApi.login(args.get("mail"), args.get("password"));
+            if (auth) {
+                ServiceResponse serviceResponse = new ServiceResponse();
+                serviceResponse.httpResponseStatus = CREATED;
+                CookieEncoder encoder = new CookieEncoder(true);
+                encoder.addCookie("session_key", "1234");
+                serviceResponse.cookie = new Cookie();
+                return serviceResponse;
+            } else {
+                ServiceResponse serviceResponse = new ServiceResponse();
+                serviceResponse.httpResponseStatus = BAD_REQUEST;
+                return serviceResponse;
+            }
         } catch (Exception e) {
             ServiceResponse serviceResponse = new ServiceResponse();
             serviceResponse.httpResponseStatus = BAD_REQUEST;
