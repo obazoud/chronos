@@ -5,7 +5,6 @@ var logger = require('util');
 
 // TODO Think about multiples nodes instances
 // TODO Think about multiples servers
-// TODO pas assez de temps pour questionEncours avec redis compliqué
 
 // nbquestions : le nombre de questions à jouer. 
 // Doit être inférieur ou égal au nombre de questions présentes dans le fichier (élement <usi:questions>). 
@@ -84,7 +83,6 @@ function GameState() {
   this.warmupStartDate = 0;
   this.warmupEndDate = 0;
   this.sessions = [];
-  this.questionEncours = 0;
 
   this.initGame = function(newGame) {
     // Force init game
@@ -97,7 +95,6 @@ function GameState() {
     this.logintimeout = parseInt(this.game.gamesession.parameters.logintimeout) * 1000;
     this.questiontimeframe = parseInt(this.game.gamesession.parameters.questiontimeframe) * 1000;
     this.synchrotime = parseInt(this.game.gamesession.parameters.synchrotime) * 1000;
-    this.questionEncours = 0;
 
     for(var i = 0; i < numberOfQuestions; i++) {
       var q = this.game.gamesession.questions.question[i];
@@ -121,7 +118,6 @@ function GameState() {
       this.warmupEndDate = now + parseInt(this.logintimeout);
       this.sessions[0] = this.warmupStartDate;
       this.sessions[1] = this.warmupEndDate;
-      this.questionEncours = 1;
     } else {
       logger.log('Already in state 2');
     }
@@ -278,14 +274,9 @@ function setTimeoutForTimeFrame(timeout, login, n, success) {
 
 function setTimeoutForTimeFrameCB(login, n, success) {
   logger.log(Date.now() + " login " + login + " fired.");
-  gameState.questionEncours = n;
   if (n == 1) {
     emitter.emit("warmupEnd", success);
   } else {
-    // TODO ?
-    // if (gameState.questionEncours >= numberOfQuestions) {
-    //  gameState.questionsEnds();
-    //}
     success();
   }
 };
@@ -294,7 +285,6 @@ function setTimeoutForTimeFrameCB(login, n, success) {
 exports.getQuestion = function(n, login, success, fail) {
   var now = new Date().getTime();
 
-  // TODO check questionEncours value ?
   var sessionNMoins1 = gameState.sessions[n - 1];
   var sessionN = gameState.sessions[n];
 
@@ -302,7 +292,6 @@ exports.getQuestion = function(n, login, success, fail) {
     setTimeoutForTimeFrame(sessionN - now, login, n, success);
   } else {
     logger.log("failed for question : " + n + ', login:' + login);
-    // logger.log("questionEncours = " + gameState.questionEncours);
     logger.log("  Missing for " + (now - sessionNMoins1) + ' ms.');
     fail();
   }
@@ -314,7 +303,6 @@ exports.answerQuestion = function(n, login, success, fail) {
   var sessionN = gameState.sessions[n];
   var sessionNplus1 = gameState.sessions[n + 1];
 
-  // TODO questionEncours ?
   if (now >= sessionN && now <= (sessionNplus1 - gameState.synchrotime)) {
     // logger.log(login + " answers question : " + n)
     success();
