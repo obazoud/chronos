@@ -19,7 +19,7 @@ exports.updateScore = function updateScore(lastname,firstname,mail,newScore){
     client.zscore("scores",token,function(err,currentScore){
         var increment = newScore - currentScore;
         client.zincrby("scores",increment,token,function(err,updatedScore){
-            console.log("score of user " + token + "incremented by " + increment);
+            // console.log("score of user " + token + " incremented by " + increment);
         });
     });
 };
@@ -59,8 +59,12 @@ exports.ranking = function ranking(lastname,firstname,mail,topN,range,callback){
                             ranking.top_scores.firstname.push(topUserObject.firstname);
                             ranking.top_scores.lastname.push(topUserObject.lastname);
                             if (i == topN ) {
-                                // after
-                                if (userRank == totalNumberOfUsers) {
+                                // TODO factoriser
+                                if (totalNumberOfUsers == 0) { callback(ranking); }
+                                // before
+                                else if (userRank == totalNumberOfUsers) {
+                                    // l'utilisateur est le dernier
+                                    // pas d'after
                                     var minBeforeRank = userRank - range;
                                     if (minBeforeRank < 0){ minBeforeRank = 0; }
                                     var maxBeforeRank = userRank - 1;
@@ -79,8 +83,31 @@ exports.ranking = function ranking(lastname,firstname,mail,topN,range,callback){
                                             });
                                         });
                                     });
-                                } // TODO factoriser
+                                }
+                                else if (userRank == 0) {
+                                    // l'utilisateur est le premier
+                                    // pas de before
+                                    var maxAfterRank = userRank + range;
+                                    if (maxAfterRank > totalNumberOfUsers) { maxAfterRank = totalNumberOfUsers; }
+                                    var minAfterRank = userRank + 1;
+                                    client.zrevrange("scores",minAfterRank,maxAfterRank,function(err,afterRange) {
+                                        console.log("after first user(" + minAfterRank + "," + maxAfterRank + ")");
+                                        afterRange.forEach(function(afterUser,j) {
+                                            var afterUserObject = JSON.parse(afterUser);
+                                            client.zscore("scores",afterUser,function(err,afterScore){
+                                                ranking.after.mail.push(afterUserObject.mail);
+                                                ranking.after.scores.push(afterScore);
+                                                ranking.after.firstname.push(afterUserObject.firstname);
+                                                ranking.after.lastname.push(afterUserObject.lastname);
+                                                if(j==maxAfterRank-minAfterRank){
+                                                    callback(ranking);
+                                                }
+                                            });
+                                        });
+                                    });
+                                }
                                 else {
+                                    // after
                                     var maxAfterRank = userRank + range;
                                     if (maxAfterRank > totalNumberOfUsers) { maxAfterRank = totalNumberOfUsers; }
                                     var minAfterRank = userRank + 1;
@@ -145,12 +172,6 @@ exports.reset = function reset(callback) {
 };
 
 /*
-addUser("user1","user1","user1@gmail.com");
-updateScore("user1","user1","user1@gmail.com",6);
-
-addUser("user2","user2","user2@gmail.com");
-updateScore("user2","user2","user2@gmail.com",1)
-
 addUser("bazoud","olivier","olivier@gmail.com");
 addUser("mage","pierre","pierre@gmail.com");
 addUser("tebourbi","slim","slim@gmail.com");
@@ -158,11 +179,7 @@ addUser("tebourbi","slim","slim@gmail.com");
 updateScore("bazoud","olivier","olivier@gmail.com",3);
 updateScore("mage","pierre","pierre@gmail.com",4);
 updateScore("tebourbi","slim","slim@gmail.com",1);
-*/
-/*
-getScore("tebourbi","slim","slim@gmail.com",function(reply){
-    console.log("score of user slim@gmail.com : " + reply);
-});
+
 
 ranking ("mage","pierre","pierre@gmail.com",100,5,function(ranking){
     console.log("pierre");
