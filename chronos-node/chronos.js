@@ -59,6 +59,7 @@ var server = http.createServer(function(req, res) {
   });
 
   req.on('end', function() {
+    // logger.log(Date.now() + ' >>');
     // Dispatch the request to router
     router.handle(req, body, function(result) {
       result.headers['Server'] = 'Chronos/1.0';
@@ -67,6 +68,7 @@ var server = http.createServer(function(req, res) {
       }
       res.writeHead(result.status, result.headers);
       res.end(result.body);
+      //logger.log(Date.now() + ' <<');
     });
   });
 });
