@@ -1,8 +1,16 @@
 // TODO integrer le mecanisme de fail-over
 var redis = require("redis").createClient();
+var subscriber = require("redis").createClient();
+var publisher = require("redis").createClient();
 
 // TODO a virer lors de l integration du mecanisme de fail over
 redis.on("error", function (err) {
+    logger.log("Error " + err);
+});
+subscriber.on("error", function (err) {
+    logger.log("Error " + err);
+});
+publisher.on("error", function (err) {
     logger.log("Error " + err);
 });
 
@@ -10,6 +18,20 @@ var sys = require('sys');
 var events = require('events');
 var emitter = new events.EventEmitter();
 var logger = require('util');
+
+subscriber.subscribe('#chronos');
+
+subscriber.on("subscribe", function (channel, count) {
+  logger.log('Client subscribed to channel ' + channel + ', ' + count + ' total subscriptions.');
+});
+
+subscriber.on("unsubscribe", function (channel, count) {
+    console.log('Client unsubscribed from ' + channel + ', ' + count + ' total subscriptions.');
+});
+
+subscriber.on('message', function(channel, message) {
+  logger.log('Incoming message ' + channel + '): ' + message);
+});
 
 // nbquestions : le nombre de questions à jouer. 
 // Doit être inférieur ou égal au nombre de questions présentes dans le fichier (élement <usi:questions>). 
