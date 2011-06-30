@@ -1,13 +1,37 @@
-var journey = require('journey');
-var api = require('./chronos-api.js');
-var security = require('./security.js');
-var tools = require("./tools.js");
+var sys = require('sys');
+var fs = require('fs');
 var logger = require('util');
+var tools = require("./tools.js");
+var journey = require('journey');
+var chronosSettings = require('./conf/settings.js').create();
+var security = require('./security.js');
+var api = require('./chronos-api.js');
+
+// Show settings
+logger.log('Loading Chronos settings' + sys.inspect(chronosSettings, false));
+
+// Prevent node.js crashing
+if (chronosSettings.uncaughtException) {
+  logger.log('Add process.on uncaughtException');
+  process.on('uncaughtException', function(err) {
+    logger.log(err);
+  });
+} else {
+  logger.log('Skipping process.on uncaughtException');
+}
+
+// node.js exit
+process.on('exit', function () {
+  logger.log('Bye bye Chronos server.');
+});
+
 
 // Create a router
+logger.log('Creating Router');
 var router = new(journey.Router)();
 
 // Create the routes
+logger.log('Creating Routes');
 router.get('/api/ping').bind(api.ping);
 //router.get('/api/drop').bind(api.dropDatabase);
 router.post('/api/user').bind(api.createUser); 
@@ -24,33 +48,9 @@ router.get(/^api\/mail\/([\w|@|\.]+)$/).bind(api.mail);
 router.get('/api/frontal').bind(api.frontal);
 router.get('/api/couchdb').bind(api.couchdb);
 
-var responses = [];
-var gameStarted = false;
-
-// Create the htt server
+// Create the http server
+logger.log('Creating Http server');
 var http = require('http');
-// var files = new(nodestatic.Server)('./public');
-
-console.log(process.argv);
-var applyCluster = true;
-if (process.argv.indexOf('--no-cluster') > -1) {
-    applyCluster = false;
-}
-
-// Prevent node.js crashing
-if (process.argv.indexOf('--no-uncaught') <= -1) {
-  logger.log('Add process.on uncaughtException');
-  process.on('uncaughtException', function(err) {
-    logger.log(err);
-  });
-} else {
-  logger.log('Skip process.on uncaughtException');
-}
-
-process.on('exit', function () {
-  logger.log('Bye bye Chronos server.');
-});
-
 var server = http.createServer(function(req, res) {
   var body = '';
 
@@ -73,17 +73,17 @@ var server = http.createServer(function(req, res) {
   });
 });
 
-if (applyCluster == true) {
-  logger.log('Configure Node.js with cluster module (' + applyCluster + ')');
+if (chronosSettings.cluster.activate) {
+  logger.log('Configure Node.js with cluster module (' + chronosSettings.cluster.workers + ' workers).');
   var cluster = require('cluster');
   cluster(server)
-    .set('workers', 4)
-    .listen(8080, process.argv[2]);
-  logger.log('Server running at http://' + process.argv[2] + ':8080');
+    .set('workers', chronosSettings.cluster.workers)
+    .listen(chronosSettings.httpPort, chronosSettings.httpAdress);
+  logger.log('Server running at http://' + chronosSettings.httpAdress + ':8080');
 } else {
   logger.log('Configure Node.js with *no* workers.');
-  server.listen(8080);
-  logger.log('Server running at http://127.0.0.1:8080');
+  server.listen(chronosSettings.httpPort);
+  logger.log('Server running at http://127.0.0.1:' + chronosSettings.httpPort);
 }
 
 
