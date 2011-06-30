@@ -97,7 +97,7 @@ function reset(callback) {
             callback();
         } else {
             users.forEach(function(user) {
-                client.getMaster().zadd("scores", 0, user,function(err,updated) {
+                client.zadd("scores", 0, user,function(err,updated) {
                     callback(err,updated);
                 });
             });
