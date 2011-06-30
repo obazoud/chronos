@@ -241,7 +241,7 @@ emitter.on('warmupEnd', function(success) {
 
     publisher.publish(channel, JSON.stringify(message));
   } else {
-    logger.log("warmupEnd: success.");
+    // logger.log("warmupEnd: success.");
     if (success) {
       // logger.log(success);
       success();
@@ -249,6 +249,7 @@ emitter.on('warmupEnd', function(success) {
   }
 });
 
+// TODO merge these methods
 function setTimeoutForTimeFrame(timeout, login, n, success, fail) {
   setTimeout(setTimeoutForTimeFrameCB, timeout, login, n, success, fail);
 };
@@ -258,13 +259,13 @@ function setTimeoutForTimeFrame1(timeout, login,  n, success, fail) {
 };
 
 function setTimeoutForTimeFrameCB(login, n, success, fail) {
-  logger.log("------> time out for answering question : (" + login + ") " + n);
+  // logger.log("------> time out for answering question : (" + login + ") " + n);
   emitter.emit("questionEncours" + n, n);
   emitter.emit("sendQuestions", login, n, success, fail);
 };
 
 function setTimeoutForTimeFrameCB1(login, n, success, fail) {
-  logger.log("------> (CB1) time out for answering question : (" + login + ") " + n);
+  // logger.log("------> (CB1) time out for answering question : (" + login + ") " + n);
   emitter.emit("warmupEnd", success, fail);
 };
 
@@ -294,7 +295,7 @@ emitter.on("sendQuestions", function(login, n, success, fail) {
 /** Get question N **/
 exports.getQuestion = function(n, login, success, fail) {
   var now = new Date().getTime();
-  logger.log("getQuestion " + n + " -> " + login);
+  // logger.log("getQuestion " + n + " -> " + login);
   // TODO check questEncours value ?
   var sessionNMoins1 = gameState.sessions[n - 1];
   var sessionN = gameState.sessions[n];
@@ -303,7 +304,7 @@ exports.getQuestion = function(n, login, success, fail) {
   // logger.log(login + ": sessionN: " + new Date(sessionN));
   if (n <= numberOfQuestions && now >= sessionNMoins1 && now < sessionN) {
     timeout = sessionN - now;
-    logger.log(login + ": is waiting for question : " + n + ', timeout ' + timeout + ' ms.');
+    // logger.log(login + ": is waiting for question : " + n + ', timeout ' + timeout + ' ms.');
     if (n == 1) {
       setTimeoutForTimeFrame1(timeout, login, n, success, fail);
     } else {
@@ -324,7 +325,7 @@ exports.answerQuestion = function(n, login, success, fail) {
     var sessionNplus1 = gameState.sessions[n + 1];
 
     if (now >= sessionN && now < (sessionNplus1 - gameState.synchrotime)) {
-      logger.log(login + " answers question : " + n)
+      // logger.log(login + " answers question : " + n)
       success();
     } else {
       logger.log("n = " + n + ', login:' + login);

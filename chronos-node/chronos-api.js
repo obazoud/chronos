@@ -177,7 +177,7 @@ function processGameXML(authentication_key, parameters) {
 };
 
 exports.login = function(req, res, params) {
-  logger.log("> Http /api/login/" + params.mail);
+  // logger.log("> Http /api/login/" + params.mail);
   chronosCouch.getDoc(params.mail, {
     error: function(data) {
       if (JSON.parse(data).error == 'not_found') {
@@ -213,7 +213,7 @@ exports.login = function(req, res, params) {
                 },
                 success: function(exist) {
                   gamemanager.warmup(res);
-                  logger.log("< Http /api/login/" + params.mail);
+                  // logger.log("< Http /api/login/" + params.mail);
                   res.send(201, {'Set-Cookie': 'session_key=' + sessionkey}, '');
                 }
               });
@@ -227,7 +227,7 @@ exports.login = function(req, res, params) {
 
 exports.getQuestion = function(req, res, n) {
   var gamejson = gamemanager.getGame();
-  logger.log("> Http /api/question/" + n + " / " + numberOfQuestions + ", login:" + req.jsonUser.login);
+  // logger.log("> Http /api/question/" + n + " / " + numberOfQuestions + ", login:" + req.jsonUser.login);
   // preparing response
   // First score is too slow, do not know why !?
   if (n > numberOfQuestions) {
@@ -247,7 +247,7 @@ exports.getQuestion = function(req, res, n) {
         if (n == 1) {
             // logger.log("< Calling score q " + n + ", login:" + req.jsonUser.login);
             question.score = "0";
-            logger.log("< Http /api/question/" + n + ", login:" + req.jsonUser.login + ", " + JSON.stringify(question));
+            // logger.log("< Http /api/question/" + n + ", login:" + req.jsonUser.login + ", " + JSON.stringify(question));
             res.send(200, {}, question);
         } else {
           gamemanager.getScore(req.jsonUser.login, {
@@ -258,7 +258,7 @@ exports.getQuestion = function(req, res, n) {
             success: function(score) {
               // logger.log("< Calling score q " + n + ", login:" + req.jsonUser.login);
               question.score = "" + score + "";
-              logger.log("< Http /api/question/" + n + ", login:" + req.jsonUser.login);
+              // logger.log("< Http /api/question/" + n + ", login:" + req.jsonUser.login);
               res.send(200, {}, question);
             }
           });
@@ -273,7 +273,7 @@ exports.getQuestion = function(req, res, n) {
 };
 
 exports.answerQuestion = function(req, res, n, params) {
-  logger.log("> Http /api/anwser/" + n + ", login:" + req.jsonUser.login);
+  // logger.log("> Http /api/anwser/" + n + ", login:" + req.jsonUser.login);
   gamemanager.answerQuestion(n, req.jsonUser.login,
     function() {
       var gamejson = gamemanager.getGame();
@@ -288,7 +288,7 @@ exports.answerQuestion = function(req, res, n, params) {
           answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
           answer.good_answer = q.choice[q.goodchoice - 1];
           answer.score = "" + score + "";
-          logger.log("< Http /api/anwser/" + n + ", login:" + req.jsonUser.login);
+          // logger.log("< Http /api/anwser/" + n + ", login:" + req.jsonUser.login);
           res.send(201, {}, answer);
         }
       });
@@ -331,7 +331,7 @@ exports.getRanking = function(req, res) {
       res.send(400, {}, err);
     }
     else {
-      logger.log("< Http /api/ranking, login:" + req.jsonUser.login);
+      logger.log("< Http /api/ranking, login:" + req.jsonUser.login + ", " + JSON.stringify(ranking));
       res.send(200, {}, ranking);
     }
   });
