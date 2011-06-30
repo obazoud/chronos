@@ -28,7 +28,7 @@ exports.createUser = function(req, res, params) {
     var url = couchdburl + '/' + params.mail;
     
     restler.put(url, {
-      data: JSON.stringify({type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || ''}),
+      data: JSON.stringify({type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:[ ], reponses:[ ], score:0}),
       headers: { 'Content-Type': 'application/json' }
     })
     .on('error', function(data) {
