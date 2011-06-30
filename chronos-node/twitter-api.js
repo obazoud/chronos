@@ -1,6 +1,10 @@
 var twitter = require('twitter');
 var sys = require('sys');
 
+exports.ping = function(req, res) {
+  res.send(201, {}, 'pong twitter');
+};
+
 exports.tweetHttp = function(req, res) {
   sys.puts('Twitter API>');
   tweet('Hello world2', {
