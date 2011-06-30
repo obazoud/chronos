@@ -1,6 +1,6 @@
 var redis = require("redis").createClient();   // TODO integrer le mecanisme de fail-over
 
-redis.on("error", function (err) {
+redis.on("error", function (err) { // TODO a virer lors de l integration du mecnaisme de fail over
     logger.log("Error " + err);
 });
 
@@ -24,7 +24,7 @@ exports.initGame = function(game) {
                         , "numberOfQuestions", parseInt(game.gamesession.parameters.nbquestions)
                         , "questionTimeFrame" , ( parseInt(game.gamesession.parameters.questiontimeframe) * 1000)
                         , "synchroTimeDuration" , ( parseInt(game.gamesession.parameters.synchrotime) * 1000)
-                        );    
+            );
 
 
     redis.del("players");
@@ -33,45 +33,10 @@ exports.initGame = function(game) {
     redis.save();
 };
 
-exports.getGame = function(options) {
-  redis.get("game", function(err, reply) {
-    if (err) {
-      if (options && options.error) {
-        options.error(err);
-      }
-    } else {
-      if (options && options.success) {
-        options.success(JSON.parse(reply));
-      }
-    }
-  });
-};
-
-function gameState(beforeStartCallback,afterStartCallback,params){
-    redis.hmget("context","dateFinWarmup","maxGamers","numberOfPlayers",function(err,replies){
-
-	// TODO recuperer une seule fois et mettre en variable globales
-        var dateFinWarmup = parseInt(replies[0]);
-        var maxGamers = parseInt(replies[1]);
-        var numberOfPlayers = parseInt(replies[2]);
-
-        if (dateFinWarmup == null || numberOfPlayers ==  null) {
-            logger.log("date fin w et/ou num player nulls");
-        } else {        
-          if( ( numberOfPlayers >= maxGamers && responses[1].length >= maxGamers ) || new Date().getTime() >= dateFinWarmup) {
-                afterStartCallback(params);    
-            }else{
-                beforeStartCallback(params);
-            }
-        }
-    });
-}
-
 /**
 gere les demandes d inscription au quiz
 */
 exports.warmup = function() {
-    logger.log("Warmup started... ");
     emitter.emit('warmupStarted');
     redis.hincrby("context", "numberOfPlayers",1, function(err,counter){
             redis.hmget("context","maxGamers",function(err,max){
@@ -85,6 +50,8 @@ exports.warmup = function() {
 
 emitter.once("warmupStarted",function(){
     var now = new Date().getTime();
+    logger.log("Warmup started... ");
+
     redis.hmget("context","dureeWarmup",function(err,dureeWarmup){
     	redis.hsetnx("context"
 	        ,"dateFinWarmup", (now + parseInt(dureeWarmup))
@@ -114,24 +81,22 @@ gere l evenement d arret de la phase de warmup en :
 emitter.once('warmupEnd',function(){
 
     logger.log("warmup timer stopped");
+    var now = new Date().getTime();
     emitter.emit("sendQuestions"); // envoi de la question 1
-    
-    redis.hmget("context","numberOfQuestions","synchroTimeDuration","questionTimeFrame","dateFinWarmup",function(err,params){
+
+    redis.hmget("context","numberOfQuestions","synchroTimeDuration","questionTimeFrame",function(err,params){
 
 	    var numberOfQuestions = parseInt(params[0]);
 	    var synchroTimeDuration = parseInt(params[1]);
 	    var questionTimeFrame = parseInt(params[2]);
-	    var dateFinWarmup = parseInt(params[3]);
 
 	    for(q=2;q<=numberOfQuestions;q++){
 		    responses[q] = [];// verfifier si avec le comportement asynch ca peux poser des problemes
 	    }
 
 	    // initialisation des timeFrames des questions
-	    var now = new Date().getTime();
         redis.hset("context",
                         "session_" + 1 , now);
-
 
         var quizSessions = [];
 
@@ -187,36 +152,30 @@ emitter.on("sendQuestions",function(){
 */
 exports.getQuestion = function(n, login, success, fail ) {
    logger.log("getQuestion " + n + " -> " + login);
-   var now = new Date().getTime();	
-   gameState(
-        function() {
-            redis.hmget("context","questionEncours",function(err,c){
-                if(c==1){
-                    responses[1].push(success);
-                }            
-            });
-        }
-        ,function(){
+   var now = new Date().getTime();
 
-            redis.hmget("context","synchroTimeDuration","numberOfQuestions","session_" + (n-1),"session_" + n ,function(err,params){
-		    
-	    var synchroTimeDuration = parseInt(params[0]);
-	    var numberOfQuestions = parseInt(params[1]);
-	    var sessionNMoins1 = parseInt(params[2]);
-	    var sessionN = parseInt(params[3]);
+    redis.hmget("context"
+            ,"questionEncours"
+            ,"numberOfQuestions"
+            ,"session_" + (n-1)
+            ,"session_" + n
+            ,function(err,params){
 
-		   
-		   if((n<=numberOfQuestions) && (now >= sessionNMoins1 && now <= sessionN)){
-		    	logger.log("a user waiting for question : " + n)
-	                responses[n].push(success);
-		    }else{
-			fail();			
-		    }		     
-	    });
-	    
+        var questionEncours = parseInt(params[0]);
+        var numberOfQuestions = parseInt(params[1]);
+        var sessionNMoins1 = parseInt(params[2]);
+        var sessionN = parseInt(params[3]);
+
+        if(questionEncours==1 && n==1){
+            logger.log("a user waiting for question : " + 1)
+            responses[1].push(success);
+        }else if((n<=numberOfQuestions) && (now >= sessionNMoins1 && now <= sessionN)){
+            logger.log("a user waiting for question : " + n)
+            responses[n].push(success);
+        }else{
+            fail();
         }
-        ,null
-    );
+    });
 }
 
 
@@ -224,12 +183,7 @@ exports.getQuestion = function(n, login, success, fail ) {
 
 */
 exports.answerQuestion = function(n, login, success, fail) {
-     gameState(	
-	function(){
-	        fail();
-	}
-        ,function(){
-	    var now = new Date().getTime();
+        var now = new Date().getTime();
 	    
 		redis.hmget("context","questionEncours","synchroTimeDuration","session_" + n,"session_" + (n+1) ,function(err,params){
 			    
@@ -238,8 +192,7 @@ exports.answerQuestion = function(n, login, success, fail) {
 		    var sessionN = parseInt(params[2]);
 		    var sessionNplus1 = parseInt(params[3]);
 
-
-		    if(now >= sessionN && now <= (sessionNplus1- synchroTimeDuration)){
+            if(now >= sessionN && now <= (sessionNplus1- synchroTimeDuration)){
 		    	logger.log("a user answers question : " + n)
 	                success();
 		    }else{
@@ -262,9 +215,6 @@ exports.answerQuestion = function(n, login, success, fail) {
 			
 		    }
 	    });
-        }
-        ,null
-    );
 }
 
 emitter.on("endOfGame",function(){
@@ -330,6 +280,22 @@ exports.updatingScore = function(lastname, firstname, login, question, reponse, 
           }
         }
       });
+    }
+  });
+};
+
+
+
+exports.getGame = function(options) {
+  redis.get("game", function(err, reply) {
+    if (err) {
+      if (options && options.error) {
+        options.error(err);
+      }
+    } else {
+      if (options && options.success) {
+        options.success(JSON.parse(reply));
+      }
     }
   });
 };
