@@ -140,7 +140,7 @@ exports.answerQuestion = function(req, res, n, params) {
 
 exports.tweetHttp = function(req, res, params) {
   sys.puts('Tweet: ' + params.tweet);
-  tweet(params.tweet + ' (' + toISO8601(new Date()) + ')');
+  twitterapi.tweet(params.tweet + ' (' + toISO8601(new Date()) + ')');
   res.send(200);
 };
 
