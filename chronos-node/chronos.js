@@ -1,5 +1,4 @@
 var journey = require('journey');
-// var nodestatic = require('node-static');
 var api = require('./chronos-api.js');
 var security = require('./security.js');
 
@@ -44,15 +43,6 @@ var server = http.createServer(function(req, res) {
   req.on('end', function() {
     // Dispatch the request to router
     router.handle(req, body, function(result) {
-//      if (result.status === 404) {
-//        files.serve(req, res, function (err, result) {
-//          if (err && (err.status === 404)) {
-//            res.writeHead(404);
-//            res.end('File not found.');
-//          }
-//        });
-//        return;
-//      }
       result.headers["Server"] = 'Chronos/1.0';
       res.writeHead(result.status, result.headers);
       res.end(result.body);
@@ -68,7 +58,6 @@ if (applyCluster == true) {
   console.log('Configure classic Node.js');
   server.listen(8080);
 }
-
 
 console.log('Server running at http://127.0.0.1:8080/');
 
