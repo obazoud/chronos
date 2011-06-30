@@ -34,10 +34,9 @@ function GameState() {
   this.state = 0;
   this.warmupStartDate = 0;
   this.warmupEndDate = 0;
-  this.session_0 = 0;
-  this.session_1 = 0;
+  this.sessions = [];
   this.questionEncours = 0;
-  
+
   this.initGame = function(newGame) {
     this.state = 1;
     this.game = newGame;
@@ -53,19 +52,33 @@ function GameState() {
       this.state = 2;
       this.warmupStartDate = now;
       this.warmupEndDate = now + parseInt(this.logintimeout);
-      this.session_0 = now;
-      this.session_1 = now + parseInt(this.logintimeout);
+      this.sessions[0] = now;
+      this.sessions[1] = now + parseInt(this.logintimeout);
       this.questionEncours = 1;
     } else {
       logger.log('Already in state 2');
     }
   };
 
+  this.warmupEnds = function(now) {
+    if (this.state == 2) {
+      logger.log('State changed state:' + this.state + ' -> ' + 3);
+      this.state = 3;
+      this.sessions[1] = now;
+      for (i = 2; i <= numberOfQuestions + 1; i++) {
+        this.sessions[i] = this.sessions[i - 1] + this.questiontimeframe + this.synchrotime;
+      }
+    } else {
+      logger.log('Already in state 3');
+    }
+  };
+
 //  this.persist = function() {
 //  };
 
-//  this.retrieve = function() {
-//  };
+  this.retrieve = function() {
+    // TODO : at node startup get state from redis
+  };
 
 }
 
@@ -89,11 +102,15 @@ subscriber.on('message', function(channel, message) {
   switch (json.event) {
     case 'initGame':
         gameState.initGame(json.message);
-        logger.log(sys.inspect(gameState, false));
+        // logger.log(sys.inspect(gameState, false));
       break;
     case 'warmupStarts':
         gameState.warmupStarts(json.warmupStartDate);
-        logger.log(sys.inspect(gameState, false));
+        // logger.log(sys.inspect(gameState, false));
+      break;
+    case 'warmupEnds':
+        gameState.warmupEnds(json.warmupEnd);
+        // logger.log(sys.inspect(gameState, false));
       break;
     default:
       logger.log('Unknow event:' + json.event);
@@ -137,6 +154,7 @@ emitter.once("warmupStarted", function() {
   var now = new Date().getTime();
   logger.log("Warmup started... ");
   gameState.warmupStarts(now);
+  // logger.log(sys.inspect(gameState,false));
 
   redis.hsetnx("context", "warmupStartDate", gameState.warmupStartDate);
   redis.hsetnx("context", "warmupEndDate", gameState.warmupEndDate);
@@ -145,13 +163,12 @@ emitter.once("warmupStarted", function() {
   redis.hsetnx("context", "questionEncours", 1);
   redis.save();
 
-  logger.log(sys.inspect(gameState,false));
-
   var message = {
     'event': 'warmupStarts',
     'warmupStartDate': gameState.warmupStartDate,
   };
   publisher.publish(channel, JSON.stringify(message));
+
   warmupLoop();
 });
 
@@ -173,45 +190,37 @@ gere l evenement d arret de la phase de warmup en :
     2. repondant a tout les utilisateurs
     3. definitions des fenetres de sessions de reponses
 */
-emitter.once('warmupEnd', function(success) {
-  logger.log("warmup timer stopped");
-  var now = new Date().getTime();
-  gameState.warmupEnds(now);
-
-  redis.hmget("context", "synchrotime", "questiontimeframe", function(err, params) {
-    var synchrotime = parseInt(params[0]);
-    var questiontimeframe = parseInt(params[1]);
-
-    // initialisation des timeFrames des questions
+emitter.on('warmupEnd', function(success) {
+  if (gameState.state == 1) {
+    logger.log("warmup timer stopped");
+    var now = new Date().getTime();
     logger.log("initialize timeFrames." + now);
-    var quizSessions = [];
-    quizSessions[1] = now;
-    for (i = 2; i <= numberOfQuestions+1; i++) {
-      quizSessions[i] = quizSessions[i-1] + questiontimeframe + synchrotime;
-    }
-    // logger.log("timeFrames:" + quizSessions);
+    gameState.warmupEnds(now);
+
+    // logger.log("timeFrames:" + gameState.sessions);
+    // TODO : hsetnx ? exception is for index 1
     redis.hmset("context",
-      "session_1", quizSessions[1],
-      "session_2", quizSessions[2],
-      "session_3", quizSessions[3],
-      "session_4", quizSessions[4],
-      "session_5", quizSessions[5],
-      "session_6", quizSessions[6],
-      "session_7", quizSessions[7],
-      "session_8", quizSessions[8],
-      "session_9", quizSessions[9],
-      "session_10", quizSessions[10],
-      "session_11", quizSessions[11],
-      "session_12", quizSessions[12],
-      "session_13", quizSessions[13],
-      "session_14", quizSessions[14],
-      "session_15", quizSessions[15],
-      "session_16", quizSessions[16],
-      "session_17", quizSessions[17],
-      "session_18", quizSessions[18],
-      "session_19", quizSessions[19],
-      "session_20", quizSessions[20],
-      "session_21", quizSessions[21],
+      "session_1", sessions[1],
+      "session_2", sessions[2],
+      "session_3", sessions[3],
+      "session_4", sessions[4],
+      "session_5", sessions[5],
+      "session_6", sessions[6],
+      "session_7", sessions[7],
+      "session_8", sessions[8],
+      "session_9", sessions[9],
+      "session_10", sessions[10],
+      "session_11", sessions[11],
+      "session_12", sessions[12],
+      "session_13", sessions[13],
+      "session_14", sessions[14],
+      "session_15", sessions[15],
+      "session_16", sessions[16],
+      "session_17", sessions[17],
+      "session_18", sessions[18],
+      "session_19", sessions[19],
+      "session_20", sessions[20],
+      "session_21", sessions[21],
       function() {
         logger.log("initialize timeFrames done.");
         if (success) {
@@ -219,7 +228,16 @@ emitter.once('warmupEnd', function(success) {
         }
         redis.save();
     });
-  });
+
+    var message = {
+      'event': 'warmupEnds',
+      'warmupEnd': now,
+    };
+
+    publisher.publish(channel, JSON.stringify(message));
+  } else {
+    sucess();
+  }
 });
 
 function setTimeoutForTimeFrame(timeout, login, n, success, fail) {
