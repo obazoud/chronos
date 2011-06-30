@@ -10,7 +10,7 @@ case $IP in
   ;;
   *)
     JSON="{\"source\":\"http://${MASTER}:5984/thechallenge\",\"target\":\"http://${IP}:5984/thechallenge\"}"
-    echo $JSON
+    #echo $JSON
     curl -iX POST -H "Content-Type:application/json" -d "${JSON}" http://${MASTER}:5984/_replicate --silent 2>&1 > /dev/null
   ;;
 esac
