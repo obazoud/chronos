@@ -6,14 +6,14 @@
         if(req.query.doc == null) {
           return [null, \"doc is null!\\n\"];
         }
-        var xmlDoc = req.query.doc.replace(/^<\?xml\s+version\s*=\s*([\"'])[^\1]+\1[^?]*\?>/, \"\");
-        var html = new XML(xmlDoc);
+        var xmlDoc = req.query.doc;
+        var gamesession = new XML(xmlDoc);
         if (doc == null) {
           doc = {};
-          
         }
         doc._id= 'gamejson';
-        doc.title = html.parameters.trackeduseridmail.text();
+        doc.type='gamejson';
+        doc.title = 'title';
         return [doc, \"ok!\\n\"];
       }
     "
