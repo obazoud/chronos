@@ -1,5 +1,5 @@
 #! /bin/bash
-#set -x
+set -x
 # https://gist.github.com/715255
 # ------------------------------------------------------------------------------ 
 # SOME INFOS : fairly standard (debian) init script.
@@ -64,7 +64,7 @@ DAEMON_ARGS="/home/user/deploiement/chronos-node/chronos.js"               # pat
 
 DESC="node.js http server"                  # whatever fancy description you like
 
-NODEUSER=nodejs:nodejs                      # USER who OWNS the daemon process (no matter whoever runs the init script)
+NODEUSER=user:user                      # USER who OWNS the daemon process (no matter whoever runs the init script)
                                             # user:group (if no group is specified, the primary GID for that user is used)
 
 LOCAL_VAR_RUN=/usr/local/var/run            # in case the init script is run by non-root user, you need to
@@ -73,7 +73,7 @@ LOCAL_VAR_RUN=/usr/local/var/run            # in case the init script is run by 
                                             #      or choose one of your own liking.
                                             #      2) node, npm,... are best NOT installed/run as ROOT.
                                             #         (see here: https://github.com/isaacs/npm/blob/master/README.md)
-
+LOCAL_VAR_LOGS=/usr/local/var/log/nodejs.log
 NAME=node                                   # name of the node.js executable
 DAEMON=/home/user/node-v0.4.4/bin/$NAME     # this SHOULD POINT TO where your node executable is
 #
@@ -120,6 +120,7 @@ VERBOSE=yes
 #
 do_start()
 {
+	touch $LOCAL_VAR_RUN $LOCAL_VAR_LOGS
 	# Return
 	#   0 if daemon has been started
 	#   1 if daemon was already running
@@ -127,7 +128,7 @@ do_start()
 	start-stop-daemon --start --quiet --pidfile $PIDFILE --chuid $NODEUSER --background --exec $DAEMON --test > /dev/null \
 		|| { [ "$VERBOSE" != no ] && log_daemon_msg  "  --->  Daemon already running $DESC" "$INIT_SCRIPT_NAME_NOEXT"; return 1; }
 	start-stop-daemon --start --quiet --chuid $NODEUSER --make-pidfile --pidfile $PIDFILE --background --exec $DAEMON -- \
-		$DAEMON_ARGS \
+		$DAEMON_ARGS 2>> $LOCAL_VAR_LOGS 1>> $LOCAL_VAR_LOGS \
 		|| { [ "$VERBOSE" != no ] && log_daemon_msg  "  --->  could not be start $DESC" "$INIT_SCRIPT_NAME_NOEXT"; return 2; }
 	# Add code here, if necessary, that waits for the process to be ready
 	# to handle requests from services started subsequently which depend
