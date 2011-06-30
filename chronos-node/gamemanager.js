@@ -191,7 +191,7 @@ exports.initGame = function(game) {
     'event': 'initGame',
     'message': game
   };
-  redis.publish(channel, JSON.stringify(message));
+  publisher.publish(channel, JSON.stringify(message));
 };
 
 /** Warmup quizz **/
@@ -216,7 +216,7 @@ emitter.once("warmupStarted", function() {
     'event': 'warmupStarts',
     'warmupStartDate': gameState.warmupStartDate
   };
-  redis.publish(channel, JSON.stringify(message));
+  publisher.publish(channel, JSON.stringify(message));
 
   warmupLoop();
 });
@@ -253,7 +253,7 @@ emitter.on('warmupEnd', function(success) {
       'warmupEnd': now
     };
 
-    redis.publish(channel, JSON.stringify(message));
+    publisher.publish(channel, JSON.stringify(message));
   } else {
     if (success) {
       success();
