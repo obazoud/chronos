@@ -3,6 +3,7 @@ package com.chronos.netty.service.impl;
 import java.io.OutputStream;
 import java.net.URLDecoder;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.codehaus.jackson.JsonEncoding;
 import org.codehaus.jackson.JsonFactory;
@@ -32,7 +33,8 @@ public class QuestionAction implements Action {
     final Logger logger = LoggerFactory.getLogger(QuestionAction.class);
     JsonFactory jsonFactory = new JsonFactory();
     CountDownLatch latch = new CountDownLatch(NettyServer.countDown);
-
+    AtomicLong hit = new AtomicLong(0);
+    
     @Override
     public HttpResponse execute(HttpRequest httpRequest) {
         try {
@@ -42,7 +44,7 @@ public class QuestionAction implements Action {
 
                 latch.countDown();
 //                TODO: Business stuff!
-                logger.info("Count: " + latch.getCount());
+                logger.info("Hit: " + hit.incrementAndGet() + "Count: " + latch.getCount());
                 latch.await();
 
                 final ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer(128);
