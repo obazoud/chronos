@@ -157,7 +157,8 @@ emitter.once("warmupStarted", function() {
 
 function warmupLoop () {
   redis.hmget("context", "numberOfPlayers", function(err, numberOfPlayers) {
-    if (parseInt(numberOfPlayers) >= parseInt(gameState.nbusersthreshold)) {
+    var now = new Date().getTime();
+    if (parseInt(numberOfPlayers) >= parseInt(gameState.nbusersthreshold) || now >= gameState.warmupEndDate) {
       emitter.emit("warmupEnd");
     } else {
       // TODO : timeout ?
@@ -175,6 +176,7 @@ gere l evenement d arret de la phase de warmup en :
 emitter.once('warmupEnd', function(success) {
   logger.log("warmup timer stopped");
   var now = new Date().getTime();
+  gameState.warmupEnds(now);
 
   redis.hmget("context", "synchrotime", "questiontimeframe", function(err, params) {
     var synchrotime = parseInt(params[0]);
