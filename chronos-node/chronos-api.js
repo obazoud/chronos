@@ -81,7 +81,7 @@ setInterval(function() {
       }
     });
   }
-}, 10000);
+}, 5000);
 
 exports.mail = function(req, res, mail) {
   chronosCouch.getDoc(mail, {
@@ -125,7 +125,7 @@ function putGame(req, res, params, paramsJSON) {
   if (message) {
     res.send(401, {}, message);
   } else {
-    console.log(tools.toISO8601(new Date()) + ": put a new game.");
+    console.log(tools.toISO8601(new Date()) + ": a new game is coming.");
     chronosCouch.putDoc('game', false, paramsJSON, {
       error: function(data) {
         res.send(400);
