@@ -1,6 +1,7 @@
 var journey = require('journey');
 // var nodestatic = require('node-static');
 var api = require('./chronos-api.js');
+var security = require('./security.js');
 
 // Create a router
 var router = new(journey.Router)();
@@ -11,12 +12,13 @@ router.get('/api/ping').bind(api.ping);
 router.post('/api/user').bind(api.createUser); 
 router.post('/api/game').bind(api.newGame);
 router.post('/api/login').bind(api.login);
-router.get(/^api\/question\/(\d+)$/).bind(api.getQuestion);
-router.post(/^api\/answer\/(\d+)$/).bind(api.answerQuestion);
-router.get('/api/ranking').bind(api.getRanking);
+router.get(/^api\/question\/(\d+)$/).filter(security.authorize).bind(api.getQuestion);
+router.post(/^api\/answer\/(\d+)$/).filter(security.authorize).bind(api.answerQuestion);
+router.get('/api/ranking').filter(security.authorize).bind(api.getRanking);
 router.get('/api/score').bind(api.getScore);
 router.get('/api/audit').bind(api.audit);
 router.get(/^api\/audit\/(\d+)$/).bind(api.audit);
+router.post('/api/tweet').bind(api.tweetHttp);
 
 var responses = [];
 var gameStarted = false;

@@ -1,8 +1,8 @@
 var twitter = require('twitter');
 var xml2json = require('./xml2json.js');
 var sys = require('sys');
-var nibbler = require('./nibbler');
 var chronosCouch = require('./chronos-couchdb-api.js');
+var security = require('./security.js');
 
 exports.ping = function(req, res) {
   res.send(201, {}, 'pong');
@@ -66,7 +66,7 @@ exports.login = function(req, res, params) {
       if (userDocjson.password != params.password) {
         res.send(401);
       } else {
-        var sessionkey = nibbler.b64encode(JSON.stringify({ "login": params.mail, "password": params.password }));
+        var sessionkey = security.encode({ "login": params.mail, "password": params.password });
         res.send(201, {"session_key":sessionkey}, '');
       }
     }
@@ -74,20 +74,7 @@ exports.login = function(req, res, params) {
 };
 
 exports.getQuestion = function(req, res, n) {
-  if (!req.headers.session_key) {
-    res.send(401);
-    return;
-  }
-  var session_key = nibbler.b64decode(req.headers.session_key);
-  var sessionkeyjson;
-  try {
-    sessionkeyjson = JSON.parse(session_key);
-  } catch (err) {
-    res.send(401);
-    return;
-  }
-
-  chronosCouch.getDoc(sessionkeyjson.login, {
+  chronosCouch.getDoc(req.jsonUser.login, {
     error: function(data, response) {
       res.send(400, {}, data);
     },
@@ -114,26 +101,13 @@ exports.getQuestion = function(req, res, n) {
 };
 
 exports.answerQuestion = function(req, res, n, params) {
-  if (!req.headers.session_key) {
-    res.send(401);
-    return;
-  }
-  var session_key = nibbler.b64decode(req.headers.session_key);
-  var sessionkeyjson;
-  try {
-    sessionkeyjson = JSON.parse(session_key);
-  } catch (err) {
-    res.send(401);
-    return;
-  }
-
   chronosCouch.getDoc('game', {
     error: function(data, response) {
       res.send(400, {}, data);
     },
     success: function(data, response) {
       var q = JSON.parse(data).gamesession.questions.question[n-1];
-      chronosCouch.putDesign('/_design/answer/_update/accumulate/' + sessionkeyjson.login + '?question=' + n + '&reponse=' + params.answer + '&correct=' + q.goodchoice + '&valeur=' + q.qvalue, {
+      chronosCouch.putDesign('/_design/answer/_update/accumulate/' + req.jsonUser.login + '?question=' + n + '&reponse=' + params.answer + '&correct=' + q.goodchoice + '&valeur=' + q.qvalue, {
         error: function(data, response) {
           res.send(400, {}, data);
         },
