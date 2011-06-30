@@ -246,12 +246,9 @@ exports.getRanking = function(req, res) {
 };
 
 exports.getScore = function(req, res, params) {
-  // TODO
-  /*
-  if (params.authentication_key is invalid) {
+  if (params.authentication_key != authentication_key) {
     res.send(401);
   }
-  */
   // TODO: avoid this call to CouchDB by putting lastname and firstname in req.jsonUser
   // TODO : /!\ can not do that, score is admin level not user
   chronosCouch.getDoc(params.user_mail, {
@@ -268,12 +265,9 @@ exports.getScore = function(req, res, params) {
 };
 
 exports.audit = function(req, res, params) {
-  // TODO
-  /*
-  if (params.authentication_key is invalid) {
+  if (params.authentication_key != authentication_key) {
     res.send(401);
   }
-  */
   chronosCouch.getDoc(params.user_mail, {
     error: function(data) {
       res.send(400, {}, data);
@@ -303,12 +297,9 @@ exports.audit = function(req, res, params) {
 };
 
 exports.auditN = function(req, res, n, params) {
-  // TODO
-  /*
-  if (params.authentication_key is invalid) {
+  if (params.authentication_key != authentication_key) {
     res.send(401);
   }
-  */
   chronosCouch.getDoc(params.user_mail, {
     error: function(data) {
       res.send(400, {}, data);
