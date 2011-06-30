@@ -16,6 +16,7 @@ var logger = require('util');
 // --> Ce paramètre est considéré comme inutile. Nous jouerons toujours 20 questions.
 var numberOfQuestions = 20;
 
+/** Initialize game **/
 exports.initGame = function(game) {
   redis.del("context");
   redis.hmset("context",
@@ -33,33 +34,37 @@ exports.initGame = function(game) {
 /** Warmup quizz **/
 exports.warmup = function() {
   emitter.emit('warmupStarted');
-  redis.hincrby("context", "numberOfPlayers", 1, function(err,counter){
-    redis.hmget("context", "maxGamers", function(err, max){
-      if(parseInt(counter) == parseInt(max)) {
-        emitter.emit('warmupEnd');
-      }
-    });
-  });
+  redis.hincrby("context", "numberOfPlayers", 1);
 };
 
-emitter.once("warmupStarted",function(){
+emitter.once("warmupStarted", function() {
   var now = new Date().getTime();
   logger.log("Warmup started... ");
 
   redis.hmget("context","dureeWarmup",function(err,dureeWarmup){
     redis.hsetnx("context" ,"dateFinWarmup", (now + parseInt(dureeWarmup)));
-      setTimeout(function(){
-        emitter.emit("warmupEnd");
-      }, parseInt(dureeWarmup));
-
     redis.hmset("context",
       "session_" + 0 , now,
-      "session_" + 1 ,now + parseInt(dureeWarmup));
+      "session_" + 1 , now + parseInt(dureeWarmup));
+    logger.log("session_0: " + new Date(now));
+    logger.log("session_1: " + new Date(now + parseInt(dureeWarmup)));
     redis.save();
+    warmupLoop();
   });
 
   redis.hsetnx("context", "questionEncours", 1);
 });
+
+function warmupLoop () {
+    redis.hmget("context", "numberOfPlayers", "maxGamers", function(err, numberOfPlayers, maxGamers) {
+      if (parseInt(numberOfPlayers) >= parseInt(maxGamers)) {
+        emitter.emit("warmupEnd");
+      } else {
+        // TODO : timeout
+        setTimeout(warmupLoop, 200);
+      }
+    });
+};
 
 /**
 gere l evenement d arret de la phase de warmup en :
@@ -67,54 +72,85 @@ gere l evenement d arret de la phase de warmup en :
     2. repondant a tout les utilisateurs
     3. definitions des fenetres de sessions de reponses
 */
-emitter.once('warmupEnd',function(){
+emitter.once('warmupEnd', function(success) {
   logger.log("warmup timer stopped");
   var now = new Date().getTime();
-  // emitter.emit("sendQuestions"); // envoi de la question 1
 
   redis.hmget("context", "synchroTimeDuration", "questionTimeFrame", function(err, params) {
-    var synchroTimeDuration = parseInt(params[1]);
-    var questionTimeFrame = parseInt(params[2]);
+    var synchroTimeDuration = parseInt(params[0]);
+    var questionTimeFrame = parseInt(params[1]);
 
     // initialisation des timeFrames des questions
-    redis.hset("context", "session_" + 1 , now);
+    logger.log("initialize timeFrames." + now);
     var quizSessions = [];
-
     quizSessions[1] = now;
-    for(i = 2; i<= (numberOfQuestions + 1); i++) {
+    for (i = 2; i <= numberOfQuestions+1; i++) {
       quizSessions[i] = quizSessions[i-1] + questionTimeFrame + synchroTimeDuration;
     }
-
-    for(j = 2; j <= (numberOfQuestions + 1); j++) {
-      redis.hset("context", "session_" + j  , quizSessions[j]);
-    }
-    redis.save();
-
+    logger.log("timeFrames:" + quizSessions);
+    redis.hmset("context",
+      "session_1", quizSessions[1],
+      "session_2", quizSessions[2],
+      "session_3", quizSessions[3],
+      "session_4", quizSessions[4],
+      "session_5", quizSessions[5],
+      "session_6", quizSessions[6],
+      "session_7", quizSessions[7],
+      "session_8", quizSessions[8],
+      "session_9", quizSessions[9],
+      "session_10", quizSessions[10],
+      "session_11", quizSessions[11],
+      "session_12", quizSessions[12],
+      "session_13", quizSessions[13],
+      "session_14", quizSessions[14],
+      "session_15", quizSessions[15],
+      "session_16", quizSessions[16],
+      "session_17", quizSessions[17],
+      "session_18", quizSessions[18],
+      "session_19", quizSessions[19],
+      "session_20", quizSessions[20],
+      "session_21", quizSessions[21],
+      function() {
+        logger.log("initialize timeFrames setted.");
+        if (success) {
+          success();
+        }
+        redis.save();
+    });
   });
 });
 
-function setTimeoutForTimeFrame(timeout, n, success) {
-  setTimeout(setTimeoutForTimeFrameCB, timeout, n, success);
+function setTimeoutForTimeFrame(timeout, n, success, fail) {
+  setTimeout(setTimeoutForTimeFrameCB, timeout, n, success, fail);
 };
 
-function setTimeoutForTimeFrameCB(n, success) {
+function setTimeoutForTimeFrame1(timeout, n, success, fail) {
+  setTimeout(setTimeoutForTimeFrameCB1, timeout, n, success, fail);
+};
+
+function setTimeoutForTimeFrameCB(n, success, fail) {
   logger.log("------> time out for answering question : " + n);
-  redis.hincrby("context", "questionEncours", 1);
-  emitter.emit("sendQuestions", n, success);
+  redis.hincrby("context", "questionEncours", 1, function(err, params) {
+    emitter.emit("sendQuestions", n, success, fail);
+  });
 };
 
-emitter.on("sendQuestions", function(n, success) {
+function setTimeoutForTimeFrameCB1(n, success, fail) {
+  emitter.emit("warmupEnd", success, fail);
+};
+
+emitter.on("sendQuestions", function(n, success, fail) {
   redis.hmget("context","questionEncours", function(err,params) {
     var questionEncours = parseInt(params[0]);
     logger.log("sending question (" + n + ") : " + questionEncours + "/" + numberOfQuestions);
 
-    if (questionEncours >= numberOfQuestions) {
+    if (questionEncours > numberOfQuestions) {
       logger.log("emitting event for end of game (no more questions)");
       emitter.emit("endOfGame");
+      fail();
     } else {
       success();
     }
-
   });
 });
 
@@ -131,13 +167,19 @@ exports.getQuestion = function(n, login, success, fail) {
     "session_" + n,
     function(err,params) {
       var questionEncours = parseInt(params[0]);
-      var sessionNMoins1 = parseInt(params[2]);
-      var sessionN = parseInt(params[3]);
+      var sessionNMoins1 = parseInt(params[1]);
+      var sessionN = parseInt(params[2]);
 
-      if ((n <= numberOfQuestions) && (now >= sessionNMoins1 && now < sessionN)) {
+      logger.log("sessionNMoins1: " + new Date(sessionNMoins1));
+      logger.log("sessionN: " + new Date(sessionN));
+      if (n <= numberOfQuestions && now >= sessionNMoins1 && now < sessionN) {
         timeout = sessionN - now;
         logger.log(login + " is waiting for question : " + n + ', timeout ' + timeout + ' ms.');
-        setTimeoutForTimeFrame(timeout, n, success);
+        if (n == 1) {
+          setTimeoutForTimeFrame1(timeout, n, success, fail);
+        } else {
+          setTimeoutForTimeFrame(timeout, n, success, fail);
+        }
       } else {
         logger.log("failed for question : " + n);
         fail();
