@@ -8,6 +8,12 @@ var router = new(journey.Router)();
 router.get('/api/ping').bind(api.ping);
 router.post('/api/tweet').bind(api.tweetHttp);
 
+process.on('uncaughtException', function(err) {
+  console.log(err);
+});
+
+console.log(process.argv);
+
 // Create the htt server
 var http = require('http');
 

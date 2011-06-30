@@ -26,7 +26,7 @@ var gameStarted = false;
 var http = require('http');
 // var files = new(nodestatic.Server)('./public');
 
-// console.log(process.argv);
+console.log(process.argv);
 var applyCluster = true;
 if (process.argv.indexOf('--no-cluster') > -1) {
     applyCluster = false;
