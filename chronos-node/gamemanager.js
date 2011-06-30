@@ -166,6 +166,7 @@ subscriber.on('message', function(channel, message) {
 });
 
 /** Initialize game **/
+// TODO callback ?
 exports.initGame = function(game) {
   redis.del("context");
   redis.del("players");
@@ -349,7 +350,7 @@ exports.updatingScore = function(lastname, firstname, login, question, reponse, 
       var token = JSON.stringify({"lastname":lastname, "firstname":firstname, "mail":login});
       // logger.log("Score " + login + ": " + token + ", " + score);
       redis.hmset("players", login + ":score", score, login + ':lastbonus', lastbonus, login + ':q:' + question, reponse);
-      redis.zadd("scores", score, token);
+      redis.zadd("scores", -score, token);
       options.success(score);
     }
   });

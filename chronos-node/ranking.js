@@ -10,13 +10,18 @@ client.on("error", function (err) {
     console.log("Error " + err);
 });
 
-function addUser(lastname,firstname,mail,callback){
+function initRanking(callback) {
+    client.del("scores");
+};
+exports.initRanking = initRanking;
+
+function addUser(lastname, firstname, mail, callback) {
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
-    //console.log("---->>>>" + token);
-    client.zadd("scores",0,token,function(err,added){
+    // logger.log("---->>>>" + token);
+    client.zadd("scores", 0, token, function(err, added) {
         // added == 1 if the element was added.
         // added == 0 if the element was already a member of the sorted set and the score was updated.
-        callback(err,added);
+        // callback(err, added);
     });
 };
 exports.addUser = addUser;
@@ -35,7 +40,7 @@ function ranking(lastname,firstname,mail,topN,range,callback){
         totalNumberOfUsers = totalNumberOfUsers - 1;
         if (topN > totalNumberOfUsers) { topN = totalNumberOfUsers; }
         client.zscore("scores",token,function(err,userScore){
-            ranking.score = parseInt(userScore) + "";
+            ranking.score = -parseInt(userScore) + "";
             client.zrank("scores",token,function(err,userRank){
                 zrange(ranking,ranking.top_scores,0,topN,function(err,ranking){
                     if (totalNumberOfUsers == 0) { callback(err,ranking); }

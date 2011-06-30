@@ -69,19 +69,9 @@ exports.createUser = function(req, res, params) {
         } else {
           var player = {_id:params.mail, firstname:params.firstname || '', lastname:params.lastname || '', password:params.password || ''};
           players.unshift(player);
-          ranking.addUser(params.lastname,params.firstname,params.mail,function(err,added) {
-            if (err) {
-              logger.log("FAILED(400)");
-              res.send(400, {}, err);
-            } else {
-              if (added == 0) {
-                logger.log("FAILED(400)");
-                res.send(400, {}, "user already exist in redis");
-              } else {
-                res.send(201);
-              }
-            }
-          });
+          // Not now but only if user is logged
+          // ranking.addUser(params.lastname,params.firstname,params.mail,function(err,added) {
+          res.send(201);
         }
       }
     });
@@ -133,23 +123,10 @@ function putGame(req, res, params, paramsJSON) {
   } else {
     logger.log("A new game is coming.");
     logger.log("Game successfully added.");
-    gamemanager.initGame(paramsJSON, {
-      error: function(err) {
-        //logger.log("Err: " + err);
-        res.send(400, {}, err);
-      },
-      success: function(exist) {
-      }
-    });
-    ranking.reset(function(err, updated) {
-      if (err) {
-        res.send(400, {}, err);
-      }
-      else {
-        //logger.log("Redis: score to 0: OK " + (updated == 0));
-        res.send(201);
-      }
-    });
+    // TODO callback ?
+    gamemanager.initGame(paramsJSON);
+    ranking.initRanking();
+    res.send(201);
   }
 };
 
@@ -208,6 +185,8 @@ exports.login = function(req, res, params) {
               // logger.log(Date.now() + " < Http /api/login/" + params.mail);
               res.send(201, {'Set-Cookie': 'session_key=' + sessionkey}, '');
               gamemanager.warmup(res);
+              // TODO callback ?
+              ranking.addUser(userDocjson.lastname, userDocjson.firstname, params.mail);
             }
           }
         });
