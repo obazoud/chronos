@@ -1,16 +1,6 @@
-var restler = require('restler');
-var querystring = require('querystring');
 var xml2json = require('./xml2json.js');
 var sys = require('sys');
 var chronosCouch = require('./chronos-couchdb-api.js');
-
-var host = '127.0.0.1';
-var port = 5984;
-var couchdbaseburl = 'http://' + host + ':' + port;
-var couchdburl = couchdbaseburl + '/thechallenge';
-var username = 'superadmin';
-var password = 'supersecret';
-var saltvalue = '1';
 
 exports.createUser = function(req, res, params) {
   chronosCouch.createCouchUser(params.mail, params.password, {
