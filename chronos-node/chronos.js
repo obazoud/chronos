@@ -7,7 +7,7 @@ var router = new(journey.Router)();
 
 // Create the routes
 router.get('/api/ping').bind(api.ping);
-router.get('/api/drop').bind(api.dropDatabase);
+//router.get('/api/drop').bind(api.dropDatabase);
 router.post('/api/user').bind(api.createUser); 
 router.post('/api/game').bind(api.newGame);
 router.post('/api/login').bind(api.login);
@@ -49,11 +49,16 @@ var server = http.createServer(function(req, res) {
       res.end(result.body);
     });
   });
-}).listen(8080);
+});//.listen(8080);
+
+var cluster = require('cluster');
+cluster(server).listen(8080);
 
 console.log('Server running at http://127.0.0.1:8080/');
 
 // New game every 120 seconds
+/*
 setInterval(function() {
   gameStarted = false;
 }, 120000);
+*/
