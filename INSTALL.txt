@@ -133,8 +133,8 @@ cat /proc/sys/fs/file-max
 # system
 # /etc/sysctl.conf
 su -
-cp /etc/sysctl.conf /etc/sysctl.conf.default
-ln -s /etc/sysctl.conf /home/user/deploiement/install/etc/sysctl.conf
+mv /etc/sysctl.conf /etc/sysctl.conf.default
+ln -s /home/user/deploiement/install/etc/sysctl.conf /etc/sysctl.conf
 # reload sysctl.conf
 sysctl -p
 
