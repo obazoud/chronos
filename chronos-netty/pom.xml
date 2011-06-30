@@ -20,8 +20,8 @@
       <artifactId>netty</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.google.code.gson</groupId>
-      <artifactId>gson</artifactId>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-core-asl</artifactId>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>

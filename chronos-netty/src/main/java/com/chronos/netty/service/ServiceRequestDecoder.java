@@ -4,20 +4,21 @@ import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonParser;
+import org.codehaus.jackson.JsonToken;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
 import org.jboss.netty.util.CharsetUtil;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
 /**
  * @author bazoud
  * @version $Id$
  */
 public class ServiceRequestDecoder extends OneToOneDecoder {
+    JsonFactory f = new JsonFactory();
 
     @Override
     protected Object decode(ChannelHandlerContext ctx, Channel channel, Object msg) throws Exception {
@@ -34,19 +35,30 @@ public class ServiceRequestDecoder extends OneToOneDecoder {
         return serviceResquest;
     }
 
-    private Map<String, String> getArgs(HttpRequest request) {
+    public Map<String, String> getArgs(HttpRequest request) throws Exception {
+        Map<String, String> map = new HashMap<String, String>();
+
         String json = request.getContent().toString(CharsetUtil.UTF_8);
-        Map<String, String> map = new Gson().fromJson(json, new TypeToken<HashMap<String, String>>() {
-        }.getType());
+
+        // using "raw" Jackson Streaming API
+        // basic implementation
+        // only key/value input here
+        JsonParser jp = f.createJsonParser(json);
+        jp.nextToken();
+        while (jp.nextToken() != JsonToken.END_OBJECT) {
+            jp.nextToken();
+            map.put(jp.getCurrentName(), jp.getText());
+        }
+
         return map;
     }
 
-    protected String getService(HttpRequest request) throws Exception {
+    public String getService(HttpRequest request) throws Exception {
         // TODO
         return "api";
     }
 
-    protected String getMethod(HttpRequest request) throws Exception {
+    public String getMethod(HttpRequest request) throws Exception {
         String uri = URLDecoder.decode(request.getUri(), "UTF-8");
         String service = uri.substring(uri.lastIndexOf("/") + 1);
         return service;
