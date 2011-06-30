@@ -5,3 +5,4 @@ target
 jmeter.log
 jmeter/result.csv
 .settings.xml
+dump.rdb
