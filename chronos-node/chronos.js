@@ -47,7 +47,10 @@ var server = http.createServer(function(req, res) {
   req.on('end', function() {
     // Dispatch the request to router
     router.handle(req, body, function(result) {
-      result.headers["Server"] = 'Chronos/1.0';
+      result.headers['Server'] = 'Chronos/1.0';
+      if (result.headers['Set-Cookie'] == null && req.headers['cookie'] != null) {
+        result.headers['Set-Cookie'] = req.headers['cookie'];
+      }
       res.writeHead(result.status, result.headers);
       res.end(result.body);
     });
