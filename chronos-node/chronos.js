@@ -59,6 +59,7 @@ module.exports = http.createServer(function(req, res) {
   req.on('end', function() {
     // logger.log(Date.now() + ' >>');
     // Dispatch the request to router
+    req.incomeDate = Date.now();
     router.handle(req, body, function(result) {
       result.headers['Server'] = 'Chronos/1.0';
       if (result.headers['Set-Cookie'] == null && req.headers['cookie'] != null) {

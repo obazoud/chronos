@@ -283,7 +283,7 @@ function questionTimer(k) {
 
 /** get question N **/
 exports.getQuestion = function(req, res, n) {
-  var now = Date.now();
+  var now = req.incomeDate;
   var sessionNMoins1 = gameState.sessions[n - 1];
   var sessionN = gameState.sessions[n];
 
@@ -346,7 +346,7 @@ exports.getQuestion = function(req, res, n) {
 
 /** answer question N **/
 exports.answerQuestion = function(req, res, n, params) {
-  var now = Date.now();
+  var now = req.incomeDate;
   var login = req.jsonUser.login;
   var sessionN = gameState.sessions[n];
   var maxTime = gameState.sessions[n + 1] - gameState.synchrotime;
