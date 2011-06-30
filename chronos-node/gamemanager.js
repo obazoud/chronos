@@ -1,17 +1,18 @@
 var redis = require("redis").createClient();
 redis.on("error", function (err) {
-    console.log("Error " + err);
+    logger.log("Error " + err);
 });
 
 var sys = require('sys');
 var events = require('events');
 var emitter = new events.EventEmitter();
+var logger = require('util');
 
 var responses = [];
 responses[0] = [];
 responses[1] = [];
 
-var quizSessions = []; // dans redis
+var quizSessions = []; 
 
 var timerId;
 var qTimer;
@@ -42,14 +43,14 @@ exports.initGame = function(game) {
     timerId = setInterval(function(){
         gameState(
         	function(){
-	            	console.log("warmup en cours...");
+	            	logger.log("en attente du debut du jeu...");
         	}
         	,function(){
         	    	emitter.emit('warmupEnd',timerId);
         	}
         	,null);
         
-    },1000);// TODO redefinir cette periode en benchmarquant
+    },20);// TODO redefinir cette periode en benchmarquant
 };
 
 exports.getGame = function(options) {
@@ -66,16 +67,16 @@ exports.getGame = function(options) {
   });
 };
 
-// TODO a renommer
 function gameState(beforeStartCallback,afterStartCallback,params){
     redis.hmget("context","dateFinWarmup","maxGamers","numberOfPlayers",function(err,replies){
 
+	// TODO recuperer une seule fois et mettre en variable globales
         var dateFinWarmup = parseInt(replies[0]);
         var maxGamers = parseInt(replies[1]);
         var numberOfPlayers = parseInt(replies[2]);
 
         if (dateFinWarmup == null || numberOfPlayers ==  null) {
-            console.log("date fin w et/ou num player nulls");
+            logger.log("date fin w et/ou num player nulls");
         } else {        
           if( ( numberOfPlayers >= maxGamers && responses[1].length >= maxGamers ) || new Date().getTime() >= dateFinWarmup) {
                 afterStartCallback(params);    
@@ -160,7 +161,7 @@ exports.logged = function(mail, options) {
 gere les demandes d inscription au quiz
 */
 exports.warmup = function() {
-    console.log("Warmup started... ");
+    logger.log("Warmup started... ");
     emitter.emit('gameStarted',timerId);
 
     gameState(function(){
@@ -181,7 +182,7 @@ exports.warmup = function() {
 
 emitter.once("gameStarted",function(timerId){
 
-    console.log("Game started...");
+    logger.log("Game started...");
 
     redis.hmget("context","dureeWarmup",function(err,dureeWarmup){
 	redis.hsetnx("context"
@@ -204,7 +205,7 @@ gere l evenement d arret de la phase de warmup en :
 emitter.once('warmupEnd',function(timerId){
 
     clearTimeout(timerId);
-    console.log("warmup timer stopped");
+    logger.log("warmup timer stopped");
     emitter.emit("sendQuestions",qTimer); // envoi de la question 1
     
     redis.hmget("context","numberOfQuestions","synchroTimeDuration","questionTimeFrame",function(err,params){
@@ -237,16 +238,16 @@ emitter.once('warmupEnd',function(timerId){
 		var n = parseInt(params[0]);
 		var numberOfQuestions = parseInt(params[1]);
 
-                console.log("checking end of time for question : " + n);
+                //logger.log("checking end of time for question : " + n);
                 var now = new Date().getTime();
 		                
 		if(now >= quizSessions[n]){
-                    console.log("emitting event for sending question : " + n);
+                    logger.log("emitting event for sending question : " + n);
                     emitter.emit("sendQuestions",qTimer);
         	    redis.hincrby("context","questionEncours",1);          
 		    
                 }else if(now > quizSessions[numberOfQuestions]){
-	            console.log("emitting event for end of game (end of time)");
+	            logger.log("emitting event for end of game (end of time)");
                     emitter.emit("endOfGame",qTimer);
 	        }
             });
@@ -254,7 +255,7 @@ emitter.once('warmupEnd',function(timerId){
         }
         ,null);
         
-    },500);// TODO redefinir cette periode 
+    },20);// TODO redefinir cette periode 
    
 });
 
@@ -265,10 +266,10 @@ emitter.on("sendQuestions",function(){
 	var n = parseInt(params[0]);
 	var numberOfQuestions = parseInt(params[1]);
 	
-        console.log("sending question : " + n + "/" + numberOfQuestions);
+        logger.log("sending question : " + n + "/" + numberOfQuestions);
     	 
 	if (n >= numberOfQuestions){
-            console.log("emitting event for end of game (no more questions)");
+            logger.log("emitting event for end of game (no more questions)");
             emitter.emit("endOfGame",qTimer);
     	}
     	responses[n].forEach(function(callback){
@@ -282,9 +283,9 @@ emitter.on("sendQuestions",function(){
     sert la question n
 */
 exports.getQuestion = function(n, success, fail ) {
-   console.log("getQuestion " + n);
-
-    gameState(
+   logger.log("getQuestion " + n);
+   var now = new Date().getTime();	
+   gameState(
         function() {
             redis.hmget("context","questionEncours",function(err,c){
                 if(c==1){
@@ -293,24 +294,33 @@ exports.getQuestion = function(n, success, fail ) {
             });
         }
         ,function(){
-            var now = new Date().getTime();
+
             redis.hmget("context","synchroTimeDuration","numberOfQuestions","questionEncours",function(err,params){
 		    
-		    var synchroTimeDuration = parseInt(params[0]);
-		    var numberOfQuestions = parseInt(params[1]);
-		    var questionEncours = parseInt(params[2]);
+	    var synchroTimeDuration = parseInt(params[0]);
+	    var numberOfQuestions = parseInt(params[1]);
+	    var questionEncours = parseInt(params[2]);
 
-	    	    if(n <= 0 || n > numberOfQuestions){
-			console.log("--->" + fail);// TODO BUG Sur la function fail (undefined)
-	                fail();
-		    }else if(now >= quizSessions[n-1] && now <= (quizSessions[n]- synchroTimeDuration)){
-		        console.log("a user requests question : " + n)
+		logger.log("n = " + n);
+		logger.log("  now = " + new Date(now) );
+		logger.log("  quizSessions[n-1] = " + new Date(quizSessions[n-1]));
+		logger.log("  quizSessions[n] = " + new Date(quizSessions[n]));
+		logger.log("  quizSessions[n] - synchro  = " + new Date(quizSessions[n] - synchroTimeDuration));
+		   
+		   if(n == questionEncours && (now >= quizSessions[n-1] && now <= (quizSessions[n]- synchroTimeDuration))){
+		    	logger.log("a user waiting for question : " + n)
 	                responses[n].push(success);
-		    }else if (now > (quizSessions[n]- synchroTimeDuration)){
-		        fail();
 		    }else{
-		    	fail();
-		    }
+			fail();			
+			if(n=!questionEncours){
+				logger.log("requested question is not the current one.");		    	
+			}else if ( quizSessions[n]- synchroTimeDuration ){
+				logger.log("time for requesting question is finished.");		    	
+			}else{
+				logger.log("unexpected problem on getQuestion.");
+			}			
+			
+		    }		     
 	    });
 	    
         }
@@ -339,7 +349,7 @@ exports.answerQuestion = function(n, success, error) {
 		    if(n <= 0 || n > numberOfQuestions){
 			error(); 
 		    }else if(now >= quizSessions[n-1] && now <= (quizSessions[n]- synchroTimeDuration)){
-			console.log("a user answers question : " + n)
+			logger.log("a user answers question : " + n)
 			success();
 		    }else if (now > (quizSessions[n]- synchroTimeDuration)){
 			error();
@@ -364,7 +374,7 @@ exports.getScore = function(login, options) {
         options.error(err);
       }
     } else {
-      console.log("Get score: " + reply)
+      logger.log("Get score: " + reply)
       if (options && options.success) {
         if (reply == null) {
           options.success(0);
@@ -401,7 +411,7 @@ exports.updatingScore = function(lastname, firstname, login, question, reponse, 
       } else {
         lastbonus = 0;
       }
-      console.log("updatingScore: " + score)
+      logger.log("updatingScore: " + score)
       redis.hmset("players", login + ":score", score, login + ':lastbonus', lastbonus, login + ':q:' + question, reponse);
       var token = JSON.stringify({"lastname":lastname, "firstname":firstname, "mail":login});
       redis.zadd("scores", -score, token, function(err, updated) {
