@@ -12,7 +12,7 @@ var gamemanager = require('./gamemanager.js');
 var authentication_key = '12IndR6r5V5618';
 
 exports.ping = function(req, res) {
-  res.send(201, {}, 'pong');
+  res.send(200, {}, 'pong');
 };
 
 exports.frontal = function(req, res) {
