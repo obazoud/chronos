@@ -46,7 +46,9 @@ exports.createUser = function(req, res, params) {
 exports.newGame = function(req, res, params) {
   var url = couchdburl + '/game';
   var gameXML = params.parameters;
-  // gameXML = gameXML.replace(/usi:/g, "");
+  gameXML = gameXML.replace(/usi:/g, "");
+
+  console.log("XML: " + gameXML);
   var paramsJSON = xml2json.parse(gameXML);
   paramsJSON['type'] = 'game';
   paramsJSON['authentication_key'] = params.authentication_key || '';
