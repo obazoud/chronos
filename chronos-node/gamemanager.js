@@ -156,14 +156,14 @@ emitter.once("warmupStarted", function() {
 });
 
 function warmupLoop () {
-    redis.hmget("context", "numberOfPlayers", function(err, numberOfPlayers) {
-      if (parseInt(numberOfPlayers) >= parseInt(gameState.nbusersthreshold)) {
-        emitter.emit("warmupEnd");
-      } else {
-        // TODO : timeout ?
-        setTimeout(warmupLoop, 250);
-      }
-    });
+  redis.hmget("context", "numberOfPlayers", function(err, numberOfPlayers) {
+    if (parseInt(numberOfPlayers) >= parseInt(gameState.nbusersthreshold)) {
+      emitter.emit("warmupEnd");
+    } else {
+      // TODO : timeout ?
+      setTimeout(warmupLoop, 250);
+    }
+  });
 };
 
 /**
