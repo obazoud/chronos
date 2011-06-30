@@ -1,4 +1,6 @@
 var restler = require('restler');
+var querystring = require('querystring');
+
 var host = '127.0.0.1';
 var port = 5984;
 var username = 'superadmin';
@@ -8,20 +10,22 @@ var couchdburl = 'http://' + host + ':' + port;
 
 exports.createUser = function(req, res, params) {
   // curl -i -X PUT http://superadmin:supersecret@127.0.0.1:5984/_config/admins/anna -d '"secret"'
-  console.log('Creating user: ' + req);
-  console.log('Creating user: ' + res);
-  console.log('Creating user: ' + params);
-  console.log('Creating user: ' + params.mail);
+  var decodedBody = querystring.parse(params);
+  console.log('Creating user: ' + decodedBody);
+  console.log('Creating user: ' + decodedBody.firstname + params.firstname);
+  var json = JSON.parse(decodedBody);
+  console.log('Creating user: ' + json.firstname);
   var url = couchdbAdminurl + '/_config/admins/' + params.mail;
   console.log('url: ' + url);
   restler.put(url, { data : params.password })
     .on('complete', function (data) {
       console.log('complete:' + data);
     })
-    .on('error', function(data) {
+   .on('error', function(data) {
       console.log('error:' + data);
   });
 
+  res.send(404);
   // Si un utilisateur ayant la même adresse mail existe déjà, une erreur est retournée
   // if (params.mail == 'mail.existant@test.com') {
   //  res.send(400);
