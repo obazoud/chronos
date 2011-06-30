@@ -155,7 +155,7 @@ function processGameXML(authentication_key, parameters) {
 };
 
 exports.login = function(req, res, params) {
-  // logger.log(Date.now() + " > Http /api/login/" + params.mail);
+  logger.log(Date.now() + " > Http /api/login/" + params.mail);
   chronosCouch.getDoc(params.mail, {
     error: function(data) {
       try {
@@ -203,7 +203,7 @@ exports.login = function(req, res, params) {
 
 exports.getQuestion = function(req, res, n) {
   var gamejson = gamemanager.getGame();
-  // logger.log(Date.now() + "> Http /api/question/" + n + " / " + numberOfQuestions + ", login:" + req.jsonUser.login);
+  logger.log(Date.now() + "> Http /api/question/" + n + " / " + numberOfQuestions + ", login:" + req.jsonUser.login);
   // preparing response
   // First score is too slow, do not know why !?
   if (n > numberOfQuestions) {

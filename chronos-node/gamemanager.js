@@ -277,6 +277,7 @@ function setTimeoutForTimeFrame(timeout, login, n, success) {
 };
 
 function setTimeoutForTimeFrameCB(login, n, success) {
+  logger.log(Date.now() + " login " + login + " fired.");
   gameState.questionEncours = n;
   if (n == 1) {
     emitter.emit("warmupEnd", success);
@@ -301,7 +302,7 @@ exports.getQuestion = function(n, login, success, fail) {
     setTimeoutForTimeFrame(sessionN - now, login, n, success);
   } else {
     logger.log("failed for question : " + n + ', login:' + login);
-    logger.log("questionEncours = " + gameState.questionEncours);
+    // logger.log("questionEncours = " + gameState.questionEncours);
     logger.log("  Missing for " + (now - sessionNMoins1) + ' ms.');
     fail();
   }
