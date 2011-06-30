@@ -33,13 +33,17 @@ ntpdate 10.50.80.7
 sudo chmod 755 /etc/cron.daily/ntpdate
 
 # couchdb http://www.couchbase.com
+# http://wiki.apache.org/couchdb/Configurationfile_couch.ini
 su -
 cd /opt
 wget http://c3145442.r42.cf0.rackcdn.com/couchbase-server-enterprise_x86_64_1.1.deb
 dpkg -i couchbase-server-enterprise_x86_64_1.1.deb
 rm /etc/init.d/couchbase-server
 cd /etc/init.d
-ln -s /home/user/deploiement/install/etc/init.d/couchdb /etc/init.d/couchdb
+ln -s /opt/couchbase-server/etc/init.d/couchdb /etc/init.d/couchdb
+vi /opt/couchbase-server/etc/default/couchdb
+Et mettre: COUCHDB_OPTIONS="-a /home/user/deploiement/install/couchdb/couchdb-`hostname`.ini"
+
 update-rc.d -f couchdb defaults
 cd /opt
 curl -x http://localhost:5984
