@@ -18,5 +18,7 @@ curl -X PUT $DB_URL/game1 -d '{"gamers":0,"type":"warmup","maxGamers":0,"warmupS
 # /!\ validate.json is deprecated
 #curl -X PUT $DB_URL/_design/validate -d @design/validate.json
 
+curl -X PUT $DB_URL/_design/gameonly -d @design/gameonly.json
+
 curl -X PUT $DB_URL/_design/answer -d @design/answer.json
 
