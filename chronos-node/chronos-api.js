@@ -307,12 +307,13 @@ exports.tweetHttp = function(req, res, params) {
 };
 
 exports.getRanking = function(req, res) {
-  logger.log("> Http /api/ranking, login:" + req.jsonUser.login);
+  // logger.log("> Http /api/ranking, login:" + req.jsonUser.login);
   gamemanager.logged(req.jsonUser.login, {
     error: function(data) {
       res.send(400, {}, data);
     },
     success: function(logged) {
+      logger.log("> Http /api/ranking, logged:" + logged);
       if (logged == 0) {
         var gamejson = gamemanager.getGame();
         gamemanager.getNumberOfPlayers({
@@ -320,7 +321,7 @@ exports.getRanking = function(req, res) {
             res.send(400, {}, data);
           },
           success: function(numberOfPlayers) {
-            // twitterapi.tweet('Notre application supporte ' + numberOfPlayers + ' joueurs #challengeUSI2011');
+            twitterapi.tweet('Notre application supporte ' + numberOfPlayers + ' joueurs #challengeUSI2011');
           }
         });
       }
@@ -331,7 +332,7 @@ exports.getRanking = function(req, res) {
       res.send(400, {}, err);
     }
     else {
-      logger.log("< Http /api/ranking, login:" + req.jsonUser.login + ", " + JSON.stringify(ranking));
+      // logger.log("< Http /api/ranking, login:" + req.jsonUser.login + ", " + JSON.stringify(ranking));
       res.send(200, {}, ranking);
     }
   });
