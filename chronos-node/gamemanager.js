@@ -15,7 +15,6 @@ responses[1] = [];
 
 
 var timerId;
-var qTimer;
 
 exports.initGame = function(game) {
     
@@ -39,8 +38,8 @@ exports.initGame = function(game) {
     Timer active une tache de fond qui s execute tous les X ms
     pour verfier si on depasser le temps de warmup ou atteint le nombre
     maximum de joueurs.
-    */    
-    timerId = setInterval(function(){
+    */
+    timerId = setInterval(function(){      // TODO remove interval
         gameState(
         	function(){
 	            	//logger.log("en attente du debut du jeu...");
@@ -49,7 +48,7 @@ exports.initGame = function(game) {
         	    	emitter.emit('warmupEnd',timerId);
         	}
         	,null);
-        
+
     },20);// TODO redefinir cette periode en benchmarquant
 };
 
@@ -92,7 +91,7 @@ gere les demandes d inscription au quiz
 */
 exports.warmup = function() {
     logger.log("Warmup started... ");
-    emitter.emit('gameStarted',timerId);
+    emitter.emit('warmupStarted',timerId);
     gameState(function(){
         redis.hincrby("context", "numberOfPlayers",1, function(err,counter){
             redis.hmget("context","maxGamers",function(err,max){
@@ -108,9 +107,9 @@ exports.warmup = function() {
     ,null);
 };
 
-emitter.once("gameStarted",function(timerId){
+emitter.once("warmupStarted",function(timerId){
 
-    logger.log("Game started...");
+
     var now = new Date().getTime();
     redis.hmget("context","dureeWarmup",function(err,dureeWarmup){
 	redis.hsetnx("context"
@@ -138,7 +137,7 @@ emitter.once('warmupEnd',function(timerId){
 
     clearTimeout(timerId);
     logger.log("warmup timer stopped");
-    emitter.emit("sendQuestions",qTimer); // envoi de la question 1
+    emitter.emit("sendQuestions"); // envoi de la question 1
     
     redis.hmget("context","numberOfQuestions","synchroTimeDuration","questionTimeFrame","dateFinWarmup",function(err,params){
 
@@ -171,40 +170,17 @@ emitter.once('warmupEnd',function(timerId){
         redis.save();
 
     });
-    /**
-    Timer active une tache de fond qui s execute tous les X ms
-    pour verfier si on a depasse le temps de la question en cours.
-    */    
-    qTimer = setInterval(function(){
-        gameState(function(){
-            // rien a faire
-        }
-        ,function(){
-            redis.hmget("context","questionEncours","numberOfQuestions",function(err,params){
-
-                var n = parseInt(params[0]);
-                var numberOfQuestions = parseInt(params[1]);
-
-                //logger.log("checking end of time for question : " + n);
-                var now = new Date().getTime();
-                redis.hget("context","session_"+n,function(err,sessionN){    // FIXME une charge en plus pour redis
-                    if(now >= sessionN){
-                            logger.log("emitting event for sending question : " + n);
-                            emitter.emit("sendQuestions",qTimer);
-                            if( n < numberOfQuestions ) {
-				    redis.hincrby("context","questionEncours",1);
-			    }
-                    }
-                });
-
-            });
-
-        }
-        ,null);
-        
-    },100);// TODO redefinir cette periode 
-   
 });
+
+function setTimeoutForTimeFrame(n){
+    setTimeout(function(){
+        logger.log("------> time out for answering question : " + n);
+        redis.hincrby("context","questionEncours",1);
+        emitter.emit("sendQuestions",n);
+    }
+            ,8000
+            ,n);
+}
 
 
 emitter.on("sendQuestions",function(){
@@ -212,13 +188,15 @@ emitter.on("sendQuestions",function(){
 	
 	var n = parseInt(params[0]);
 	var numberOfQuestions = parseInt(params[1]);
-	
-        logger.log("sending question : " + n + "/" + numberOfQuestions);
+
+    logger.log("sending question : " + n + "/" + numberOfQuestions);
     	 
 	if (n >= numberOfQuestions){
             logger.log("emitting event for end of game (no more questions)");
-            emitter.emit("endOfGame",qTimer);
-    	}
+            emitter.emit("endOfGame");
+    }else{
+        setTimeoutForTimeFrame(n);
+    }
 	// TODO make this asynch
     	responses[n].forEach(function(callback){
             callback();
@@ -313,7 +291,8 @@ exports.answerQuestion = function(n, success, fail) {
 }
 
 emitter.on("endOfGame",function(){
-	clearTimeout(qTimer);	
+	//clearTimeout(qTimer);
+    logger.log("event endOfGame recu.");
 });
 
 exports.getScore = function(login, options) {
