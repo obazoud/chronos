@@ -358,7 +358,6 @@ exports.answerQuestion = function(req, res, n, params) {
         res.send(400);
       },
       success: function(score) {
-      var score = 11;
       var answer = {};
       answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
       answer.good_answer = q.choice[q.goodchoice - 1];
