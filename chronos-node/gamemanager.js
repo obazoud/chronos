@@ -271,7 +271,7 @@ function questionTimer(k) {
   var count = gameState.pendings[k].length;
   for (var i = 0; i < count; i++) {
     var ctx = gameState.pendings[k][i];
-    ctx.req.resume();
+    // ctx.req.resume();
     ctx.res.send(200, {}, ctx.question);
     ctx.fired = true;
   }
@@ -285,10 +285,12 @@ exports.getQuestion = function(req, res, n) {
   var login = req.jsonUser.login;
   var sessionNMoins1 = gameState.sessions[n - 1];
   var sessionN = gameState.sessions[n];
+  req.connection.setTimeout(60000);
 
   if (now >= sessionNMoins1 && now <= sessionN) {
     redis.hget("players", login + ":score", function(err, reply) {
       if (err)  {
+        logger.log('getQuestion ' + n + '[' + req.jsonUser.login + '] : ' + err);
         res.send(400);
       } else {
         var score = 0;
@@ -312,11 +314,10 @@ exports.getQuestion = function(req, res, n) {
         };
         gameState.pushQuestion(ctx);
         // TODO
-        //req.connection.setTimeout(gameState.questiontimeframe + gameState.synchrotime);
         //req.connection.on('timeout', function() {
         //    ctx = {};
         //});
-        req.pause();
+        // req.pause();
       }
     });
   } else {

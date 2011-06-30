@@ -196,7 +196,7 @@ exports.login = function(req, res, body) {
 exports.getQuestion = function(req, res, body, query, part) {
   if (security.authorize(req, res)) {
     var n = parseInt(part);
-    // logger.log(Date.now() + " > Http /api/question/" + n + " / " + numberOfQuestions + ", login:" + req.jsonUser.login);
+    logger.log(Date.now() + " > Http /api/question/" + n + " / " + numberOfQuestions + ", login:" + req.jsonUser.login);
     if (n <= 0 || n > numberOfQuestions) {
       // logger.log("FAILED(400) " + n + "< Http /api/question/" + n + ", login:" + req.jsonUser.login);
       res.send(400);
@@ -213,6 +213,7 @@ exports.answerQuestion = function(req, res, body, query, part) {
     //req.connection.on('timeout', function() {
     //  logger.log('connection timeout answerQuestion ' + n + '[' + req.jsonUser.login + ']');
     //});
+    logger.log("> Http /api/answser, login:" + req.jsonUser.login);
     var n = parseInt(part);
     if (n <= 0 || n > numberOfQuestions) {
       res.send(400);
