@@ -5,6 +5,7 @@ stop/start node
 remettre la conf Redis avec les IPs / plugger le settings.js
 verifier que les couchdb soit up / vor pq plusieurs instances ?
 npm install http-proxy
+changer chronos.js en server.js dans /etc/init.d/nodejs ?
 
 ---------------------------------------------
 1.0
