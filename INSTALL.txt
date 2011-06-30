@@ -48,6 +48,6 @@ fs.file-max=583570
 
 
 sudo vi /etc/security/limits.conf
-*      hard    nofile             30000
-*      soft    nofile             10000
+user      hard    nofile             65535
+user      soft    nofile             65535
 sysctl -p
