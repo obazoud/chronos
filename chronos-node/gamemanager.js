@@ -1,3 +1,8 @@
+var sys = require('sys');
+var events = require('events');
+var emitter = new events.EventEmitter();
+var logger = require('util');
+
 // TODO integrer le mecanisme de fail-over
 var redis = require("redis").createClient();
 var subscriber = require("redis").createClient();
@@ -13,11 +18,6 @@ subscriber.on("error", function (err) {
 publisher.on("error", function (err) {
     logger.log("Error " + err);
 });
-
-var sys = require('sys');
-var events = require('events');
-var emitter = new events.EventEmitter();
-var logger = require('util');
 
 function GameState() {
   this.game = {};
