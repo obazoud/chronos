@@ -87,18 +87,20 @@ function zrange(ranking,rankingField,min,max,callback) {
         if (err) {
             callback(err,ranking);
         }
-        zrange.forEach(function(user,i) {
-            if (i%2 == 0) {
-                var userObject = JSON.parse(user);
-                rankingField.mail.push(userObject.mail);
-                rankingField.firstname.push(userObject.firstname);
-                rankingField.lastname.push(userObject.lastname);
-                rankingField.scores.push(-parseInt(zrange[i+1]));
-            }
-            if (i == zrange.length - 1) {
-                callback(err,ranking);
-            }
-        });
+        else {
+            zrange.forEach(function(user,i) {
+                if (i%2 == 0) {
+                    var userObject = JSON.parse(user);
+                    rankingField.mail.push(userObject.mail);
+                    rankingField.firstname.push(userObject.firstname);
+                    rankingField.lastname.push(userObject.lastname);
+                    rankingField.scores.push(-parseInt(zrange[i+1]));
+                }
+                if (i == zrange.length - 1) {
+                    callback(err,ranking);
+                }
+            });
+        }
     });
 }
 
