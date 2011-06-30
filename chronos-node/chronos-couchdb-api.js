@@ -23,6 +23,7 @@ var store = {};
 var keys = {
     'game': true
 };
+var timerId;
 
 exports.putDoc = function(name, batch, json, options) {
   var url = couchdburl + '/' + name;
@@ -271,7 +272,7 @@ couchdbChangesStream('gameonly/game', 'game', couchdbChangesStreamCallback, couc
 
 emitter.on("couchdbAccessFailed",function() {
   couchdbAccessFailed = true;
-  setInterval(function() {
+  timerId = setInterval(function() {
     if (couchdbAccessFailed == true) {
       console.log('Try again to access to couchdbChangesStream.');
       couchdbChangesStream('gameonly/game', 'game', couchdbChangesStreamCallback, couchdbChangesStreamCallbackError);
