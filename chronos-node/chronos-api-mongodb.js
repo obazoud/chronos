@@ -8,13 +8,15 @@ var port = Connection.DEFAULT_PORT;
 
 console.log('Connecting to ' + host + ':' + port);
 
-var db = new Db('chronos-mongodb', new Server(host, port, {}), {native_parser:true});  
-db.open(function(err, db) {
-  db.dropDatabase(function(err, result) {
-    console.log('Dropping database: ' + result);
-    db.close();
+exports.dropDatabase = function(req, res) {
+  var db = new Db('chronos-mongodb', new Server(host, port, {}), {native_parser:true});  
+  db.open(function(err, db) {
+    db.dropDatabase(function(err, result) {
+      console.log('Dropping database: ' + result);
+      db.close();
+    });
   });
-});
+}
 
 exports.createUser = function(req, res, params) {
   console.log('Creating user: ' + params);

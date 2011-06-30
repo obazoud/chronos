@@ -5,6 +5,7 @@ var api = require('./chronos-api-mongodb.js');
 var router = new(journey.Router);
 
 // Create the routes
+router.get('/api/drop').bind(api.dropDatabase);
 router.post('/api/user').bind(api.createUser); 
 router.post('/api/game').bind(api.newGame);
 router.post('/api/login').bind(api.login);
