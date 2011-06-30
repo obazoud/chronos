@@ -19,20 +19,54 @@ publisher.on("error", function (err) {
     logger.log("Error " + err);
 });
 
+// state 0: RAS
+// state 1: game starts
+// state 2: warmup starts
+// state 3: warmup ends
+// state 4: questions
+// state 5: game ends
 function GameState() {
   this.game = {};
   this.nbusersthreshold = 0;
   this.logintimeout = 0;
   this.questiontimeframe = 0;
   this.synchrotime = 0;
+  this.state = 0;
+  this.warmupStartDate = 0;
+  this.warmupEndDate = 0;
+  this.session_0 = 0;
+  this.session_1 = 0;
+  this.questionEncours = 0;
   
   this.initGame = function(newGame) {
+    this.state = 1;
     this.game = newGame;
     this.nbusersthreshold = parseInt(this.game.gamesession.parameters.nbusersthreshold);
     this.logintimeout = parseInt(this.game.gamesession.parameters.logintimeout) * 1000;
     this.questiontimeframe = parseInt(this.game.gamesession.parameters.questiontimeframe) * 1000;
     this.synchrotime = parseInt(this.game.gamesession.parameters.synchrotime) * 1000;
   };
+
+  this.warmupStarts = function(now) {
+    if (this.state == 1) {
+      logger.log('State changed state:' + this.state + ' -> ' + 2);
+      this.state = 2;
+      this.warmupStartDate = now;
+      this.warmupEndDate = now + parseInt(this.logintimeout);
+      this.session_0 = now;
+      this.session_1 = now + parseInt(this.logintimeout);
+      this.questionEncours = 1;
+    } else {
+      logger.log('Already in state 2');
+    }
+  };
+
+//  this.persist = function() {
+//  };
+
+//  this.retrieve = function() {
+//  };
+
 }
 
 var gameState = new GameState();
@@ -54,11 +88,15 @@ subscriber.on('message', function(channel, message) {
   var json = JSON.parse(message);
   switch (json.event) {
     case 'initGame':
-      logger.log('initGame event');
-      gameState.initGame(json.message);
-      logger.log(sys.inspect(gameState,false));
-      logger.log(gameState.nbusersthreshold);
-      logger.log(gameState.game.gamesession.parameters.questiontimeframe);
+        gameState.initGame(json.message);
+        logger.log(sys.inspect(gameState, false));
+      break;
+    case 'warmupStarts':
+        gameState.warmupStarts(json.warmupStartDate);
+        logger.log(sys.inspect(gameState, false));
+      break;
+    default:
+      logger.log('Unknow event:' + json.event);
       break;
   }
 });
@@ -72,7 +110,7 @@ var numberOfQuestions = 20;
 exports.initGame = function(game) {
   redis.del("context");
   redis.hmset("context",
-    "maxGamers", parseInt(game.gamesession.parameters.nbusersthreshold),
+    "nbusersthreshold", parseInt(game.gamesession.parameters.nbusersthreshold),
     "numberOfPlayers", 0,
     "logintimeout", (parseInt(game.gamesession.parameters.logintimeout) * 1000),
     "questiontimeframe", (parseInt(game.gamesession.parameters.questiontimeframe) * 1000),
@@ -98,28 +136,32 @@ exports.warmup = function() {
 emitter.once("warmupStarted", function() {
   var now = new Date().getTime();
   logger.log("Warmup started... ");
+  gameState.warmupStarts(now);
 
-  redis.hmget("context","logintimeout",function(err,logintimeout){
-    redis.hsetnx("context" ,"dateFinWarmup", (now + parseInt(logintimeout)));
-    redis.hmset("context",
-      "session_" + 0 , now,
-      "session_" + 1 , now + parseInt(logintimeout));
-    logger.log("session_0: " + new Date(now));
-    logger.log("session_1: " + new Date(now + parseInt(logintimeout)));
-    redis.save();
-    warmupLoop();
-  });
-
+  redis.hsetnx("context", "warmupStartDate", gameState.warmupStartDate);
+  redis.hsetnx("context", "warmupEndDate", gameState.warmupEndDate);
+  redis.hsetnx("context", "session_0" , gameState.session_0);
+  redis.hsetnx("context", "session_1" , gameState.session_1);
   redis.hsetnx("context", "questionEncours", 1);
+  redis.save();
+
+  logger.log(sys.inspect(gameState,false));
+
+  var message = {
+    'event': 'warmupStarts',
+    'warmupStartDate': gameState.warmupStartDate,
+  };
+  publisher.publish(channel, JSON.stringify(message));
+  warmupLoop();
 });
 
 function warmupLoop () {
-    redis.hmget("context", "numberOfPlayers", "maxGamers", function(err, numberOfPlayers, maxGamers) {
-      if (parseInt(numberOfPlayers) >= parseInt(maxGamers)) {
+    redis.hmget("context", "numberOfPlayers", function(err, numberOfPlayers) {
+      if (parseInt(numberOfPlayers) >= parseInt(gameState.nbusersthreshold)) {
         emitter.emit("warmupEnd");
       } else {
-        // TODO : timeout
-        setTimeout(warmupLoop, 200);
+        // TODO : timeout ?
+        setTimeout(warmupLoop, 250);
       }
     });
 };
