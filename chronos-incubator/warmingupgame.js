@@ -14,6 +14,8 @@ var emitter = new events.EventEmitter();
 
 router.get('/test/warmup').bind(warmup);
 router.get('/test').bind(fake);
+router.get(/^test\/question\/(\d+)$/).bind(getQuestion);
+
 
 var http = require('http');
 
@@ -38,27 +40,39 @@ var server = http.createServer(function(req, res) {
 server.listen(8080);
 console.log('Server running at http://127.0.0.1:8080/');
 
-var responses = [];
-
 function fake(req,resp){
     resp.send(200,{},"c note, mais je suis un fake!") ;
 }
+
+var counter = 1; // sera mis dans redis
+var dureeWarmup = 10000;
+var dateFinWarmup = new Date().getTime() + dureeWarmup;
+var responses = [];
+responses[0] = [];
+
+var numberOfQuestions = 5; 
+
+var questionTimeFrame = 5000;
+var synchroTimeDuration = 2000;
+var quizSessions = []; // sera mis dans redis
+var currentQuestion = 0;
+
 
 function warmup(req,resp){
      restler.get('http://127.0.0.1:8080/test')
        .on('complete', function(data) {
             if(!gameStarted()){
+                counter++;
                 responses[0] = [];
                 responses[0].push(resp);
             }else{
                 console.log("sending immediatly");
-                resp.send(200,{},"temps de reponse depasse!");
+                resp.send(400,{},"temps de reponse depasse!");
             }
         });
 }
 
-
-emitter.on('warmupEnd',function(timerId){
+emitter.once('warmupEnd',function(timerId){
     responses[0].forEach(function(resp){
         console.log("sending...");
         resp.send(200,{},"question 1");    
@@ -67,35 +81,33 @@ emitter.on('warmupEnd',function(timerId){
     clearTimeout(timerId);
     console.log("warmup timer stopped");
     
+    // initialisation des time frames des questions
+    quizSessions[0] = new Date().getTime();
+    for(i=1; i<numberOfQuestions ; i++){
+        quizSessions[i] = quizSessions[i-1] + synchroTimeDuration + questionTimeFrame;
+    }
+    currentQuestion = 1;
 });
 
-// les joueurs doivent repondre dans l intervalle questionTimeFrame
-/*
-emitter.on('questionTimeFrameStart',function(){
-    questionTimeFrameStart = new Date().getTime();    
-    questionEnCours++;
-});
-*/
 
-//emitter.on('questionTimeFrameEnd',function(){});
-
-// l application doit repondre dans l intervalle synchroTime
-//emitter.on('synchroTimeFrameStart',function(){});
-//emitter.on('synchroTimeFrameEnd',function(){});
-
-
-
-
-var counter = 1;
 var timerId = setInterval(function(){
-        if(counter==25){
+        if(counter==15 || new Date().getTime() >= dateFinWarmup){
             emitter.emit('warmupEnd',timerId);
         }else{
-            console.log("waiting... " + counter++);
+            console.log("waiting... " + counter);
         }    
 },1000);
 
 function gameStarted(){
-    return (counter==25);
+    return (counter==15);
 }
 
+function getQuestion(req,resp,n){
+    var now = new Date().getTime();
+    // voir avec pierre les cas
+    if(now >=quizSessions[n-1] && now <= (quizSessions[n-1]- synchroTimeDuration)){
+        resp.send(200,{},"voici la question " + n);
+    }else if (now < quizSessions[n-1]){
+        resp.send(400,{},"vous avez rate la question " + n);
+    }
+}
