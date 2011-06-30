@@ -16,21 +16,22 @@ var quizSessions = []; // dans redis
 var timerId;
 var qTimer;
 
-exports.initGame = function(config){
+exports.initGame = function(game) {
     
     redis.hmset("context"
-                        , "maxGamers",parseInt(config.nbusersthreshold)
+                        , "maxGamers",parseInt(game.gamesession.parameters.nbusersthreshold)
                         , "numberOfPlayers",0
-			, "dureeWarmup", ( parseInt(config.logintimeout) * 1000)
-			, "numberOfQuestions", parseInt(config.nbquestions)
-			, "questionTimeFrame" , ( parseInt(config.questiontimeframe) * 1000)
-			, "synchroTimeDuration" , ( parseInt(config.synchrotime) * 1000)
+			, "dureeWarmup", ( parseInt(game.gamesession.parameters.logintimeout) * 1000)
+			, "numberOfQuestions", parseInt(game.gamesession.parameters.nbquestions)
+			, "questionTimeFrame" , ( parseInt(game.gamesession.parameters.questiontimeframe) * 1000)
+			, "synchroTimeDuration" , ( parseInt(game.gamesession.parameters.synchrotime) * 1000)
                         );    
                           
     redis.hdel("context", "questionEncours");
     redis.hdel("context", "dateFinWarmup");
 
     redis.del("players");
+    redis.set("game", JSON.stringify(game));
 
     redis.save();
     /**
@@ -48,9 +49,22 @@ exports.initGame = function(config){
         	}
         	,null);
         
-    	},1000);// TODO redefinir cette periode en benchmarquant
-}
+    },1000);// TODO redefinir cette periode en benchmarquant
+};
 
+exports.getGame = function(options) {
+  redis.get("game", function(err, reply) {
+    if (err) {
+      if (options && options.error) {
+        options.error(err);
+      }
+    } else {
+      if (options && options.success) {
+        options.success(JSON.parse(reply));
+      }
+    }
+  });
+};
 
 // TODO a renommer
 function gameState(beforeStartCallback,afterStartCallback,params){

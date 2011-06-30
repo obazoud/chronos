@@ -113,26 +113,7 @@ exports.mail = function(req, res, mail) {
 
 exports.newGame = function(req, res, params) {
   var paramsJSON = processGameXML(params.authentication_key, params.parameters);
-
-  chronosCouch.head('game', {
-    error: function(data) {
-      res.send(400);
-    },
-    success: function(data, id) {
-      if (id != null) {
-        chronosCouch.delete('game', id, {
-          error: function(data) {
-            res.send(400);
-          },
-          success: function(data, id) {
-            putGame(req, res, params, paramsJSON);
-          }
-        });
-      } else {
-        putGame(req, res, params, paramsJSON);
-      }
-    }
-  });
+  putGame(req, res, params, paramsJSON);
 };
 
 function putGame(req, res, params, paramsJSON) {
@@ -142,22 +123,22 @@ function putGame(req, res, params, paramsJSON) {
     res.send(401, {}, message);
   } else {
     console.log(tools.toISO8601(new Date()) + ": a new game is coming.");
-    chronosCouch.putDoc('game', false, paramsJSON, {
-      error: function(data) {
-        res.send(400);
+    console.log(tools.toISO8601(new Date()) + ": game successfully added.");
+    gamemanager.initGame(paramsJSON, {
+      error: function(err) {
+        //console.log("Err: " + err);
+        res.send(400, {}, err);
       },
-      success: function(data) {
-        console.log(tools.toISO8601(new Date()) + ": game successfully added.");
-        gamemanager.initGame(paramsJSON.gamesession.parameters);
-        ranking.reset(function(err, updated) {
-          if (err) {
-            res.send(400, {}, err);
-          }
-          else {
-            //console.log(tools.toISO8601(new Date()) + ": Redis: score to 0: OK " + (updated == 0));
-            res.send(201);
-          }
-        });
+      success: function(exist) {
+      }
+    });
+    ranking.reset(function(err, updated) {
+      if (err) {
+        res.send(400, {}, err);
+      }
+      else {
+        //console.log(tools.toISO8601(new Date()) + ": Redis: score to 0: OK " + (updated == 0));
+        res.send(201);
       }
     });
   }
@@ -214,7 +195,7 @@ exports.login = function(req, res, params) {
             } else {
               var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
               gamemanager.login(params.mail);
-              gamemanager.warmup(res);
+              //gamemanager.warmup(res);
               res.send(201, {'Set-Cookie': 'session_key=' + sessionkey}, '');
             }
           }
@@ -227,17 +208,16 @@ exports.login = function(req, res, params) {
 exports.getQuestion = function(req, res, n) {
   gamemanager.getQuestion(n, 
     function () {
-      chronosCouch.getDoc('game', {
+      gamemanager.getGame({
         error: function(data) {
           res.send(400, {}, data);
         },
-        success: function(game) {
+        success: function(gamejson) {
           gamemanager.getScore(req.jsonUser.login, {
             error: function(err) {
               res.send(400, {}, err);
             },
             success: function(score) {
-              var gamejson = JSON.parse(game);
               var q = gamejson.gamesession.questions.question[n-1];
               var question = {};
               question.question = q.label;
@@ -260,13 +240,12 @@ exports.getQuestion = function(req, res, n) {
 exports.answerQuestion = function(req, res, n, params) {
   gamemanager.answerQuestion(n,
     function() {
-        chronosCouch.getDoc('game', {
+        gamemanager.getGame({
           error: function(data) {
             res.send(400, {}, data);
           },
-          success: function(gameDoc) {
-            var game = JSON.parse(gameDoc);
-            var q = game.gamesession.questions.question[n-1];
+          success: function(gamejson) {
+            var q = gamejson.gamesession.questions.question[n-1];
             gamemanager.updatingScore(req.jsonUser.lastname, req.jsonUser.fistname, req.jsonUser.login, n, params.answer, q.goodchoice, q.qvalue, {
               error: function(data) {
                 res.send(400, {}, data);
@@ -274,7 +253,7 @@ exports.answerQuestion = function(req, res, n, params) {
               success: function(score) {
                 var answer = {};
                 answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
-                answer.good_answer = q.choice[q.goodchoice];
+                answer.good_answer = q.choice[q.goodchoice - 1];
                 answer.score = score;
                 res.send(200, {}, answer);
               }
@@ -301,10 +280,9 @@ exports.getRanking = function(req, res) {
     },
     success: function(logged) {
       if (logged == 0) {
-        chronosCouch.getDoc('game', {
-          success: function(gameDoc) {
-            var game = JSON.parse(gameDoc);
-            twitterapi.tweet('Notre application supporte ' + game.gamesession.parameters.nbusersthreshold + ' joueurs #challengeUSI2011');
+        gamemanager.getGame({
+          success: function(gamejson) {
+            twitterapi.tweet('Notre application supporte ' + gamejson.gamesession.parameters.nbusersthreshold + ' joueurs #challengeUSI2011');
           }
         });
       }
@@ -347,19 +325,18 @@ exports.audit = function(req, res, params) {
     res.send(401);
   }
 
-  chronosCouch.getDoc('game', {
+  gamemanager.getGame({
     error: function(data) { res.send(400, {}, data); },
-    success: function(game) {
+    success: function(gamejson) {
       gamemanager.getAnswers(params.user_mail, {
         error: function(data) {
           res.send(400, {}, data);
         },
         success: function(answers) {
-          var gameJson = JSON.parse(game);
           var audit = {};
           audit.user_answers = new Array();
           audit.good_answers = new Array();
-          var question = gameJson.gamesession.questions.question;
+          var question = gamejson.gamesession.questions.question;
           for (i=0; i<question.length; i++) {
             audit.good_answers.push(question[i].goodchoice);
           }
@@ -378,20 +355,19 @@ exports.auditN = function(req, res, n, params) {
     res.send(401);
   }
 
-  chronosCouch.getDoc('game', {
+  gamemanager.getGame({
     error: function(data) {
       res.send(400, {}, data);
     },
-    success: function(game) {
+    success: function(gamejson) {
       gamemanager.getAnswer(params.user_mail, n, {
         error: function(data) {
           res.send(400, {}, data);
         },
         success: function(answer) {
-          var gameJson = JSON.parse(game);
           var audit = {};
-          audit.good_answer = gameJson.gamesession.questions.question[n-1].goodchoice;
-          audit.question = gameJson.gamesession.questions.question[n-1].label;
+          audit.good_answer = gamejson.gamesession.questions.question[n-1].goodchoice;
+          audit.question = gamejson.gamesession.questions.question[n-1].label;
           audit.user_answer = answer;
           res.send(200, {}, audit);
         }
