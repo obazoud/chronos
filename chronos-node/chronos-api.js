@@ -38,9 +38,9 @@ function validateField(field, mandatory, minlength, maxlength, value) {
 };
 
 exports.createUser = function(req, res, params) {
-  if (validateField(params.firstname, true, 2, 50) || validateField(params.lastname, true, 2, 50) || validateField(params.mail, true, 2, 50) || validateField(params.password, true, 2, 50)) {
-    res.send(401, {}, message);
-  } else {
+//  if (validateField(params.firstname, true, 2, 50) || validateField(params.lastname, true, 2, 50) || validateField(params.mail, true, 2, 50) || validateField(params.password, true, 2, 50)) {
+//    res.send(400, {}, message);
+//  } else {
     chronosCouch.head(params.mail, {
       error: function(data) {
         res.send(400, {}, data);
@@ -70,7 +70,7 @@ exports.createUser = function(req, res, params) {
         }
       }
     });
-  }
+//  }
 };
 
 exports.mail = function(req, res, mail) {
