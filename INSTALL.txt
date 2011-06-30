@@ -33,6 +33,8 @@ deb-src http://ppa.launchpad.net/git-core/ppa/ubuntu lucid main
 
 
 # Optim systeme
+http://www.ubuntu-unleashed.com/2008/04/howto-harden-ubuntu-linux-kernel-with.html
+
 http://www.cyberciti.biz/files/linux-kernel/Documentation/networking/ip-sysctl.txt
 http://serverfault.com/questions/10852/what-limits-the-maximum-number-of-connections-on-a-linux-server
 http://redmine.lighttpd.net/wiki/1/Docs:Performance
@@ -72,6 +74,8 @@ net.core.netdev_max_backlog = 2500
 # I was also masquerading the port comet was on, you might not need this
 net.ipv4.netfilter.ip_conntrack_max = 1048576
 net.ipv4.tcp_fin_timeout=1
+# increase system IP port limits
+net.ipv4.ip_local_port_range = 1024 65535
 
 # system
 #kernel.shmmax = 4294967296
