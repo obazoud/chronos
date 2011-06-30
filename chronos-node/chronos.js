@@ -59,10 +59,9 @@ module.exports = http.createServer(function(req, res) {
       if (result.headers['Set-Cookie'] == null && req.headers['cookie'] != null) {
         if (req.jsonUser) {
           //logger.log("< User: " + JSON.stringify(req.jsonUser));
-          var session_key = security.encode(req.jsonUser.login);
           var data_key = security.encodeScore(req.jsonUser.firstname, req.jsonUser.lastname, req.jsonUser.score, req.jsonUser.lastbonus, req.jsonUser.lastquestion);
           //logger.log("< cookieContent: " + session_key + ' / ' + data_key);
-          result.headers['Set-Cookie'] = ['session_key=' + session_key + '; path=/', 'data_key=' + data_key + '; path=/'];
+          result.headers['Set-Cookie'] = ['session_key=' + req.session_key + '; path=/', 'data_key=' + data_key + '; path=/'];
         }
       }
       result.headers["Date"] = new(Date)().toUTCString();

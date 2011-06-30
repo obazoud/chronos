@@ -11,7 +11,8 @@ exports.authorize = function(req, res) {
   try {
     var cookieContent = req.headers['cookie'].split(';');
     //logger.log("> cookieContent: " + cookieContent);
-    req.login = exports.decrypt(cookieContent[1].split('=')[1]);
+    req.session_key = cookieContent[1].split('=')[1];
+    req.login = exports.decrypt(req.session_key);
     var rawUserData = exports.decrypt(cookieContent[0].split('=')[1]);
     var rawUserDataParts = rawUserData.split(/;/);
     req.jsonUser = {"login": req.login, "firstname": rawUserDataParts[0], "lastname": rawUserDataParts[1], "score": parseInt(rawUserDataParts[2]), "lastbonus": parseInt(rawUserDataParts[3]), "lastquestion": parseInt(rawUserDataParts[4]) };
