@@ -213,14 +213,14 @@ exports.getQuestion = function(req, res, n) {
     var question = gamemanager.getGameFragment(n);
     gamemanager.getQuestion(n, req.jsonUser.login,
       function () {
-        var start = Date.now();
+        // var start = Date.now();
         // logger.log("> Calling score q " + n + ", login:" + req.jsonUser.login);
         if (n == 1) {
             // logger.log("< Calling score q " + n + ", login:" + req.jsonUser.login);
             question.score = "0";
             // logger.log("< Http /api/question/" + n + ", login:" + req.jsonUser.login + ", " + JSON.stringify(question));
             // logger.log("< Http /api/question/" + n + ", login:" + req.jsonUser.login);
-            logger.log('getQuestion took:' + (Date.now() - start) + 'ms.');
+            //logger.log('getQuestion took:' + (Date.now() - start) + 'ms.');
             res.send(200, {}, question);
         } else {
           gamemanager.getScore(req.jsonUser.login, {
@@ -248,7 +248,7 @@ exports.getQuestion = function(req, res, n) {
 
 exports.answerQuestion = function(req, res, n, params) {
   // logger.log(Date.now() + " > Http /api/anwser/" + n + ", login:" + req.jsonUser.login);
-  var start = Date.now();
+  // var start = Date.now();
   gamemanager.answerQuestion(n, req.jsonUser.login,
     function() {
       var gamejson = gamemanager.getGame();
@@ -264,7 +264,7 @@ exports.answerQuestion = function(req, res, n, params) {
           answer.good_answer = q.choice[q.goodchoice - 1];
           answer.score = "" + score + "";
           // logger.log(Date.now() + " < Http /api/anwser/" + n + ", login:" + req.jsonUser.login);
-          logger.log('answerQuestion took:' + (Date.now() - start) + ' ms. ' + start);
+          // logger.log('answerQuestion took:' + (Date.now() - start) + ' ms. ' + start);
           res.send(201, {}, answer);
         }
       });
