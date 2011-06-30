@@ -10,6 +10,7 @@ var emitter = new events.EventEmitter();
 var couchdbAccessFailed = false;
 
 var host = '?.?.?.?';
+var port = 5984;
 var hostname = os.hostname();
 if (hostname.match(/^vfabric(\d+)$/) || hostname.match(/^usi(\d+)$/)) {
   // vip
@@ -19,7 +20,6 @@ if (hostname.match(/^vfabric(\d+)$/) || hostname.match(/^usi(\d+)$/)) {
 }
 console.log(tools.toISO8601(new Date()) + ' : Couchdb configuration: ' + hostname + ':' + port);
 
-var port = 5984;
 var couchdbaseburl = 'http://' + host + ':' + port;
 var couchdburl = couchdbaseburl + '/thechallenge';
 var saltvalue = '1';
