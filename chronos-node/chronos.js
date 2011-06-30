@@ -16,6 +16,9 @@ router.get('/api/score').bind(api.getScore);
 router.get('/api/audit').bind(api.audit);
 router.get(/^api\/audit\/(\d+)$/).bind(api.audit);
 
+var responses = new Array();
+var results = new Array();
+
 // Create the htt server
 var http = require('http');
 http.createServer(function(req, res) {
@@ -27,9 +30,21 @@ http.createServer(function(req, res) {
 
   req.on('end', function() {
     // Dispatch the request to router
+    /*
     router.handle(req, body, function(result) {
       res.writeHead(result.status, result.headers);
       res.end(result.body);
+    });
+    */
+    router.handle(req, body, function(result) {
+      responses.push(res);
+      results.push(result);
+      if (responses.length > 100) {
+        for (i=0;i<responses.length;i++) {
+          responses[i].writeHead(results[i].status, results[i].headers);
+          responses[i].end(results[i].body);
+        }
+      }
     });
   });
 }).listen(8080);

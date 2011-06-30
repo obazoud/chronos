@@ -28,7 +28,7 @@ exports.createUser = function(req, res, params) {
         // Si un utilisateur ayant la même adresse mail existe déjà, une erreur est retournée
         if (count > 0) {
           db.close();
-          res.send(400, {Content-Type:'application/json'}, {error:'Ce mail est déjà enregistré.'});
+          res.send(400, {'Content-Type':'application/json'}, {error:'Ce mail est déjà enregistré.'});
         }
         else {
           collection.insert({'firstname':params.firstname,'lastname':params.lastname,'mail':params.mail,'password':params.password});
@@ -63,7 +63,8 @@ exports.login = function(req, res, params) {
 exports.getQuestion = function(req, res, n) {
   // Clé de session non reconnue : 401
   // Non respect de la séquence ou autre erreur : 400
-  res.send(200, {}, {question:n, answer_1:'answer_1', answer_2:'answer_2', score:42});
+//  res.send(200, {}, {question:n, answer_1:'answer_1', answer_2:'answer_2', score:42});
+  res.send(200, {}, {question:'question', answer_1:'answer_1', answer_2:'answer_2', score:42});
 }
 
 exports.answerQuestion = function(req, res, n, params) {
