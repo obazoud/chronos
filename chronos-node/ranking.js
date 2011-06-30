@@ -24,7 +24,7 @@ exports.addUser = addUser;
 function ranking(lastname,firstname,mail,topN,range,callback){
     topN = topN - 1;
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
-    logger.log("Ranking " + mail + ": " + token);
+    // logger.log("Ranking " + mail + ": " + token);
     var ranking = {
          "score": "?"
         ,"top_scores":{"mail":[],"scores":[],"firstname":[],"lastname":[]}
@@ -35,7 +35,7 @@ function ranking(lastname,firstname,mail,topN,range,callback){
         totalNumberOfUsers = totalNumberOfUsers - 1;
         if (topN > totalNumberOfUsers) { topN = totalNumberOfUsers; }
         client.zscore("scores",token,function(err,userScore){
-            ranking.score = -parseInt(userScore) + "";
+            ranking.score = parseInt(userScore) + "";
             client.zrank("scores",token,function(err,userRank){
                 zrange(ranking,ranking.top_scores,0,topN,function(err,ranking){
                     if (totalNumberOfUsers == 0) { callback(err,ranking); }
