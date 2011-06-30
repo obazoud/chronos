@@ -10,7 +10,7 @@ exports.addUser = function addUser(lastname,firstname,mail){
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
     client.zadd("scores",0,token,function(err,reply){
         // console.log("user : " + token + " added");
-        client.bgsave();
+        // TODO: client.save();
     });
 };
 
@@ -21,7 +21,7 @@ exports.updateScore = function updateScore(lastname,firstname,mail,newScore){
         var increment = newScore - currentScore;
         client.zincrby("scores",increment,token,function(err,updatedScore){
             console.log("score of user " + token + "incremented by " + increment);
-            client.bgsave();
+            client.save();
         });
     });
 };
