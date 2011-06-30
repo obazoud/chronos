@@ -225,7 +225,7 @@ exports.getQuestion = function(req, res, n) {
   // preparing response
   // First score is too slow, do not know why !?
   if (n > numberOfQuestions) {
-    logger.log("< Http /api/question/" + n + ", login:" + req.jsonUser.login);
+    logger.log(n + "< Http /api/question/" + n + ", login:" + req.jsonUser.login);
     res.send(400);
   } else {
     var q = gamejson.gamesession.questions.question[n-1];
@@ -236,11 +236,11 @@ exports.getQuestion = function(req, res, n) {
     }
     gamemanager.getQuestion(n, req.jsonUser.login,
       function () {
-        logger.log("> Calling score q " + n + ", login:" + req.jsonUser.login);
+        // logger.log("> Calling score q " + n + ", login:" + req.jsonUser.login);
         if (n == 1) {
-            logger.log("< Calling score q " + n + ", login:" + req.jsonUser.login);
+            // logger.log("< Calling score q " + n + ", login:" + req.jsonUser.login);
             question.score = "\"0\"";
-            logger.log("< Http /api/question/" + n + ", login:" + req.jsonUser.login);
+            // logger.log("< Http /api/question/" + n + ", login:" + req.jsonUser.login);
             res.send(200, {}, question);
         } else {
           gamemanager.getScore(req.jsonUser.login, {
@@ -249,7 +249,7 @@ exports.getQuestion = function(req, res, n) {
               res.send(400, {}, err);
             },
             success: function(score) {
-              logger.log("< Calling score q " + n + ", login:" + req.jsonUser.login);
+              // logger.log("< Calling score q " + n + ", login:" + req.jsonUser.login);
               question.score = "" + score + "";
               logger.log("< Http /api/question/" + n + ", login:" + req.jsonUser.login);
               res.send(200, {}, question);
@@ -258,7 +258,7 @@ exports.getQuestion = function(req, res, n) {
         }
       },
       function () {
-        logger.log("FAILED(400): /api/question/" + n + ", login:" + req.jsonUser.login);
+        logger.log("< FAILED(400): /api/question/" + n + ", login:" + req.jsonUser.login);
         res.send(400);
       }
     );

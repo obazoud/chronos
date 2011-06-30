@@ -261,6 +261,7 @@ function setTimeoutForTimeFrameCB(login, n, success, fail) {
 };
 
 function setTimeoutForTimeFrameCB1(login, n, success, fail) {
+  logger.log("------> time out for answering question : (" + login + ") " + n);
   emitter.emit("warmupEnd", success, fail);
 };
 
@@ -275,7 +276,7 @@ for (var k = 1; k <= 20; k++) {
 }
 
 emitter.on("sendQuestions", function(login, n, success, fail) {
-  logger.log(login + ": sending question (" + n + ") : " + gameState.questionEncours + "/" + numberOfQuestions);
+  // logger.log(login + ": sending question (" + n + ") : " + gameState.questionEncours + "/" + numberOfQuestions);
 
   if (gameState.questionEncours > numberOfQuestions) {
     logger.log(login + ": emitting event for end of game (no more questions)");
@@ -295,8 +296,8 @@ exports.getQuestion = function(n, login, success, fail) {
   var sessionNMoins1 = gameState.sessions[n - 1];
   var sessionN = gameState.sessions[n];
 
-  logger.log(login + ": sessionNMoins1: " + new Date(sessionNMoins1));
-  logger.log(login + ": sessionN: " + new Date(sessionN));
+  // logger.log(login + ": sessionNMoins1: " + new Date(sessionNMoins1));
+  // logger.log(login + ": sessionN: " + new Date(sessionN));
   if (n <= numberOfQuestions && now >= sessionNMoins1 && now < sessionN) {
     timeout = sessionN - now;
     logger.log(login + ": is waiting for question : " + n + ', timeout ' + timeout + ' ms.');
@@ -394,7 +395,7 @@ exports.updatingScore = function(lastname, firstname, login, question, reponse, 
         lastbonus = 0;
       }
 
-      logger.log("updatingScore: " + score)
+      // logger.log("updatingScore: " + score)
       redis.hmset("players", login + ":score", score, login + ':lastbonus', lastbonus, login + ':q:' + question, reponse);
       var token = JSON.stringify({"lastname":lastname, "firstname":firstname, "mail":login});
       redis.zadd("scores", -score, token, function(err, updated) {
