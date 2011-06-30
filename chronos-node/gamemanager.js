@@ -79,7 +79,7 @@ exports.login = function(mail, options) {
   redis.hset('players', mail + ':login', "1", function(err, reply) {
     if (err) {
       if (options && options.error) {
-        options.error(data);
+        options.error(err);
       }
     } else {
       if (options && options.success) {
@@ -100,6 +100,43 @@ exports.isLogin = function(mail, options) {
       var exist = (reply == 1);
       if (options && options.success) {
         options.success(exist);
+      }
+    }
+  });
+}
+
+exports.logged = function(mail, options) {
+  redis.hincrby('players', mail + ':login', -1, function(err, reply) {
+    if (err) {
+      if (options && options.error) {
+        options.error(err);
+      }
+    } else {
+      var value = parseInt(reply);
+      if (value >= 0) {
+        redis.hincrby('players', 'logged', "-1", function(err, reply2) {
+          if (err) {
+            if (options && options.error) {
+              options.error(err);
+            }
+          } else {
+            if (options && options.success) {
+              options.success(reply2);
+            }
+          }
+        });
+      } else {
+        redis.hget('players', 'logged', "-1", function(err, reply2) {
+          if (err) {
+            if (options && options.error) {
+              options.error(err);
+            }
+          } else {
+            if (options && options.success) {
+              options.success(reply2);
+            }
+          }
+        });
       }
     }
   });

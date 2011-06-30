@@ -289,13 +289,22 @@ exports.tweetHttp = function(req, res, params) {
 };
 
 exports.getRanking = function(req, res) {
-  chronosCouch.getDoc('game', {
-    success: function(gameDoc) {
-      var game = JSON.parse(gameDoc);
-      twitterapi.tweet('Notre application supporte ' + game.gamesession.parameters.nbusersthreshold + ' joueurs #challengeUSI2011');
+  gamemanager.logged(req.jsonUser.login, {
+    error: function(data) {
+      res.send(400, {}, data);
+    },
+    success: function(logged) {
+      if (logged == 0) {
+        chronosCouch.getDoc('game', {
+          success: function(gameDoc) {
+            var game = JSON.parse(gameDoc);
+            twitterapi.tweet('Notre application supporte ' + game.gamesession.parameters.nbusersthreshold + ' joueurs #challengeUSI2011');
+          }
+        });
+      }
     }
   });
-  ranking.ranking(req.jsonUser.lastname, req.jsonUser.firstname, req.jsonUser.login, 100, 5, function(err,ranking) {
+  ranking.ranking(req.jsonUser.lastname, req.jsonUser.firstname, req.jsonUser.login, 100, 5, function(err, ranking) {
     if (err) {
       res.send(400, {}, err);
     }
