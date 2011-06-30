@@ -1,11 +1,11 @@
-# sudo vi /etc/profile
-#export http_proxy=http://10.200.1.44:8080
 
 # vi ~/.bashrc
 # USI
 # http_proxy
 alias proxyon='export http_proxy=http://10.200.1.44:8080;echo $http_proxy'
 alias proxyoff='export http_proxy=;echo $http_proxy'
+export PATH=/home/user/node-v0.4.4/bin:$PATH
+export PATH=/opt/redis:$PATH
 
 # sudo vi /etc/apt/apt.conf.d/proxy
 Acquire::http::Proxy "http://10.200.1.44:8080";
@@ -39,9 +39,10 @@ wget http://c3145442.r42.cf0.rackcdn.com/couchbase-server-enterprise_x86_64_1.1.
 dpkg -i couchbase-server-enterprise_x86_64_1.1.deb
 rm /etc/init.d/couchbase-server
 cd /etc/init.d
-ln -s /opt/couchbase-server/etc/init.d/couchdb couchdb
+ln -s /home/user/deploiement/install/etc/init.d/couchdb /etc/init.d/couchdb
 update-rc.d -f couchdb defaults
 cd /opt
+curl -x http://localhost:5984
 
 # sur usi1
 cd /usr/local
