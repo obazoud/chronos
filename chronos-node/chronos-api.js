@@ -25,6 +25,7 @@ exports.createUser = function(req, res, params) {
 
 exports.newGame = function(req, res, params) {
   var paramsJSON = processGameXML(params.authentication_key, params.parameters);
+  paramsJSON.game_id = uuid().toLowerCase();
 
   chronosCouch.head('game', {
     error: function(data) {
@@ -91,7 +92,6 @@ function processGameXML(authentication_key, parameters) {
       paramsJSON.gamesession.questions.question[i].qvalue = parseInt(i / 5, 10) * 5;
     }
   }
-  paramsJSON.game_id = uuid().toLowerCase();
   return paramsJSON;
 };
 
@@ -186,7 +186,8 @@ exports.answerQuestion = function(req, res, n, params) {
 
 exports.tweetHttp = function(req, res, params) {
   sys.puts('Tweet: ' + params.tweet);
-  twitterapi.tweet(params.tweet + ' (' + tools.toISO8601(new Date()) + ')');
+  twitterapi.tweet(params.tweet + ' (' + tools.  paramsJSON.game_id = uuid().toLowerCase();
+toISO8601(new Date()) + ')');
   res.send(200);
 };
 
