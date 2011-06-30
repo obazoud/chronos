@@ -165,12 +165,12 @@ sudo cp -r ~/deploiement/install/ha.d/* /etc/ha.d/.
 sudo cp -r ~/deploiement/install/haproxy/* /etc/haproxy/.
 
 # add heartbeat to rc init and remove haproxy from (started by heartbeat)
-update-rc.d heartbeat start 75 2 3 4 5 . stop 05 0 1 6 .
-update-rc.d -f haproxy remove
+sudo update-rc.d heartbeat start 75 2 3 4 5 . stop 05 0 1 6 .
+sudo update-rc.d -f haproxy remove
 
 # stop haproxy and start heartbeat
-/etc/init.d/haproxy stop
-/etc/init.d/heartbeat start
+sudo /etc/init.d/haproxy stop
+sudo /etc/init.d/heartbeat start
 
 # the virtual IP is 192.168.1.150 (can be modify)
 # haproxy listen to 192.168.1.150:80 and loadbalance (roundrobin) on vfabric1 to vfabric4 on port 8080, adding a ServerId cookie with node's name.
