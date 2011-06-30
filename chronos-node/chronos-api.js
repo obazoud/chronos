@@ -48,6 +48,7 @@ exports.newGame = function(req, res, params) {
   var url = couchdburl + '/game';
   var gameXML = params.parameters.replace(/ xmlns:usi/g, " usi").replace(/ xmlns:xsi/g, " xsi").replace(/ xsi:schemaLocation/g, " schemaLocation").replace(/usi:/g, "");
   // console.log("XML: " + gameXML);
+  gameXML = gameXML.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"");
   sys.puts("XMLSys: " + gameXML);
 
   var paramsJSON = xml2json.parse(gameXML);
