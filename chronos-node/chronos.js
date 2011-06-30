@@ -73,6 +73,7 @@ var server = http.createServer(function(req, res) {
   });
 });
 
+// Node Cluster ?
 if (chronosSettings.cluster.activate) {
   logger.log('Configure Node.js with cluster module (' + chronosSettings.cluster.workers + ' workers).');
   var cluster = require('cluster');
