@@ -8,6 +8,7 @@ client.on("error", function (err) {
 
 function addUser(lastname,firstname,mail,callback){
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
+    //console.log("---->>>>" + token);
     client.zadd("scores",0,token,function(err,added){
         // added == 1 if the element was added.
         // added == 0 if the element was already a member of the sorted set and the score was updated.
@@ -20,7 +21,8 @@ function ranking(lastname,firstname,mail,topN,range,callback){
     topN = topN - 1;
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
     var ranking = {
-         "top_scores":{"mail":[],"scores":[],"firstname":[],"lastname":[]}
+         "score": "?"
+        ,"top_scores":{"mail":[],"scores":[],"firstname":[],"lastname":[]}
         ,"before":{"mail":[],"scores":[],"firstname":[],"lastname":[]}
         ,"after":{"mail":[],"scores":[],"firstname":[],"lastname":[]}
     };
