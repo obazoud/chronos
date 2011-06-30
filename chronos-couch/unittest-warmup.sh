@@ -33,7 +33,7 @@ sleep 3
 
 curl -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"mail" : "null@gmail.com", "password" : "secret"}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/login
 
-sessionkey=eyJsb2dpbiI6Im51bGxAZ21haWwuY29tIiwicGFzc3dvcmQiOiJzZWNyZXQiLCJmaXJzdG5hbWUiOiJvbGl2aWVyIiwibGFzdG5hbWUiOiJiYXpvdWQifQ==
+sessionkey=57db2395e17ef583d2aa5df81933699577160bdccb9cc40f1dee11ed9798870a09e99f86dc5e1b75bcb6219e8340418941233f83b4a1965d10350487dd60ef27660350c5faa64f31eb9d13f1bb696345ecc4872b8d3e5f06bc2393a74a6db7a9
 
 sleep 4
 curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/1
