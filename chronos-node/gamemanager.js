@@ -55,8 +55,8 @@ function GameState() {
       this.state = 2;
       this.warmupStartDate = now;
       this.warmupEndDate = now + parseInt(this.logintimeout);
-      this.sessions[0] = now;
-      this.sessions[1] = now + parseInt(this.logintimeout);
+      this.sessions[0] = this.warmupStartDate;
+      this.sessions[1] = this.warmupEndDate;
       this.questionEncours = 1;
     } else {
       logger.log('Already in state 2');
@@ -196,9 +196,9 @@ gere l evenement d arret de la phase de warmup en :
 */
 emitter.on('warmupEnd', function(success) {
   if (gameState.state == 2) {
-    logger.log("warmup timer stopped");
     var now = new Date().getTime();
-    logger.log("initialize timeFrames: " + new Date(now));
+    logger.log("warmup timer stopped");
+    // logger.log("initialize timeFrames.");
     gameState.warmupEnds(now);
 
     // logger.log("timeFrames:" + gameState.sessions);
@@ -227,7 +227,7 @@ emitter.on('warmupEnd', function(success) {
       "session_21", gameState.sessions[21],
       function() {
         logger.log("Initialize timeFrames done.");
-        redis.save();
+        // redis.save();
     });
 
     if (success) {
@@ -275,20 +275,21 @@ for (var k = 1; k <= 20; k++) {
     gameState.questionEncours = n;
     logger.log('Once questionEncours ' + n);
     // TODO and others node do that ?
-    redis.hincrby("context", "questionEncours", 1);
+    // redis.hincrby("context", "questionEncours", 1);
   });
 }
 
 emitter.on("sendQuestions", function(login, n, success, fail) {
   // logger.log(login + ": sending question (" + n + ") : " + gameState.questionEncours + "/" + numberOfQuestions);
 
-  if (gameState.questionEncours > numberOfQuestions) {
-    logger.log(login + ": emitting event for end of game (no more questions)");
-    emitter.emit("endOfGame");
-    fail();
-  } else {
+  // TODO still need ?
+//  if (gameState.questionEncours > numberOfQuestions) {
+//    logger.log(login + ": emitting event for end of game (no more questions)");
+//    emitter.emit("endOfGame");
+//    fail();
+//  } else {
     success();
-  }
+//  }
 
 });
 
