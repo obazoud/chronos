@@ -158,6 +158,7 @@ exports.login = function(req, res, params) {
               var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
               userDocjson.cookies[gamejson.game_id] = sessionkey;
               chronosCouch.putDoc(params.mail, true, userDocjson);
+              gamemanager.warmup(res);
               res.send(201, {'Set-Cookie': 'session_key=' + sessionkey}, '');
             }
           }
@@ -168,64 +169,78 @@ exports.login = function(req, res, params) {
 };
 
 exports.getQuestion = function(req, res, n) {
-  chronosCouch.getDoc(req.jsonUser.login, {
-    error: function(data) {
-      res.send(400, {}, data);
-    },
-    success: function(userDoc) {
-      chronosCouch.getDoc('game', {
+  gamemanager.getQuestion(n, 
+    function () {
+      chronosCouch.getDoc(req.jsonUser.login, {
         error: function(data) {
           res.send(400, {}, data);
         },
-        success: function(game) {
-          var gamejson = JSON.parse(game);
-          var q = gamejson.gamesession.questions.question[n-1];
-          var userDocjson = JSON.parse(userDoc);
-          var question = {};
-          question.question = q.label;
-          for (i=0; i<q.choice.length;i++) {
-            question['answer_' + (i+1)] = q.choice[i];
-          }
-          if (userDocjson.score[gamejson.game_id] == null) {
-            question.score = userDocjson.score[gamejson.game_id];
-          } else {
-            question.score = 0;
-          }
-          if (userDocjson.lastbonus[gamejson.game_id] == null) {
-            question.lastbonus = userDocjson.lastbonus[gamejson.game_id];
-          } else {
-            question.lastbonus = 0;
-          }
-          res.send(200, {}, question);
+        success: function(userDoc) {
+          chronosCouch.getDoc('game', {
+            error: function(data) {
+              res.send(400, {}, data);
+            },
+            success: function(game) {
+              var gamejson = JSON.parse(game);
+              var q = gamejson.gamesession.questions.question[n-1];
+              var userDocjson = JSON.parse(userDoc);
+              var question = {};
+              question.question = q.label;
+              for (i=0; i<q.choice.length;i++) {
+                question['answer_' + (i+1)] = q.choice[i];
+              }
+              if (userDocjson.score[gamejson.game_id] == null) {
+                question.score = userDocjson.score[gamejson.game_id];
+              } else {
+                question.score = 0;
+              }
+              if (userDocjson.lastbonus[gamejson.game_id] == null) {
+                question.lastbonus = userDocjson.lastbonus[gamejson.game_id];
+              } else {
+                question.lastbonus = 0;
+              }
+              res.send(200, {}, question);
+            }
+          });
         }
-      });
+    },
+    function () {
+      res.send(400);
     }
+  );
   });
 };
 
 exports.answerQuestion = function(req, res, n, params) {
-  chronosCouch.getDoc('game', {
-    error: function(data) {
-      res.send(400, {}, data);
+  gamemanager.answerQuestion(n,
+    function() {
+        chronosCouch.getDoc('game', {
+          error: function(data) {
+            res.send(400, {}, data);
+          },
+          success: function(gameDoc) {
+            var game = JSON.parse(gameDoc);
+            var q = game.gamesession.questions.question[n-1];
+            chronosCouch.putDesign('/_design/answer/_update/accumulate/' + req.jsonUser.login + '?question=' + n + '&reponse=' + params.answer + '&correct=' + q.goodchoice + '&valeur=' + q.qvalue + '&game_id=' + game.game_id, {
+              error: function(data) {
+                res.send(400, {}, data);
+              },
+              success: function(scoreDoc) {
+                var answer = {};
+                answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
+                answer.good_answer=q.goodchoice;
+                answer.score=scoreDoc;
+                ranking.updateScore(req.jsonUser.lastname,req.jsonUser.fistname,req.jsonUser.login,scoreDoc);
+                res.send(200, {}, answer);
+              }
+            });
+          }
+        });
     },
-    success: function(gameDoc) {
-      var game = JSON.parse(gameDoc);
-      var q = game.gamesession.questions.question[n-1];
-      chronosCouch.putDesign('/_design/answer/_update/accumulate/' + req.jsonUser.login + '?question=' + n + '&reponse=' + params.answer + '&correct=' + q.goodchoice + '&valeur=' + q.qvalue + '&game_id=' + game.game_id, {
-        error: function(data) {
-          res.send(400, {}, data);
-        },
-        success: function(scoreDoc) {
-          var answer = {};
-          answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
-          answer.good_answer=q.goodchoice;
-          answer.score=scoreDoc;
-          ranking.updateScore(req.jsonUser.lastname,req.jsonUser.fistname,req.jsonUser.login,scoreDoc);
-          res.send(200, {}, answer);
-        }
-      });
+    function() {
+        res.send(400);
     }
-  });
+  );
 };
 
 exports.tweetHttp = function(req, res, params) {

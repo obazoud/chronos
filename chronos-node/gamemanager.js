@@ -13,30 +13,36 @@ var questionTimeFrame = 5000; // dans redis
 var synchroTimeDuration = 2000; // dans redis
 
 var counter = 1; // dans redis
-var qTimer;
+
 
 //var dateFinWarmup = new Date().getTime() + dureeWarmup; // dans redis
 var responses = [];
 responses[0] = [];
+responses[1] = [];
 
 var quizSessions = []; // dans redis
+
+var timerId;
+var qTimer;
 
 exports.initGame = function(config){
     
     redis.hmset("context"
                         ,"maxGamers",15
-                        ,"dateFinWarmup", (new Date().getTime() + dureeWarmup)
-                        ,"questionEncours",0
+                        ,"numberOfPlayers",0
+//                        ,"questionEncours",0
+//                        ,"dateFinWarmup", -1
                         );    
-                        
-    redis.set("numberOfPlayers",0);
-    
+                          
+    redis.hdel("context", "questionEncours");
+    redis.hdel("context", "dateFinWarmup");
+
     /**
     Timer active une tache de fond qui s execute tous les X ms
     pour verfier si on depasser le temps de warmup ou atteint le nombre
     maximum de joueurs.
     */    
-    var timerId = setInterval(function(){
+    timerId = setInterval(function(){
         gameState(
         	function(){
 	            	console.log("warmup en cours...");
@@ -51,56 +57,63 @@ exports.initGame = function(config){
 
 // initGame();
 
-/**
- exemple d utilisation de cette fonction
- 
-  gameState(function(params){
-        console.log("before : " + params.signal);
-    }
-    ,function(params){
-        console.log("after : " + params.signal);
-    }
-    , {signal:"test"}
-);
-*/
 // TODO a renommer
 function gameState(beforeStartCallback,afterStartCallback,params){
     redis.hmget("context","dateFinWarmup","maxGamers","numberOfPlayers",function(err,replies){
         var dateFinWarmup = replies[0];
         var maxGamers = replies[1];
         var numberOfPlayers = replies[2];
-        //console.log("dateFinWarmup = " + dateFinWarmup  );
-        if(numberOfPlayers >= maxGamers || new Date().getTime() >= dateFinWarmup){
-            afterStartCallback(params);    
-        }else{
-            beforeStartCallback(params);
+        // console.log("dateFinWarmup = " + dateFinWarmup);
+        // console.log("numberOfPlayers = " + numberOfPlayers);
+        if (dateFinWarmup == null || numberOfPlayers ==  null) {
+            console.log("date fin w et/ou num player nulls");
+        } else {        
+            // console.log("numberOfPlayers = " + numberOfPlayers);
+            // console.log("Now     = " + new Date().getTime());
+            // console.log("Jours ayant demandes la question 1     = " + responses[1].length );
+            if( ( numberOfPlayers >= maxGamers && responses[1].length ) || new Date().getTime() >= dateFinWarmup) {
+                afterStartCallback(params);    
+            }else{
+                beforeStartCallback(params);
+            }
         }
     });
 }
 
-
-
-
 /**
 gere les demandes d inscription au quiz
 */
-function warmup(req,resp){
+exports.warmup = function() {
+    console.log("Warmup started... ");
+    emitter.emit('gameStarted',timerId);
+
     gameState(function(){
-        responses[0].push(resp);
-        redis.incr("numberOfPlayers",function(err,counter){
+        
+        redis.hincrby("context", "numberOfPlayers",1, function(err,counter){
             redis.hmget("context","maxGamers",function(err,max){
                 if(counter==max){
                     emitter.emit('warmupEnd',timerId);
-                }    
+                }   
             });
-        });
+            });
     }
     ,function(){
-        console.log("sending immediatly");
-        resp.send(400,{},"temps de reponse depasse!");
+        // rien  
     }
     ,null);
-}
+};
+
+emitter.once("gameStarted",function(timerId){
+    redis.hsetnx("context"
+        ,"dateFinWarmup", (new Date().getTime() + dureeWarmup)
+    );
+
+    redis.hsetnx("context"
+        ,"questionEncours",1
+    );    
+        
+    console.log("Game started...");
+});
 
 /**
 gere l evenement d arret de la phase de warmup en :
@@ -109,14 +122,12 @@ gere l evenement d arret de la phase de warmup en :
     3. definitions des fenetres de sessions de reponses
 */
 emitter.once('warmupEnd',function(timerId){
+
     clearTimeout(timerId);
     console.log("warmup timer stopped");
+    emitter.emit("sendQuestions",qTimer);
     
-    responses[0].forEach(function(resp){
-        console.log("sending...");
-        resp.send(200,{},"que le jeu commence");    
-    });
-    for(q=0;q<=numberOfQuestions;q++){
+    for(q=2;q<=numberOfQuestions;q++){
         responses[q] = [];// verfifier si avec le comportement asynch ca peux poser des problemes    
     }
     // initialisation des time frames des questions
@@ -125,9 +136,9 @@ emitter.once('warmupEnd',function(timerId){
         quizSessions[i] = quizSessions[i-1] + synchroTimeDuration + questionTimeFrame;
     }
     
-    redis.hincrby("context","questionEncours",1,function(err,c){
-	    console.log("current question is now : " + c);
-    });
+//    redis.hincrby("context","questionEncours",1,function(err,c){
+//	    console.log("current question is now : " + c);
+//    });
     
     /**
     Timer active une tache de fond qui s execute tous les X ms
@@ -161,14 +172,15 @@ emitter.once('warmupEnd',function(timerId){
 emitter.on("sendQuestions",function(){
      redis.hmget("context","questionEncours",function(err,n){
         console.log("sending question : " + n + "/" + numberOfQuestions);
-    	if( n >= numberOfQuestions){
-               console.log("emitting event for end of game (no more questions)");
-               emitter.emit("endOfGame",qTimer);
-    	}else{
+    	if (n >= numberOfQuestions){
+            console.log("emitting event for end of game (no more questions)");
+            emitter.emit("endOfGame",qTimer);
+    	} else {
     		redis.hincrby("context","questionEncours",1);          
     	}
-    	responses[n].forEach(function(resp){
-    		    resp.send(200,{},"question " + n);    
+    	responses[n].forEach(function(callback){
+            callback();
+    		// resp.send(200,{},"question " + n);    
     	}); 
      });
         
@@ -177,26 +189,36 @@ emitter.on("sendQuestions",function(){
 /*
     sert la question n
 */
-function getQuestion(req,resp,n){
+exports.getQuestion = function(n, success, error) {
+   console.log("getQuestion " + n);
+
     gameState(
-        function(){
-            resp.send(400,{},"le jeu n a pas encore commence ");
+        function() {
+            redis.hmget("context","questionEncours",function(err,c){
+                if(c==1){
+                    responses[1].push(success);
+                }            
+            });
         }
         ,function(){
             var now = new Date().getTime();
             redis.hmget("context","questionEncours",function(err,c){
 	    	    if(n <= 0 || n > numberOfQuestions){
-                        resp.send(400,{},"le numero de la question demande est incorrect.");
+                        //resp.send(400,{},"le numero de la question demande est incorrect.");
+                    error();
 		    }else if (n>c){
-			resp.send(400,{},"question demande n est pas encore atteinte.");
+                    error();
+			    // resp.send(400,{},"question demande n est pas encore atteinte.");
 		    }else if(now >= quizSessions[n-1] && now <= (quizSessions[n]- synchroTimeDuration)){
 		        console.log("a user requests question : " + n)
-		        responses[n].push(resp);
+                responses[n].push(sucess);
 		        //resp.send(200,{},"voici la question " + n);
 		    }else if (now > (quizSessions[n]- synchroTimeDuration)){
-		        resp.send(400,{},"vous avez rate la question " + n);
+		        error();
+                //resp.send(400,{},"vous avez rate la question " + n);
 		    }else{
-		    	resp.send(400,{},"requete incoherente.");
+		    	error();
+                //resp.send(400,{},"requete incoherente.");
 		    }
 	    });
 	    
@@ -209,23 +231,27 @@ function getQuestion(req,resp,n){
 /*
 
 */
-function answerQuestion(req,resp,n){
-    
+exports.answerQuestion = function(n, success, error) {
      gameState(
 	function(){
-	   resp.send(400,{},"le jeu n a pas encore commence ");
+	   //resp.send(400,{},"le jeu n a pas encore commence ");
+        error();
 	}
         ,function(){
 	    var now = new Date().getTime();
 	    if(n <= 0 || n > numberOfQuestions){
-	        resp.send(400,{},"le numero de la question a la quelle vous repondez est incorrect.");
+	        //resp.send(400,{},"le numero de la question a la quelle vous repondez est incorrect.");
+            error();
 	    }else if(now >= quizSessions[n-1] && now <= (quizSessions[n]- synchroTimeDuration)){
 	        console.log("a user answers question : " + n)
-		resp.send(200,{},"voici votre score ... et la reponse correcte a la derniere question...  ");
+		    //resp.send(200,{},"voici votre score ... et la reponse correcte a la derniere question...  ");
+            success();
 	    }else if (now > (quizSessions[n]- synchroTimeDuration)){
-	        resp.send(400,{},"vous avez rate la question " + n);
+	        //resp.send(400,{},"vous avez rate la question " + n);
+            error();
 	    }else {
-	    	resp.send(400,{},"Requete incoherente.")
+	    	error();
+            //resp.send(400,{},"Requete incoherente.")
 	    }
         }
         ,null
