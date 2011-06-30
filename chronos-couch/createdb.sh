@@ -11,5 +11,3 @@ DB_URL=http://$HOST/thechallenge
 curl -X DELETE $DB_URL
 curl -X PUT $DB_URL
 
-curl -X PUT $DB_URL/_design/gameonly -d @design/gameonly.json
-
