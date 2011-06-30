@@ -15,9 +15,9 @@
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
           <boolProp name="LoopController.continue_forever">false</boolProp>
-          <stringProp name="LoopController.loops">1</stringProp>
+          <stringProp name="LoopController.loops">100</stringProp>
         </elementProp>
-        <stringProp name="ThreadGroup.num_threads">1000</stringProp>
+        <stringProp name="ThreadGroup.num_threads">5000</stringProp>
         <stringProp name="ThreadGroup.ramp_time">1</stringProp>
         <longProp name="ThreadGroup.start_time">1298219615000</longProp>
         <longProp name="ThreadGroup.end_time">1298219615000</longProp>
@@ -30,7 +30,7 @@
           <collectionProp name="Arguments.arguments">
             <elementProp name="server.ip" elementType="Argument">
               <stringProp name="Argument.name">server.ip</stringProp>
-              <stringProp name="Argument.value">127.0.0.1</stringProp>
+              <stringProp name="Argument.value">vfabric3</stringProp>
               <stringProp name="Argument.metadata">=</stringProp>
             </elementProp>
             <elementProp name="server.port" elementType="Argument">
@@ -45,7 +45,7 @@
             </elementProp>
             <elementProp name="result.output" elementType="Argument">
               <stringProp name="Argument.name">result.output</stringProp>
-              <stringProp name="Argument.value">/Users/pmage/Workspace/chronos/jmeter/result.csv</stringProp>
+              <stringProp name="Argument.value">/home/user/result.csv</stringProp>
               <stringProp name="Argument.metadata">=</stringProp>
             </elementProp>
           </collectionProp>
@@ -108,20 +108,20 @@
             <intProp name="Assertion.test_type">2</intProp>
           </ResponseAssertion>
           <hashTree/>
-          <ResultCollector guiclass="SimpleDataWriter" testclass="ResultCollector" testname="Simple Data Writer" enabled="false">
-            <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <ResultCollector guiclass="SimpleDataWriter" testclass="ResultCollector" testname="Simple Data Writer" enabled="true">
+            <boolProp name="ResultCollector.error_logging">true</boolProp>
             <objProp>
               <name>saveConfig</name>
               <value class="SampleSaveConfiguration">
                 <time>true</time>
                 <latency>true</latency>
                 <timestamp>true</timestamp>
-                <success>true</success>
+                <success>false</success>
                 <label>true</label>
                 <code>true</code>
                 <message>true</message>
                 <threadName>true</threadName>
-                <dataType>true</dataType>
+                <dataType>false</dataType>
                 <encoding>false</encoding>
                 <assertions>false</assertions>
                 <subresults>false</subresults>
@@ -134,12 +134,7 @@
                 <responseDataOnError>false</responseDataOnError>
                 <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
                 <assertionsResultsToSave>0</assertionsResultsToSave>
-                <bytes>true</bytes>
-                <url>true</url>
-                <hostname>true</hostname>
                 <threadCounts>true</threadCounts>
-                <sampleCount>true</sampleCount>
-                <idleTime>true</idleTime>
               </value>
             </objProp>
             <stringProp name="filename">${result.output}</stringProp>
