@@ -169,13 +169,14 @@ exports.getQuestion = function(n, login, success, fail ) {
         var sessionNMoins1 = parseInt(params[2]);
         var sessionN = parseInt(params[3]);
 
-        if(questionEncours==1 && n==1){
+        if((questionEncours==1 && n==1)&& (now >= sessionNMoins1 && now <= sessionN)){
             logger.log("a user waiting for question : " + 1)
             responses[1].push(success);
         }else if((n<=numberOfQuestions) && (now >= sessionNMoins1 && now <= sessionN)){
             logger.log("a user waiting for question : " + n)
             responses[n].push(success);
         }else{
+            logger.log("failed for question : " + n);
             fail();
         }
     });
