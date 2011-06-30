@@ -232,8 +232,12 @@ emitter.once('warmupEnd',function(timerId){
         quizSessions[1] = now;
         for(i=2; i<=(numberOfQuestions+1) ; i++){
              quizSessions[i] = quizSessions[i-1] + questionTimeFrame + synchroTimeDuration;
+              
         }
 
+        for (k=0;k<quizSessions;k++) {
+          logger.log(k + ' -> ' + new Date(quizSessions[k]));
+        }
         for(j=2; j<=(numberOfQuestions+1) ; j++){
 		    redis.hset("context",
                         "session_" + j  , quizSessions[j]);
@@ -258,8 +262,9 @@ emitter.once('warmupEnd',function(timerId){
                 // logger.log("checking end of time for question : " + n);
                 var now = new Date().getTime();
                 redis.hget("context","session_"+n,function(err,sessionN){    // FIXME une charge en plus pour redis
+                    logger.log(now + ' -> ' + sessionN);
                     if(now >= sessionN){
-                            logger.log("emitting event for sending question : " + n + ' / ' + questionEncours);
+                            logger.log("emitting event for sending question : " + n);
                             emitter.emit("sendQuestions",qTimer);
                             if( n < numberOfQuestions ) {
 				    redis.hincrby("context","questionEncours",1);
