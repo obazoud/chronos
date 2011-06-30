@@ -15,7 +15,7 @@ var saltvalue = '1';
 exports.createUser = function(req, res, params) {
   var url = couchdbaseburl + '/_users';
   var password_sha = hash.sha1(params.password + saltvalue);
-  sys.puts("password_sha: " + password_sha);
+  // sys.puts("password_sha: " + password_sha);
   
   restler.post(url, {
     data: JSON.stringify({'_id':'org.couchdb.user:' + params.mail, 'type':'user', 'name':params.mail, 'roles':[], 'password_sha':password_sha, 'salt':saltvalue}),
