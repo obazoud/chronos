@@ -22,7 +22,7 @@ exports.putDoc = function(name, json, options) {
     headers: { 'Content-Type': 'application/json' }
   })
   .on('error', function(data, response) {
-    if (options.error) {
+    if (options && options.error) {
       options.error(data);
     }
   })
@@ -32,18 +32,18 @@ exports.putDoc = function(name, json, options) {
         data: ''
       })
       .on('error', function(alldata, response2) {
-        if (options.error) {
+        if (options && options.error) {
           options.error(data);
         }
       })
       .on('complete', function(alldata, response2) {
         store[name] = alldata;
-        if (options.success) {
+        if (options && options.success) {
           options.success(data);
         }
       });
     } else {
-      if (options.success) {
+      if (options && options.success) {
         options.success(data);
       }
     }
@@ -55,12 +55,12 @@ exports.putDesign = function(name, options) {
     data: ''
   })
   .on('error', function(data, response) {
-    if (options.error) {
+    if (options && options.error) {
       options.error(data);
     }
   })
   .on('complete', function(data, response) {
-    if (options.success) {
+    if (options && options.success) {
       options.success(data);
     }
   });
@@ -68,7 +68,7 @@ exports.putDesign = function(name, options) {
 
 exports.getDoc = function(name, options) {
   if (store[name]) {
-    if (options.success) {
+    if (options && options.success) {
       options.success(store[name]);
       return;
     }
@@ -77,7 +77,7 @@ exports.getDoc = function(name, options) {
     data: ''
   })
   .on('error', function(data, response) {
-    if (options.error) {
+    if (options && options.error) {
       options.error(data);
     }
   })
@@ -85,7 +85,7 @@ exports.getDoc = function(name, options) {
     if (keys[name]) {
       store[name] = data;
     }
-    if (options.success) {
+    if (options && options.success) {
       options.success(data);
     }
   });
@@ -99,13 +99,13 @@ exports.head = function(name, options) {
   })
   .on('error', function(data, response) {
     if (response.statusCode != 404) {
-      if (options.error) {
+      if (options && options.error) {
         options.error(data);
       }
     }
   })
   .on('complete', function(data, response) {
-    if (options.success) {
+    if (options && options.success) {
       if (response.statusCode == 200) {
         options.success(data, response.headers.etag.replace(/\"/g, ""));
       } else {
@@ -120,12 +120,12 @@ exports.delete = function(name, id, options) {
     data: ''
   })
   .on('error', function(data, response) {
-    if (options.error) {
+    if (options && options.error) {
       options.error(data);
     }
   })
   .on('complete', function(data, response) {
-    if (options.success) {
+    if (options && options.success) {
         options.success(data);
     }
   });
