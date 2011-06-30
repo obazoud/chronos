@@ -39,7 +39,7 @@ public class NettyServer {
         bootstrap.setPipelineFactory(new HttpServerPipelineFactory());
         bootstrap.setOption("child.tcpNoDelay", true);
         bootstrap.setOption("child.keepAlive", true);
-        Channel channel = bootstrap.bind(new InetSocketAddress("127.0.0.1", port));
+        Channel channel = bootstrap.bind(new InetSocketAddress(port));
         channels = new DefaultChannelGroup("HTTP-Netty-Server");
         channels.add(channel);
 
