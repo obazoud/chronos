@@ -1,6 +1,6 @@
 var sys = require('sys');
 var uuid = require('node-uuid');
-var twitterapi = require('./twitter-api');
+var twitterapi = require('./twitter/twitter-api.js');
 var xml2json = require('./externals/xml2json.js');
 var chronosCouch = require('./chronos-couchdb-api.js');
 var security = require('./security.js');

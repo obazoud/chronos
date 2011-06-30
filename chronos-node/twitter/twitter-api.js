@@ -10,8 +10,8 @@ exports.tweetHttp = function(req, res, params) {
 };
 
 exports.tweet = function(message, options) {
-  var cmd = path.dirname(process.argv[1]) + "/twitter.sh -keyf=./ttytterkey -status=\"" + message + "\"";
-  sys.puts('cms tweet: ' + cmd);
+  var cmd = path.dirname(process.argv[1]) + "/twitter/twitter.sh -keyf=./ttytterkey -status=\"" + message + "\"";
+  sys.puts('cmd tweet: ' + cmd);
   exec(cmd, function (error, stdout, stderr) {
     sys.print('stderr: ' + stderr);
     sys.print('stdout: ' + stdout);
