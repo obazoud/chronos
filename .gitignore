@@ -3,3 +3,4 @@
 .classpath
 target
 jmeter/jmeter.log
+jmeter/result.csv

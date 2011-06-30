@@ -11,11 +11,6 @@
   <name>Chronos Netty</name>
   <dependencies>
     <dependency>
-      <groupId>com.chronos</groupId>
-      <artifactId>chronos-biz</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.jboss.netty</groupId>
       <artifactId>netty</artifactId>
     </dependency>
@@ -58,6 +53,7 @@
               <name>netty</name>
             </program>
           </programs>
+            <extraJvmArguments>-server -Xms1024m -Xmx1024m -XX:NewSize=512m -XX:MaxNewSize=512m -XX:MaxPermSize=128M -XX:-UseGCOverheadLimit -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:+UseCompressedOops -XX:+AggressiveOpts -XX:+UseFastAccessorMethods</extraJvmArguments>
         </configuration>
       </plugin>
     </plugins>

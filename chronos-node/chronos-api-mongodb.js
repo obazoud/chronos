@@ -8,13 +8,15 @@ var port = Connection.DEFAULT_PORT;
 
 console.log('Connecting to ' + host + ':' + port);
 
-var db = new Db('chronos-mongodb', new Server(host, port, {}), {native_parser:true});  
-db.open(function(err, db) {
-  db.dropDatabase(function(err, result) {
-    console.log('Dropping database: ' + result);
-    db.close();
+exports.dropDatabase = function(req, res) {
+  var db = new Db('chronos-mongodb', new Server(host, port, {}), {native_parser:true});  
+  db.open(function(err, db) {
+    db.dropDatabase(function(err, result) {
+      console.log('Dropping database: ' + result);
+      db.close();
+    });
   });
-});
+}
 
 exports.createUser = function(req, res, params) {
   console.log('Creating user: ' + params);
@@ -26,7 +28,7 @@ exports.createUser = function(req, res, params) {
         // Si un utilisateur ayant la même adresse mail existe déjà, une erreur est retournée
         if (count > 0) {
           db.close();
-          res.send(400, {}, {error:'Ce mail est déjà enregistré.'});
+          res.send(400, {'Content-Type':'application/json'}, {error:'Ce mail est déjà enregistré.'});
         }
         else {
           collection.insert({'firstname':params.firstname,'lastname':params.lastname,'mail':params.mail,'password':params.password});
@@ -48,7 +50,8 @@ exports.newGame = function(req, res, params) {
 }
 
 exports.login = function(req, res, params) {
-  // Si l'utilisateur n'existe pas ou si l'utilisateur est déjà loggé : 400
+  // Si l'utilisateur est déjà loggé : 400
+  // Problème d'authentification (l'utilisateur n'existe pas, mauvais mot de passe) : 401
   if (params.mail == 'deja.logge@test.com') {
     res.send(400);
   }
@@ -60,7 +63,8 @@ exports.login = function(req, res, params) {
 exports.getQuestion = function(req, res, n) {
   // Clé de session non reconnue : 401
   // Non respect de la séquence ou autre erreur : 400
-  res.send(200, {}, {question:n, answer_1:'answer_1', answer_2:'answer_2', score:42});
+//  res.send(200, {}, {question:n, answer_1:'answer_1', answer_2:'answer_2', score:42});
+  res.send(200, {}, {question:'question', answer_1:'answer_1', answer_2:'answer_2', score:42});
 }
 
 exports.answerQuestion = function(req, res, n, params) {
