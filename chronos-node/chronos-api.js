@@ -4,6 +4,7 @@ var sys = require('sys');
 var chronosCouch = require('./chronos-couchdb-api.js');
 var security = require('./security.js');
 var ranking = require("./ranking.js");
+var uuid = require('node-uuid');
 
 exports.ping = function(req, res) {
   res.send(201, {}, 'pong');
@@ -11,7 +12,7 @@ exports.ping = function(req, res) {
 
 // TODO appeler rancking#addUser(params.mail);
 exports.createUser = function(req, res, params) {
-  chronosCouch.putDoc(params.mail, {type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:[ ], reponses:[ ], score:0, lastbonus:0}, {
+  chronosCouch.putDoc(params.mail, {type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }}, {
     error: function(data) {
       res.send(400, {}, data);
     },
@@ -37,7 +38,8 @@ exports.newGame = function(req, res, params) {
       paramsJSON.gamesession.questions.question[i].qvalue=parseInt(i/5,10)*5;
     }
   }
-  
+  paramsJSON.game_id = uuid().toLowerCase();
+  //TODO : purge redis
   chronosCouch.putDoc('game', paramsJSON, {
     error: function(data) {
       if (JSON.parse(data).reason == 'Authentication key is not recognized.') {
@@ -87,15 +89,24 @@ exports.getQuestion = function(req, res, n) {
           res.send(400, {}, data);
         },
         success: function(game) {
-          var q = JSON.parse(game).gamesession.questions.question[n-1];
+          var gamejson = JSON.parse(game);
+          var q = gamejson.gamesession.questions.question[n-1];
           var userDocjson = JSON.parse(userDoc);
           var question = {};
           question.question = q.label;
           for (i=0; i<q.choice.length;i++) {
             question['answer_' + (i+1)] = q.choice[i];
           }
-          question.score = userDocjson.score;
-          question.lastbonus = userDocjson.lastbonus;
+          if (userDocjson.score[gamejson.game_id] == null) {
+            question.score = userDocjson.score[gamejson.game_id];
+          } else {
+            question.score = 0;
+          }
+          if (userDocjson.lastbonus[gamejson.game_id] == null) {
+            question.lastbonus = userDocjson.lastbonus[gamejson.game_id];
+          } else {
+            question.lastbonus = 0;
+          }
           res.send(200, {}, question);
         }
       });
@@ -110,8 +121,9 @@ exports.answerQuestion = function(req, res, n, params) {
       res.send(400, {}, data);
     },
     success: function(data) {
-      var q = JSON.parse(data).gamesession.questions.question[n-1];
-      chronosCouch.putDesign('/_design/answer/_update/accumulate/' + req.jsonUser.login + '?question=' + n + '&reponse=' + params.answer + '&correct=' + q.goodchoice + '&valeur=' + q.qvalue, {
+      var game = JSON.parse(data);
+      var q = game.gamesession.questions.question[n-1];
+      chronosCouch.putDesign('/_design/answer/_update/accumulate/' + req.jsonUser.login + '?question=' + n + '&reponse=' + params.answer + '&correct=' + q.goodchoice + '&valeur=' + q.qvalue + '&game_id=' + game.game_id, {
         error: function(data) {
           res.send(400, {}, data);
         },
@@ -203,9 +215,9 @@ exports.audit = function(req, res, params) {
           for (i=0; i<question.length; i++) {
             audit.good_answers.push(question[i].goodchoice);
           }
-          var user_questions = JSON.parse(player).questions;
+          var user_questions = JSON.parse(player).questions[game.game_id];
           for (i=0; i<user_questions.length; i++) {
-            audit.user_answers[user_questions[i] - 1] = JSON.parse(player).responses[i];
+            audit.user_answers[user_questions[i] - 1] = JSON.parse(player).responses[game.game_id][i];
           }
           res.send(200, {}, audit);
         }
@@ -234,10 +246,10 @@ exports.audit = function(req, res, n, params) {
           var audit = {};
           audit.good_answer = JSON.parse(game).gamesession.questions.question[n-1].goodchoice;
           audit.question = JSON.parse(game).gamesession.questions.question[n-1].label;
-          var user_questions = JSON.parse(player).questions;
+          var user_questions = JSON.parse(player).questions[game.game_id];
           for (i=0; i<user_questions.length; i++) {
             if (user_questions[i] == n) {
-              audit.user_answer = JSON.parse(player).reponses[i];
+              audit.user_answer = JSON.parse(player).reponses[game.game_id][i];
               break;
             }
           }

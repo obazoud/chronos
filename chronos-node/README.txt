@@ -21,8 +21,8 @@ npm install restler
 npm install journey
 npm install twitter
 npm install node_hash
-nmp install redis
- 
+npm install redis
+npm install node-uuid 
 
 npm install journey
 

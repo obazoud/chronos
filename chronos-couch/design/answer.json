@@ -1,23 +1,37 @@
 {
    "_id": "_design/answer",
    "updates": {
-       "accumulate": "function (doc, req) { 
-          question= parseInt(req.query.question);
+       "accumulate": "function (doc, req) {
+           question= parseInt(req.query.question);
            reponse= parseInt(req.query.reponse);
            correct= parseInt(req.query.correct);
-         
+           game_id=req.query.game_id;
+
+           if (doc.lastbonus[game_id] == null) {
+              doc.lastbonus[game_id] = 0;
+           }
+           if (doc.score[game_id] == null) {
+              doc.score[game_id] = 0;
+           }
+           if (doc.reponses[game_id] == null) {
+              doc.reponses[game_id] = [];
+           }
+           if (doc.questions[game_id] == null) {
+              doc.questions[game_id] = [];
+           }
+
            if (reponse == correct) {
                 valeur=parseInt(req.query.valeur);
-                bonus= doc.lastbonus;
-                doc.lastbonus = doc.lastbonus + 1;
+                bonus= doc.lastbonus[game_id];
+                doc.lastbonus[game_id] = doc.lastbonus[game_id] + 1;
                 inc = valeur + bonus;
-                doc.score = doc.score + inc;
+                doc.score[game_id] = doc.score[game_id] + inc;
            } else {
-             doc.lastbonus = 0;
+             doc.lastbonus[game_id] = 0;
            }
-          doc.reponses.push(reponse);
-          doc.questions.push(question);
-          return [doc, doc.score + \"\"];
+          doc.reponses[game_id].push(reponse);
+          doc.questions[game_id].push(question);
+          return [doc, doc.score[game_id] + \"\"];
         }"
     }
 }
