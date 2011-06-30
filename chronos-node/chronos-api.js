@@ -1,6 +1,7 @@
 var twitter = require('twitter');
 var xml2json = require('./xml2json.js');
 var sys = require('sys');
+var nibbler = require('./nibbler');
 var chronosCouch = require('./chronos-couchdb-api.js');
 
 exports.ping = function(req, res) {
@@ -8,19 +9,12 @@ exports.ping = function(req, res) {
 };
 
 exports.createUser = function(req, res, params) {
-  chronosCouch.createCouchUser(params.mail, params.password, {
+  chronosCouch.createChronosUser(params.firstname, params.lastname, params.mail, params.password, {
     error: function(data, response) {
       res.send(400, {}, data);
     },
     success: function(data, response) {
-      chronosCouch.createChronosUser(params.firstname, params.lastname, params.mail, params.password, {
-        error: function(data, response) {
-          res.send(400, {}, data);
-        },
-        success: function(data, response) {
-          res.send(201);
-        }
-      });
+      res.send(201);
     }
   });
 };
@@ -55,9 +49,9 @@ exports.newGame = function(req, res, params) {
   });
 };
 
-// TODO: cookie persistence ?
 exports.login = function(req, res, params) {
-  chronosCouch.login(params.mail, params.password, {
+  // already login ?
+  chronosCouch.getDoc(params.mail, {
     error: function(data, response) {
       if (data.error == 'unauthorized') {
         res.send(401);
@@ -65,82 +59,89 @@ exports.login = function(req, res, params) {
       res.send(400);
     },
     success: function(data, response) {
-      var cookie = response.headers['set-cookie'][0].split(';')[0];
-      res.send(201, {"session_key":cookie}, '');
+      var userDocjson = JSON.parse(data);
+      if (userDocjson.password != params.password) {
+        res.send(401);
+      } else {
+        var sessionkey = nibbler.b64encode(JSON.stringify({ "login": params.mail, "password": params.password }));
+        res.send(201, {"session_key":sessionkey}, '');
+      }
     }
   });
 };
 
 exports.getQuestion = function(req, res, n) {
-  chronosCouch.getCurrentUser(req.headers.session_key, {
+  if (!req.headers.session_key) {
+    res.send(401);
+    return;
+  }
+  var session_key = nibbler.b64decode(req.headers.session_key);
+  var sessionkeyjson;
+  try {
+    sessionkeyjson = JSON.parse(session_key);
+  } catch (err) {
+    res.send(401);
+    return;
+  }
+
+  chronosCouch.getDoc(sessionkeyjson.login, {
     error: function(data, response) {
       res.send(400, {}, data);
     },
-    success: function(user, response) {
-      var jsonuser = JSON.parse(user);
-      if (!jsonuser.userCtx.name) {
-        res.send(401, {}, user);
-      } else {
-        chronosCouch.getDoc('game', req.headers.session_key, {
-          error: function(data, response) {
-            res.send(400, {}, data);
-          },
-          success: function(game, response) {
-            chronosCouch.getDoc(jsonuser.userCtx.name, req.headers.session_key, {
-              error: function(data, response) {
-                res.send(400, {}, data);
-              },
-              success: function(userDoc, response) {
-                var q = JSON.parse(game).gamesession.questions.question[n-1];
-                var userDocjson = JSON.parse(userDoc);
-                var question = {};
-                question.question = q.label;
-                for (i=0; i<q.choice.length;i++) {
-                  question['answer_' + (i+1)] = q.choice[i];
-                }
-                question.score = userDocjson.score;
-                question.lastbonus = userDocjson.lastbonus;
-                res.send(200, {}, question);
-              }
-            });
+    success: function(userDoc, response) {
+      chronosCouch.getDoc('game', {
+        error: function(data, response) {
+          res.send(400, {}, data);
+        },
+        success: function(game, response) {
+          var q = JSON.parse(game).gamesession.questions.question[n-1];
+          var userDocjson = JSON.parse(userDoc);
+          var question = {};
+          question.question = q.label;
+          for (i=0; i<q.choice.length;i++) {
+            question['answer_' + (i+1)] = q.choice[i];
           }
-        });
-      }
+          question.score = userDocjson.score;
+          question.lastbonus = userDocjson.lastbonus;
+          res.send(200, {}, question);
+        }
+      });
     }
   });
 };
 
 exports.answerQuestion = function(req, res, n, params) {
-  chronosCouch.getCurrentUser(req.headers.session_key, {
+  if (!req.headers.session_key) {
+    res.send(401);
+    return;
+  }
+  var session_key = nibbler.b64decode(req.headers.session_key);
+  var sessionkeyjson;
+  try {
+    sessionkeyjson = JSON.parse(session_key);
+  } catch (err) {
+    res.send(401);
+    return;
+  }
+
+  chronosCouch.getDoc('game', {
     error: function(data, response) {
       res.send(400, {}, data);
     },
     success: function(data, response) {
-      var json = JSON.parse(data);
-      if (!json.userCtx.name) {
-        res.send(401, {}, data);
-      } else {
-        chronosCouch.getDoc('game', req.headers.session_key, {
-          error: function(data, response) {
-            res.send(400, {}, data);
-          },
-          success: function(data, response) {
-            var q = JSON.parse(data).gamesession.questions.question[n-1];
-            chronosCouch.putDesign('/_design/answer/_update/accumulate/' + json.userCtx.name + '?question=' + n + '&reponse=' + params.answer + '&correct=' + q.goodchoice + '&valeur=' + q.qvalue, req.headers.session_key, {
-              error: function(data, response) {
-                res.send(400, {}, data);
-              },
-              success: function(data, response) {
-                var answer = {};
-                answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
-                answer.good_answer=q.goodchoice;
-                answer.score=data;
-                res.send(200, {}, answer);
-              }
-            });
-          }
-        });
-      }
+      var q = JSON.parse(data).gamesession.questions.question[n-1];
+      chronosCouch.putDesign('/_design/answer/_update/accumulate/' + sessionkeyjson.login + '?question=' + n + '&reponse=' + params.answer + '&correct=' + q.goodchoice + '&valeur=' + q.qvalue, {
+        error: function(data, response) {
+          res.send(400, {}, data);
+        },
+        success: function(data, response) {
+          var answer = {};
+          answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
+          answer.good_answer=q.goodchoice;
+          answer.score=data;
+          res.send(200, {}, answer);
+        }
+      });
     }
   });
 };
