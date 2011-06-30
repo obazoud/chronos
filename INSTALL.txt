@@ -33,9 +33,15 @@ deb-src http://ppa.launchpad.net/git-core/ppa/ubuntu lucid main
 
 
 # Optim systeme
+http://www.cyberciti.biz/files/linux-kernel/Documentation/networking/ip-sysctl.txt
+http://serverfault.com/questions/10852/what-limits-the-maximum-number-of-connections-on-a-linux-server
 http://redmine.lighttpd.net/wiki/1/Docs:Performance
 http://www.metabrew.com/article/a-million-user-comet-application-with-mochiweb-part-1
 http://www.acc.umu.se/~maswan/linux-netperf.txt
+
+#tsung
+sudo apt-get install gnuplot-nox libtemplate-perl libhtml-template-perl libhtml-template-expr-perl
+ http://tsung.erlang-projects.org/dist/tsung-1.3.3.tar.gz ~$ tar -zxvf tsung-1.3.0.tar.gz ~$ cd tsung-1.3.0 ~/tsung-1.3.0$ ./configure && make && sudo make instal
 
 ulimit -a
 ulimit -Hn
