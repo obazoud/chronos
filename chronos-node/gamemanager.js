@@ -13,7 +13,6 @@ var responses = [];
 responses[0] = [];
 responses[1] = [];
 
-//var quizSessions = [];
 
 var timerId;
 var qTimer;
@@ -219,26 +218,26 @@ emitter.once('warmupEnd',function(timerId){
 	    var dateFinWarmup = parseInt(params[3]);
 
 	    for(q=2;q<=numberOfQuestions;q++){
-		responses[q] = [];// verfifier si avec le comportement asynch ca peux poser des problemes    
+		    responses[q] = [];// verfifier si avec le comportement asynch ca peux poser des problemes
 	    }
 
 	    // initialisation des timeFrames des questions
 	    redis.hset("context",
                         "session_" + 1 , new Date().getTime());
 
-	    for(i=2; i<=numberOfQuestions ; i++){
-		    redis.hget("context", "session_"+(i-1), function(last){
-                redis.hset("context",
-                        "session_" + i , last + questionTimeFrame + synchroTimeDuration);
-            });
+
+        var quizSessions = [];
+        for(i=2; i<=numberOfQuestions ; i++){
+             quizSessions[i] = quizSessions[i-1] + questionTimeFrame + synchroTimeDuration;
+        }
+
+        for(j=2; j<=numberOfQuestions ; j++){
+		    redis.hset("context",
+                        "session_" + j  , quizSessions[j]);
 
 	    }
         redis.save();
-        //TODO a enlever
-	    for(j=0;j<numberOfQuestions;j++){
-	    	redis.hget("context","session_"+j,logger.log);
-	    }
-	    
+
     });
     /**
     Timer active une tache de fond qui s execute tous les X ms

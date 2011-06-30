@@ -4,7 +4,8 @@ set -x
 # https://github.com/zpoley/json-command
 # npm install json
 
-./createdb.sh localhost 5984
+../chronos-couch/createdb.sh localhost 5984
+
 redis-cli flushdb
 
 CHRONOS_HOST=localhost
@@ -30,7 +31,7 @@ assertNotNull() {
 curl -iX POST -H Accept:application/json -H Content-Type:application/json -d '{"firstname" : "olivier", "lastname" : "bazoud", "mail" : "null@gmail.com","password" : "secret"}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/user
 sleep 6
 
-GAME_JSON="`cat ./sample/gamesession-sample-encode.json`"
+GAME_JSON="`cat ../chronos-couch/sample/gamesession-sample-encode.json`"
 curl -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d "${GAME_JSON}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/game
 sleep 2
 
