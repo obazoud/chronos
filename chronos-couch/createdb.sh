@@ -12,6 +12,6 @@ curl -X PUT http://superadmin:supersecret@localhost:5984/thechallenge/game1 -d '
 
 curl -X PUT http://superadmin:supersecret@localhost:5984/thechallenge/_design/validate -d @design/validate.json
 
-JSON="`cat ./sample/gamesession-sample.json`"
-curl -X POST -H Accept:application/json -H Content-Type:application/json -d "${JSON}" http://localhost:8080/api/game
+JSON="`cat ./sample/gamesession-sample-encode.json`"
+curl -iX POST -H Accept:application/json -H Content-Type:application/json -d "${JSON}" http://localhost:8080/api/game
 
