@@ -23,37 +23,45 @@ exports.createUser = function(req, res, params) {
 };
 
 exports.newGame = function(req, res, params) {
-  var gameXML = params.parameters.replace(/ xmlns:usi/g, " usi").replace(/ xmlns:xsi/g, " xsi").replace(/ xsi:schemaLocation/g, " schemaLocation").replace(/usi:/g, "");
-  gameXML = gameXML.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"");
+  var paramsJSON = processGameXML(params.authentication_key, params.parameters);
 
-  var paramsJSON = xml2json.parse(gameXML);
-  paramsJSON.type = 'game';
-  paramsJSON.authentication_key = params.authentication_key || '';
-  delete paramsJSON.value;
-  for(i=0;i<paramsJSON.gamesession.questions.question.length;i++) {
-    if (i<5) {
-      paramsJSON.gamesession.questions.question[i].qvalue=1;
-    } else {
-      paramsJSON.gamesession.questions.question[i].qvalue=parseInt(i/5,10)*5;
-    }
-  }
-  paramsJSON.game_id = uuid().toLowerCase();
   chronosCouch.putDoc('game', paramsJSON, {
     error: function(data) {
-      if (JSON.parse(data).reason == 'Authentication key is not recognized.') {
+      var error = JSON.parse(data);
+      if (error.reason == 'Authentication key is not recognized.') {
         res.send(401);
       } else {
+        console.log(data);
         res.send(400);
       }
     },
     success: function(data) {
-      ranking.reset(function(err,incrementedScore) {
+      ranking.reset(function(err, incrementedScore) {
         console.log("incrementedScore=" + incrementedScore);
         res.send(201);
       });
     }
   });
 };
+
+function processGameXML(authentication_key, parameters) {
+  var gameXML = parameters.replace(/ xmlns:usi/g, " usi").replace(/ xmlns:xsi/g, " xsi").replace(/ xsi:schemaLocation/g, " schemaLocation").replace(/usi:/g, "");
+  gameXML = gameXML.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"");
+
+  var paramsJSON = xml2json.parse(gameXML);
+  paramsJSON.type = 'game';
+  paramsJSON.authentication_key = authentication_key || '';
+  delete paramsJSON.value;
+  for(i = 0;i < paramsJSON.gamesession.questions.question.length; i++) {
+    if (i < 5) {
+      paramsJSON.gamesession.questions.question[i].qvalue = 1;
+    } else {
+      paramsJSON.gamesession.questions.question[i].qvalue = parseInt(i / 5, 10) * 5;
+    }
+  }
+  paramsJSON.game_id = uuid().toLowerCase();
+  return paramsJSON;
+}
 
 exports.login = function(req, res, params) {
   // already login ?
