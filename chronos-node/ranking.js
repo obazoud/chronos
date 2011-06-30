@@ -6,18 +6,19 @@ client.on("error", function (err) {
     console.log("Error " + err);
 });
 
-exports.addUser = function addUser(lastname,firstname,mail){
+exports.addUser = function addUser(lastname,firstname,mail,callback){
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
-    client.zadd("scores",0,token,function(err,reply){
-        // console.log("user : " + token + " added");
+    client.zadd("scores",0,token,function(err,added){
+        // added == 1 if the element was added.
+        // added == 0 if the element was already a member of the sorted set and the score was updated.
+        callback(err,added);
     });
 };
 
-exports.updateScore = function updateScore(lastname,firstname,mail,newScore){
+exports.updateScore = function updateScore(lastname,firstname,mail,newScore,callback){
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
-    // TODO: avoid this call to redis by replacing newScore by increment
-    client.zadd("scores",-newScore,token,function(err,score) {
-        // callback?
+    client.zadd("scores",-newScore,token,function(err,updated) {
+        callback(err,updated);
     });
 };
 
@@ -161,7 +162,7 @@ exports.reset = function reset(callback) {
         } else {
             users.forEach(function(user) {
                 client.zadd("scores",0,user,function(err,score) {
-                    callback(err,score);
+                    callback(err,updated);
                 });
             });
         }
@@ -169,9 +170,9 @@ exports.reset = function reset(callback) {
 };
 
 /*
-addUser("bazoud","olivier","olivier@gmail.com");
-addUser("mage","pierre","pierre@gmail.com");
-addUser("tebourbi","slim","slim@gmail.com");
+addUser("bazoud","olivier","olivier@gmail.com",function(err,reply){});
+addUser("mage","pierre","pierre@gmail.com",function(err,reply){});
+addUser("tebourbi","slim","slim@gmail.com",function(err,reply){});
 
 updateScore("bazoud","olivier","olivier@gmail.com",10);
 updateScore("mage","pierre","pierre@gmail.com",1);

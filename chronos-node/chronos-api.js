@@ -49,8 +49,17 @@ exports.createUser = function(req, res, params) {
               res.send(400, {}, data);
             },
             success: function(data) {
-              ranking.addUser(params.lastname,params.firstname,params.mail);
-              res.send(201);
+              ranking.addUser(params.lastname,params.firstname,params.mail,function(err,added){
+                if (err) {
+                  res.send(400, {}, err);
+                }
+                else if (added == 0) {
+                  res.send(400, {}, "user already exist in redis");
+                }
+                else {
+                  res.send(201);
+                }
+              });
             }
           });
         }
@@ -109,9 +118,14 @@ function putGame(req, res, params, paramsJSON) {
       success: function(data) {
         console.log(tools.toISO8601(new Date()) + ": game successfully added.");
         gamemanager.initGame(paramsJSON);
-        ranking.reset(function(err, incrementedScore) {
-          console.log(tools.toISO8601(new Date()) + ": Redis: score to 0: OK " + incrementedScore);
-          res.send(201);
+        ranking.reset(function(err, updated) {
+          if (err) {
+            res.send(400, {}, err);
+          }
+          else {
+            //console.log(tools.toISO8601(new Date()) + ": Redis: score to 0: OK " + (updated == 0));
+            res.send(201);
+          }
         });
       }
     });
@@ -241,8 +255,12 @@ exports.answerQuestion = function(req, res, n, params) {
                 answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
                 answer.good_answer=q.goodchoice;
                 answer.score=scoreDoc;
-                ranking.updateScore(req.jsonUser.lastname,req.jsonUser.fistname,req.jsonUser.login,scoreDoc);
-                res.send(200, {}, answer);
+                ranking.updateScore(req.jsonUser.lastname,req.jsonUser.fistname,req.jsonUser.login,scoreDoc,function(err,updated){
+                  if (err) {
+                    res.send(400, {}, err);
+                  }
+                  res.send(200, {}, answer);
+                });
               }
             });
           }
