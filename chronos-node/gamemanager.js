@@ -290,7 +290,7 @@ exports.getQuestion = function(req, res, n) {
   if (now >= sessionNMoins1 && now <= sessionN) {
     redis.hget("players", login + ":score", function(err, reply) {
       if (err)  {
-        logger.log('getQuestion ' + n + '[' + req.jsonUser.login + '] : ' + err);
+        // logger.log('getQuestion ' + n + '[' + req.jsonUser.login + '] : ' + err);
         res.send(400);
       } else {
         var score = 0;
