@@ -2,7 +2,7 @@ var sys = require('sys');
 var fs = require('fs');
 var logger = require('util');
 var router = require('./router');
-
+var security = require('./security.js');
 var chronosSettings = require('./conf/settings.js').create();
 // Show settings
 logger.log('Loading Chronos settings: ' + sys.inspect(chronosSettings, false));
@@ -57,7 +57,13 @@ module.exports = http.createServer(function(req, res) {
     router.handle(req, res, body, function(result) {
       result.headers['Server'] = 'Chronos/1.0';
       if (result.headers['Set-Cookie'] == null && req.headers['cookie'] != null) {
-        result.headers['Set-Cookie'] = req.headers['cookie'];
+        if (req.jsonUser) {
+          //logger.log("< User: " + JSON.stringify(req.jsonUser));
+          var session_key = security.encode(req.jsonUser.login);
+          var data_key = security.encodeScore(req.jsonUser.firstname, req.jsonUser.lastname, req.jsonUser.score, req.jsonUser.lastbonus, req.jsonUser.lastquestion);
+          //logger.log("< cookieContent: " + session_key + ' / ' + data_key);
+          result.headers['Set-Cookie'] = ['session_key=' + session_key + '; path=/', 'data_key=' + data_key + '; path=/'];
+        }
       }
       result.headers["Date"] = new(Date)().toUTCString();
       if (result.body) {

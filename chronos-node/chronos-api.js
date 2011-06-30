@@ -179,8 +179,9 @@ exports.login = function(req, res, body) {
               // logger.log(params.mail + ": exists.");
               res.send(400);
             } else {
-              var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
-              res.send(201, {'Set-Cookie': 'session_key=' + sessionkey}, '');
+              var session_key = security.encode(params.mail);
+              var data_key = security.encodeScore(userDocjson.firstname, userDocjson.lastname, 0, 0, 0);
+              res.send(201, {'Set-Cookie': ['session_key=' + session_key + '; path=/', 'data_key=' + data_key + '; path=/']}, '');
               gamemanager.warmup(res);
               // TODO callback ?
               ranking.addUser(userDocjson.lastname, userDocjson.firstname, params.mail);

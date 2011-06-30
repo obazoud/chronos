@@ -1,27 +1,37 @@
 var crypto = require('crypto');
-var key = '1hv4pmT';
+var logger = require('util');
+// TODO key modulo game id ?
+var key = 'F28i4Lk';
 
 exports.authorize = function(req, res) {
   if (!req.headers['cookie']) {
     res.send(401, {}, {error: 'Unauthorized'});
     return false;
   }
-  var session_key = exports.decrypt(req.headers['cookie'].split('=')[1]);
-  var sessionkeyjson;
   try {
-    sessionkeyjson = JSON.parse(session_key);
-    req.jsonUser = sessionkeyjson;
+    var cookieContent = req.headers['cookie'].split(';');
+    //logger.log("> cookieContent: " + cookieContent);
+    req.login = exports.decrypt(cookieContent[1].split('=')[1]);
+    var rawUserData = exports.decrypt(cookieContent[0].split('=')[1]);
+    var rawUserDataParts = rawUserData.split(/;/);
+    req.jsonUser = {"login": req.login, "firstname": rawUserDataParts[0], "lastname": rawUserDataParts[1], "score": parseInt(rawUserDataParts[2]), "lastbonus": parseInt(rawUserDataParts[3]), "lastquestion": parseInt(rawUserDataParts[4]) };
+    //logger.log("> User: " + JSON.stringify(req.jsonUser));
   } catch (err) {
-    res.send(401, {}, {error: 'Unauthorized'});
+    logger.log("authorize: " + err);
+    res.send(401, {}, {error: 'Unauthorized', "reason": err});
     return false;
   }
   return true;
 };
 
-exports.encode = function(data) {
-  return exports.crypt(JSON.stringify(data));
+exports.encode = function(mail) {
+  return exports.crypt(mail);
 };
 
+exports.encodeScore = function(firstname, lastname, score, lastbonus, lastquestion) {
+  //logger.log("encodeScore: " + firstname + ';' + lastname + ';' + score + ';' + lastbonus + ';' + lastquestion);
+  return exports.crypt(firstname + ';' + lastname + ';' + score + ';' + lastbonus + ';' + lastquestion);
+};
 
 exports.crypt = function(text) {
   var cipher = crypto.createCipher('aes-128-cbc', key);

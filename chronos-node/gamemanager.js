@@ -282,42 +282,30 @@ function questionTimer(k) {
 /** get question N **/
 exports.getQuestion = function(req, res, n) {
   var now = req.incomeDate;
-  var login = req.jsonUser.login;
   var sessionNMoins1 = gameState.sessions[n - 1];
   var sessionN = gameState.sessions[n];
 
   if (now >= sessionNMoins1 && now <= sessionN) {
-    redis.hget("players", login + ":score", function(err, reply) {
-      if (err)  {
-        res.send(400);
-      } else {
-        var score = 0;
-        if (reply != null) {
-          score = parseInt(reply);
-        }
-
-        var q = gameState.game.gamesession.questions.question[n - 1];
-        var question = {};
-        question.question = q.label;
-        for (var j = 0; j < q.choice.length; j++) {
-          question['answer_' + (j+1)] = q.choice[j];
-        }
-        question.score = "" + score + "";
-        var ctx = {
-            n: n,
-            timestamp: now,
-            req: req,
-            res: res,
-            question: question
-        };
-        gameState.pushQuestion(ctx);
-        // TODO
-        //req.connection.on('timeout', function() {
-        //    ctx = {};
-        //});
-        // req.pause();
-      }
-    });
+    var q = gameState.game.gamesession.questions.question[n - 1];
+    var question = {};
+    question.question = q.label;
+    for (var j = 0; j < q.choice.length; j++) {
+      question['answer_' + (j+1)] = q.choice[j];
+    }
+    question.score = "" + req.jsonUser.score + "";
+    var ctx = {
+        n: n,
+        timestamp: now,
+        req: req,
+        res: res,
+        question: question
+    };
+    gameState.pushQuestion(ctx);
+    // TODO
+    //req.connection.on('timeout', function() {
+    //    ctx = {};
+    //});
+    // req.pause();
   } else {
     logger.log('getQuestion ' + n + ', missing time frame for: ' + (now - sessionNMoins1) + ' ms. ' + '[' + req.jsonUser.login + ']');
     res.send(400);
@@ -327,9 +315,6 @@ exports.getQuestion = function(req, res, n) {
 /** answer question N **/
 exports.answerQuestion = function(req, res, n, params) {
   var now = req.incomeDate;
-  var login = req.jsonUser.login;
-  var firstname = req.jsonUser.firstname;
-  var lastname = req.jsonUser.lastname;
 
   var sessionN = gameState.sessions[n];
   var maxTime = gameState.sessions[n + 1] - gameState.synchrotime;
@@ -337,46 +322,33 @@ exports.answerQuestion = function(req, res, n, params) {
   if (now >= sessionN && now <= maxTime) {
     var q = gameState.game.gamesession.questions.question[n-1];
 
-    redis.hmget("players", login + ":score", login + ':lastbonus', function(err, replies) {
-      if (err) {
-        res.send(400);
-      } else {
-        var score = 0;
-        var lastbonus = 0;
-
-        if (replies[0]) {
-          score = parseInt(replies[0]);
-        }
-        if (replies[1]) {
-          lastbonus = parseInt(replies[1]);
-        }
-
-        // TODO : checks if bonus is correct, answer last question ?
-
-        if (params.answer == q.goodchoice) {
-          var bonus = lastbonus;
-          lastbonus = lastbonus + 1;
-          var inc = q.qvalue + bonus;
-          score = score + inc;
-        } else {
-          lastbonus = 0;
-        }
-
-        var token = JSON.stringify({"lastname":lastname, "firstname":firstname, "mail":login});
-        // logger.log("Score " + login + ": " + token + ", " + score);
-        redis.multi()
-          .hmset("players", login + ":score", score, login + ':lastbonus', lastbonus, login + ':q:' + n, params.answer)
-          .zadd("scores", -score, token)
-          .exec();
-
-        var answer = {};
-        answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
-        answer.good_answer = q.choice[q.goodchoice - 1];
-        answer.score = "" + score + "";
-
-        res.send(201, {}, answer);
+    if (params.answer == q.goodchoice) {
+      if ((n - 1) != req.jsonUser.lastquestion) {
+        req.jsonUser.lastbonus = 0;
       }
-    });
+      var bonus = req.jsonUser.lastbonus;
+      req.jsonUser.lastbonus = req.jsonUser.lastbonus + 1;
+      var inc = q.qvalue + bonus;
+      req.jsonUser.score = req.jsonUser.score + inc;
+    } else {
+      req.jsonUser.lastbonus = 0;
+    }
+    req.jsonUser.lastquestion = n;
+
+    var token = JSON.stringify({"lastname":req.jsonUser.lastname, "firstname":req.jsonUser.firstname, "mail":req.jsonUser.login});
+    // logger.log("Score " + req.jsonUser.login + ": " + token + ", " + req.jsonUser.score);
+    redis.multi()
+      .hmset("players", req.jsonUser.login + ":score", req.jsonUser.score, req.jsonUser.login + ':lastbonus', req.jsonUser.lastbonus, req.jsonUser.login + ':lastquestion', req.jsonUser.lastquestion, req.jsonUser.login + ':q:' + n, params.answer)
+      .zadd("scores", -req.jsonUser.score, token)
+      .exec();
+    // TODO redis callback ?
+
+    var answer = {};
+    answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
+    answer.good_answer = q.choice[q.goodchoice - 1];
+    answer.score = "" + req.jsonUser.score + "";
+
+    res.send(201, {}, answer);
   } else {
     logger.log('answerQuestion ' + n + ' missing for ' + (now - maxTime) + ' ms. ' + '[' + login + ']');
     res.send(400);

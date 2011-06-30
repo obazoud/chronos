@@ -1,9 +1,10 @@
 #!/bin/bash 
 set -e
-#set -x
+set -x
 
 CHRONOS_HOST=localhost
 CHRONOS_PORT=8080
+COOKIE='/tmp/cookie'
 
 assertEquals() {
   if [ -f "$4" ]; then
@@ -22,160 +23,163 @@ assertNotNull() {
   fi
 }
 
+if [ -f $COOKIE ]; then
+  rm $COOKIE
+fi
+
 GAME_JSON="`cat ../chronos-couch/sample/gamesession-sample-encode.json`"
 curl -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d "${GAME_JSON}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/game
 sleep 2
 
 
-curl -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"mail" : "abbott.adams@yahoo.com", "password" : "o1rufd3efty5fd3e"}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/login
-sessionkey=456b29ca3cd897dde39bb1e23d42c8de2ae07f5461b3647af3f02ec82aed70a246c68278092948c18d077074b8458bea1819de4a0d7a6820c81b03a9f25a988d17f3922230bcd186eda86f8da005548ffcb05d4c2e3c3f6d51fc4649163c428c9f122ca733530798d36d2ee2f6798467
+curl --cookie $COOKIE --cookie-jar $COOKIE -ivX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"mail" : "abbott.adams@yahoo.com", "password" : "o1rufd3efty5fd3e"}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/login
 
 sleep 2 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/1
+curl --cookie $COOKIE --cookie-jar $COOKIE -ivX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/1
 
 sleep 2
-curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/1
+curl --cookie $COOKIE --cookie-jar $COOKIE -ivX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/1
 
 sleep 1 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/2
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/2
 
 sleep 3
-curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/2
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/2
 
 sleep 1 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/3
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/3
 
 sleep 3
-curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/3
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/3
 
 
 sleep 1 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/4
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/4
 
 sleep 3
-curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/4
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/4
 
 
 sleep 1 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/5
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/5
 
 sleep 3
-curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/5
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/5
 
 
 sleep 1 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/6
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/6
 
 sleep 3
-curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/6
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/6
 
 
 sleep 1 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/7
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/7
 
 sleep 3
-curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/7
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/7
 
 
 sleep 1 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/8
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/8
 
 sleep 3
-curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/8
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/8
 
 
 sleep 1 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/9
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/9
 
 sleep 3
-curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/9
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/9
 
 
 sleep 1 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/10
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/10
 
 sleep 3
-curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/10
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/10
 
 
 sleep 1 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/11
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/11
 
 sleep 3
-curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/11
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/11
 
 
 sleep 1 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/12
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/12
 
 sleep 3
-curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/12
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/12
 
 
 
 sleep 1 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/13
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/13
 
 sleep 3
-curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/13
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/13
 
 
 sleep 1 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/14
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/14
 
 sleep 3
-curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/14
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/14
 
 
 
 sleep 1 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/15
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/15
 
 sleep 3
-curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/15
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/15
 
 
 sleep 1 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/16
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/16
 
 sleep 3
-curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/16
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/16
 
 
 sleep 1 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/17
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/17
 
 sleep 3
-curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/17
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/17
 
 
 sleep 1 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/18
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/18
 
 sleep 3
-curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/18
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/18
 
 sleep 1 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/19
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/19
 
 sleep 3
-curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/19
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/19
 
 
 sleep 1 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/20
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/20
 
 sleep 3
-curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/20
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/20
 
 
 sleep 1 
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/21
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/21
 
 
 
 sleep 1
-curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/ranking
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/ranking
 sleep 1
 curl -iX GET "http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/score?user_mail=abbott.adams@yahoo.com&authentication_key=12IndR6r5V5618"
 curl -iX GET "http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/audit/1?user_mail=abbott.adams@yahoo.com&authentication_key=12IndR6r5V5618"
