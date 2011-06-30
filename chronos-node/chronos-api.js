@@ -2,7 +2,6 @@ var restler = require('restler');
 var querystring = require('querystring');
 var xml2json = require('./xml2json.js');
 var sys = require('sys');
-var hash = require('node_hash');
 var chronosCouch = require('./chronos-couchdb-api.js');
 
 var host = '127.0.0.1';
@@ -19,19 +18,13 @@ exports.createUser = function(req, res, params) {
       res.send(400, {}, data);
     },
     success: function(data, response) {
-      restler.put(couchdburl + '/' + params.mail, {
-        data: JSON.stringify({type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:[ ], reponses:[ ], score:0, lastbonus:0}),
-        headers: { 'Content-Type': 'application/json' }
-      })
-      .on('error', function(data) {
-        // if user already exists, couchdb sends: {"error":"conflict","reason":"Document update conflict."}
-        // so no need to test if a user exists via a HEAD request
-        // via _design/validate, errors occurs if one of the parameter is not valid
-        res.send(400, {}, data);
-      })
-      .on('complete', function (data) {
-         //console.log('data: ' + data);
-        res.send(201, {}, data);
+      chronosCouch.createChronosUser(params.firstname, params.lastname, params.mail, params.password, {
+        error: function(data, response) {
+          res.send(400, {}, data);
+        },
+        success: function(data, response) {
+          res.send(201, {}, data);
+        }
       });
     }
   });

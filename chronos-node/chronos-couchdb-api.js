@@ -18,7 +18,7 @@ exports.createCouchUser = function(username, password, options) {
   restler.post(couchdbaseburl + '/_users', {
     data: JSON.stringify({'_id':'org.couchdb.user:' + username, 'type':'user', 'name':username, 'roles':[], 'password_sha':password_sha, 'salt':saltvalue}),
     headers: { 'Content-Type': 'application/json' }
-  })  
+  })
   .addListener('error', function(data, response) {
     if (options.error) {
       options.error(data, response);
@@ -29,4 +29,23 @@ exports.createCouchUser = function(username, password, options) {
       options.success(data, response);
     }
   });
-}
+};
+
+exports.createChronosUser = function(firstname, lastname, mail, password, options) {
+    restler.put(couchdburl + '/' + mail, {
+      data: JSON.stringify({type:'player', firstname:firstname || '', lastname:lastname || '', mail:mail || '', password:password || '', questions:[ ], reponses:[ ], score:0, lastbonus:0}),
+      headers: { 'Content-Type': 'application/json' }
+    })
+  .addListener('error', function(data, response) {
+    if (options.error) {
+      options.error(data, response);
+    }
+  })
+  .addListener('complete', function(data, response) {
+    if (options.success) {
+      options.success(data, response);
+    }
+  });
+};
+
+
