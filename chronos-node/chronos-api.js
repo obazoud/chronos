@@ -81,25 +81,33 @@ exports.getQuestion = function(req, res, n) {
     error: function(data, response) {
       res.send(400, {}, data);
     },
-    success: function(data, response) {
-      var json = JSON.parse(data);
-      if (!json.userCtx.name) {
-        // sys.puts(data);
-        res.send(401, {}, data);
+    success: function(user, response) {
+      var jsonuser = JSON.parse(user);
+      if (!jsonuser.userCtx.name) {
+        res.send(401, {}, user);
       } else {
         chronosCouch.getDoc('game', req.headers.session_key, {
           error: function(data, response) {
             res.send(400, {}, data);
           },
-          success: function(data, response) {
-            var q = JSON.parse(data).gamesession.questions.question[n-1];
-            var question = {};
-            question.question = q.label;
-            for (i=0; i<q.choice.length;i++) {
-              question['answer_' + (i+1)] = q.choice[i];
-            }
-            question.score = 12345;
-            res.send(200, {}, question);
+          success: function(game, response) {
+            chronosCouch.getDoc(jsonuser.userCtx.name, req.headers.session_key, {
+              error: function(data, response) {
+                res.send(400, {}, data);
+              },
+              success: function(userDoc, response) {
+                var q = JSON.parse(game).gamesession.questions.question[n-1];
+                var userDocjson = JSON.parse(userDoc);
+                var question = {};
+                question.question = q.label;
+                for (i=0; i<q.choice.length;i++) {
+                  question['answer_' + (i+1)] = q.choice[i];
+                }
+                question.score = userDocjson.score;
+                question.lastbonus = userDocjson.lastbonus;
+                res.send(200, {}, question);
+              }
+            });
           }
         });
       }
@@ -129,7 +137,7 @@ exports.answerQuestion = function(req, res, n, params) {
               },
               success: function(data, response) {
                 var answer = {};
-                answer.are_u_right= (q.goodchoice == params.answer);
+                answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
                 answer.good_answer=q.goodchoice;
                 answer.score=data;
                 res.send(200, {}, answer);
