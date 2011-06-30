@@ -121,8 +121,6 @@ function GameState() {
       this.warmupEndDate = now + parseInt(this.logintimeout);
       this.sessions[0] = this.warmupStartDate;
       this.sessions[1] = this.warmupEndDate;
-    } else {
-      logger.log('Already in state 2');
     }
   };
 
@@ -137,15 +135,14 @@ function GameState() {
       logger.log('sessions1: ' + this.sessions[1] + ' / ' + new Date(this.sessions[1]));
       for (var i = 2; i <= numberOfQuestions + 1; i++) {
         this.sessions[i] = this.sessions[i - 1] + this.questiontimeframe + this.synchrotime;
-        logger.log('sessions' + i + ': ' + this.sessions[i] + ' / ' + new Date(this.sessions[i]));
+        // logger.log('sessions' + i + ': ' + this.sessions[i] + ' / ' + new Date(this.sessions[i]));
       }
       // Creating timers question N > 1
       for (var k = 2; k <= numberOfQuestions; k++) {
         var timerId = setTimeout(questionTimer, this.sessions[k] - now, k);
         this.timers.push(timerId);
       }
-    } else {
-      logger.log('Already in state 3');
+      questionTimer(1);
     }
   };
 
@@ -154,8 +151,6 @@ function GameState() {
       logger.log('State changed state: ' + this.state + ' -> ' + 4);
       this.state = 5;
       redis.hset("context", "state", this.state);
-    } else {
-      // logger.log('Already in state 4');
     }
   };
 
@@ -257,7 +252,6 @@ function warmupLoop () {
           'warmupEnd': now
         };
         publisher.publish(channel, JSON.stringify(message));
-        questionTimer(1);
       }
     } else {
       // TODO : timeout ?
@@ -271,14 +265,13 @@ function questionTimer(k) {
   var start = Date.now();
   var count = gameState.pendings[k].length;
   for (var i = 0; i < count; i++) {
-    var ctx = gameState.pendings[k][i];
-    // TODO ctx.req.resume();
-    ctx.res.send(200, {}, ctx.question);
+    ctx.req.resume();
+    ctx.res.send(200, {}, gameState.pendings[k][i].question);
     ctx.fired = true;
     // TODO ctx.res.end();
   }
 
-  logger.log('Fire question: ' + k + ' (' + count + ') in ' + (Date.now() - start) + ' ms.');
+  // logger.log('Fire question: ' + k + ' (' + count + ' / ' + gameState.pendings[k].length + ') in ' + (Date.now() - start) + ' ms.');
 }
 
 /** get question N **/
@@ -304,10 +297,6 @@ exports.getQuestion = function(req, res, n) {
           question: question
       };
       gameState.pushQuestion(ctx);
-      var t = Date.now() - now;
-      if (t > 350) {
-        logger.log('getQuestion ' + n + ' tooks ' + (Date.now() - now) + ' ms. ' + '[' + req.jsonUser.login + ']');
-      }
     } else {
       this.getScore(req.jsonUser.login, {
         error: function(err) {
@@ -334,7 +323,7 @@ exports.getQuestion = function(req, res, n) {
           //req.connection.on('timeout', function() {
           //    ctx = {};
           //});
-          // req.pause();
+          req.pause();
         }
       });
     }
