@@ -1,4 +1,4 @@
-#!bin/sh
+#!/bin/sh
 
 LOCAL_VAR_LOGS_DIR=/usr/local/var/log
 LOCAL_VAR_LOGS=$LOCAL_VAR_LOGS_DIR/nodejs.log
