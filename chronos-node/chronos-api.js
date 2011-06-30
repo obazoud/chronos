@@ -206,7 +206,7 @@ exports.login = function(req, res, params) {
 };
 
 exports.getQuestion = function(req, res, n) {
-  gamemanager.getQuestion(n, 
+  gamemanager.getQuestion(n, req.jsonUser.login,
     function () {
       gamemanager.getGame({
         error: function(data) {
