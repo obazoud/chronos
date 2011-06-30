@@ -132,4 +132,11 @@ exports.delete = function(name, id, options) {
 
 };
 
+exports.purge = function(name) {
+  if (name) {
+    delete(store[name]);
+  } else {
+    store = {};
+  };
+};
 
