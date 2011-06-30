@@ -12,7 +12,7 @@ client.on("error", function (err) {
 function addUser(lastname,firstname,mail,callback){
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
     //console.log("---->>>>" + token);
-    client.zadd("scores","0",token,function(err,added){
+    client.zadd("scores",0,token,function(err,added){
         // added == 1 if the element was added.
         // added == 0 if the element was already a member of the sorted set and the score was updated.
         callback(err,added);
@@ -97,7 +97,7 @@ function reset(callback) {
             callback();
         } else {
             users.forEach(function(user) {
-                client.getMaster().zadd("scores","0",user,function(err,updated) {
+                client.getMaster().zadd("scores", 0, user,function(err,updated) {
                     callback(err,updated);
                 });
             });
