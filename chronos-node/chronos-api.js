@@ -10,27 +10,24 @@ var couchdburl = 'http://' + host + ':' + port;
 
 exports.createUser = function(req, res, params) {
   // curl -i -X PUT http://superadmin:supersecret@127.0.0.1:5984/_config/admins/anna -d '"secret"'
-  var decodedBody = querystring.parse(params);
-  console.log('Creating user: ' + decodedBody);
-  console.log('Creating user: ' + decodedBody.firstname + params.firstname);
-  var json = JSON.parse(decodedBody);
-  console.log('Creating user: ' + json.firstname);
-  var url = couchdbAdminurl + '/_config/admins/' + params.mail;
+  console.log('JSON: ' + params.mail + ',' + params.password);
+  var url = couchdburl + '/_config/admins/' + params.mail;
   console.log('url: ' + url);
-  restler.put(url, { data : params.password })
+  restler.put(url,
+      params.password
+    )
     .on('complete', function (data) {
       console.log('complete:' + data);
     })
    .on('error', function(data) {
       console.log('error:' + data);
+      res.send(400, {}, data);
   });
 
-  res.send(404);
   // Si un utilisateur ayant la même adresse mail existe déjà, une erreur est retournée
   // if (params.mail == 'mail.existant@test.com') {
   //  res.send(400);
   // }
-  // console.log(params);
   // res.send(201, {}, {firstname:params.firstname, lastname:params.lastname, mail:params.mail, password:params.password});
 }
 
