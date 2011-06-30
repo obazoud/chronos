@@ -49,7 +49,7 @@ function fake(req,resp){
 }
 
 var dureeWarmup = 10000; // dans redis
-var numberOfQuestions = 5; // dans redis
+var numberOfQuestions = 3; // dans redis
 var questionTimeFrame = 5000; // dans redis
 var synchroTimeDuration = 2000; // dans redis
 
@@ -125,24 +125,21 @@ function gameState(beforeStartCallback,afterStartCallback,params){
 gere les demandes d inscription au quiz
 */
 function warmup(req,resp){
-     restler.get('http://127.0.0.1:8080/test')
-       .on('complete', function(data) {
-            gameState(function(){
-                responses[0].push(resp);
-                redis.incr("numberOfPlayers",function(err,counter){
-                    redis.hmget("context","maxGamers",function(err,max){
-                        if(counter==max){
-                            emitter.emit('warmupEnd',timerId);
-                        }    
-                    });
-                });
-            }
-            ,function(){
-                console.log("sending immediatly");
-                resp.send(400,{},"temps de reponse depasse!");
-            }
-            ,null);
+    gameState(function(){
+        responses[0].push(resp);
+        redis.incr("numberOfPlayers",function(err,counter){
+            redis.hmget("context","maxGamers",function(err,max){
+                if(counter==max){
+                    emitter.emit('warmupEnd',timerId);
+                }    
+            });
         });
+    }
+    ,function(){
+        console.log("sending immediatly");
+        resp.send(400,{},"temps de reponse depasse!");
+    }
+    ,null);
 }
 
 /**
@@ -164,12 +161,12 @@ emitter.once('warmupEnd',function(timerId){
     }
     // initialisation des time frames des questions
     quizSessions[0] = new Date().getTime();
-    for(i=1; i<numberOfQuestions ; i++){
+    for(i=1; i<=numberOfQuestions ; i++){
         quizSessions[i] = quizSessions[i-1] + synchroTimeDuration + questionTimeFrame;
     }
     
     redis.hincrby("context","questionEncours",1,function(err,c){
-	console.log("current question is now : " + c);
+	    console.log("current question is now : " + c);
     });
     
     
@@ -191,11 +188,10 @@ var qTimer = setInterval(function(){
             if(now >= quizSessions[n]){
                 console.log("emitting event for sending question : " + n);
                 emitter.emit("sendQuestions",qTimer);
-            
             }else if(now > quizSessions[numberOfQuestions]){
-	       console.log("emitting event for end of game");
-               emitter.emit("endOfGame",qTimer);
-	    }
+	            console.log("emitting event for end of game (end of time)");
+                emitter.emit("endOfGame",qTimer);
+	        }
         });
         
     }
@@ -206,15 +202,15 @@ var qTimer = setInterval(function(){
 emitter.on("sendQuestions",function(){
      redis.hmget("context","questionEncours",function(err,n){
         console.log("sending question : " + n + "/" + numberOfQuestions);
-	if( n > numberOfQuestions){
-               console.log("emitting event for end of game");
+    	if( n >= numberOfQuestions){
+               console.log("emitting event for end of game (no more questions)");
                emitter.emit("endOfGame",qTimer);
-	}else{
-		redis.hincrby("context","questionEncours",1);          
-	}
-	responses[n].forEach(function(resp){
-		    resp.send(200,{},"question " + n);    
-	}); 
+    	}else{
+    		redis.hincrby("context","questionEncours",1);          
+    	}
+    	responses[n].forEach(function(resp){
+    		    resp.send(200,{},"question " + n);    
+    	}); 
      });
         
 });
