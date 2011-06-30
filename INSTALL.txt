@@ -143,8 +143,8 @@ net.ipv4.ip_forward = 1
 # reload sysctl.conf
 sysctl -p
 
-# install heartbeat + ldirectord + all virtual server dependencies
-sudo apt-get install heartbeat ldirectord
+# install heartbeat + haproxy + all virtual server dependencies
+sudo apt-get install heartbeat haproxy
 
 # disable IPVS at boot time, since it is managed from heartbeat
 sudo dpkg-reconfigure ipvsadm
@@ -154,23 +154,26 @@ sudo dpkg-reconfigure ipvsadm
 "Select a daemon method."
 <-- none
 
-# copy the config from repo (authkeys, ha.cf, haresources, ldirectord.cf) :
+# copy the heartbeat config from repo (authkeys, ha.cf, haresources) :
 sudo cp -r ~/deploiement/install/ha.d/* /etc/ha.d/.
 
-# add heartbeat to rc init and remove ldirectord one (started by heartbeat)
-update-rc.d heartbeat start 75 2 3 4 5 . stop 05 0 1 6 .
-update-rc.d -f ldirectord remove
+# copy the haproxy config from repo (haproxy.cfg) :
+sudo cp -r ~/deploiement/install/haproxy/* /etc/haproxy/.
 
-# stop ldirectord and start heartbeat
-/etc/init.d/ldirectord stop
+# add heartbeat to rc init and remove haproxy from (started by heartbeat)
+update-rc.d heartbeat start 75 2 3 4 5 . stop 05 0 1 6 .
+update-rc.d -f haproxy remove
+
+# stop haproxy and start heartbeat
+/etc/init.d/haproxy stop
 /etc/init.d/heartbeat start
 
-# the virtual IP is 192.168.1.150 (can be modify) on port 80
-# to work properly, http front service must run on port 80 and serve the /api/ping with a "pong" text content in response.
+# the virtual IP is 192.168.1.150 (can be modify)
+# haproxy listen to 192.168.1.150:80 and loadbalance (roundrobin) on vfabric1 to vfabric4 on port 8080, adding a ServerId cookie with node's name.
 # first started heartbeat node will create the virtual interface, check this with
 ip addr sh eth0
-# check the lb with (always run on the heartbeat master node)
-ldirectord ldirectord.cf status
+# check the lb (always run on the heartbeat master node) with : (creds: chronos/chronos)
+elinks http://192.168.1.150/haproxy?stats
 # check the arp routing table from VIP to local IPs with :
 ipvsadm -L -n
 
