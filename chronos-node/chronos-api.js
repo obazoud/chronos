@@ -157,12 +157,17 @@ exports.login = function(req, res, params) {
   // logger.log(Date.now() + " > Http /api/login/" + params.mail);
   chronosCouch.getDoc(params.mail, {
     error: function(data) {
-      if (JSON.parse(data).error == 'not_found') {
-        logger.log('user not found, ' + params.mail);
-        res.send(401);
-      } else {
-        logger.log(params.mail + ":" + err);
-        res.send(400);
+      try {
+        if (JSON.parse(data).error == 'not_found') {
+          logger.log('user not found, ' + params.mail);
+          res.send(401);
+        } else {
+          logger.log(params.mail + ":" + err);
+          res.send(400);
+        }
+      } catch(err) {
+          logger.log("Something wrong here, is couchbd up ? " + err);
+          res.send(400);
       }
     },
     success: function(data) {
@@ -182,11 +187,11 @@ exports.login = function(req, res, params) {
               res.send(400);
             } else {
               var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
-              // logger.log(Date.now() + " < Http /api/login/" + params.mail);
               res.send(201, {'Set-Cookie': 'session_key=' + sessionkey}, '');
               gamemanager.warmup(res);
               // TODO callback ?
               ranking.addUser(userDocjson.lastname, userDocjson.firstname, params.mail);
+              // logger.log(Date.now() + " < Http /api/login/" + params.mail);
             }
           }
         });
@@ -197,7 +202,7 @@ exports.login = function(req, res, params) {
 
 exports.getQuestion = function(req, res, n) {
   var gamejson = gamemanager.getGame();
-  // logger.log("> Http /api/question/" + n + " / " + numberOfQuestions + ", login:" + req.jsonUser.login);
+  // logger.log(Date.now() + "> Http /api/question/" + n + " / " + numberOfQuestions + ", login:" + req.jsonUser.login);
   // preparing response
   // First score is too slow, do not know why !?
   if (n > numberOfQuestions) {
