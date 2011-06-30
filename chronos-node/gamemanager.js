@@ -254,9 +254,10 @@ function setTimeoutForTimeFrameCB(login, n, success) {
   if (n == 1) {
     emitter.emit("warmupEnd", success);
   } else {
-    if (gameState.questionEncours >= numberOfQuestions) {
-      gameState.questionsEnds();
-    }
+    // TODO ?
+    // if (gameState.questionEncours >= numberOfQuestions) {
+    //  gameState.questionsEnds();
+    //}
     success();
   }
 };
