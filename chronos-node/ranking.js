@@ -1,6 +1,6 @@
 var os = require('os');
-var redisBalancerToken = parseInt(os.hostname().match(/\d/)[0]); // TODO considerer les hostnames sans chiffre
-var redisBalancer = require('./failover.js').createBalancer(redisBalancerToken);
+//var redisBalancerToken = parseInt(os.hostname().match(/\d/)[0]); // TODO considerer les hostnames sans chiffre
+var redisBalancer = require('./redis-balancer.js').createBalancer(1);
 
 redisBalancer.getMaster().on("error", function (err) {
     console.log("Error " + err);
@@ -105,31 +105,3 @@ function reset(callback) {
     });
 };
 exports.reset = reset;
-
-/*
-addUser("bazoud","olivier","olivier@gmail.com",function(err,reply){});
-addUser("mage","pierre","pierre@gmail.com",function(err,reply){});
-addUser("tebourbi","slim","slim@gmail.com",function(err,reply){});
-
-updateScore("bazoud","olivier","olivier@gmail.com",10,function(err,reply){});
-updateScore("mage","pierre","pierre@gmail.com",1,function(err,reply){});
-updateScore("tebourbi","slim","slim@gmail.com",5,function(err,reply){});
-
-ranking ("mage","pierre","pierre@gmail.com",100,5,function(err,ranking){
-    console.log("pierre");
-    console.log("\t ranking:" + JSON.stringify(ranking));
-});
-
-ranking ("bazoud","olivier","olivier@gmail.com",100,5,function(err,ranking){
-    console.log("olivier");
-    console.log("\t ranking:" + JSON.stringify(ranking));
-});
-
-ranking ("tebourbi","slim","slim@gmail.com",100,5,function(err,ranking){
-    console.log("slim");
-    console.log("\t ranking:" + JSON.stringify(ranking));
-});
-*/
-/*
-reset(function(err,incrementedScore){console.log(incrementedScore);});
-*/

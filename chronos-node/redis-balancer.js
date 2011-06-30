@@ -7,12 +7,12 @@ var redis = require("redis");
 
 var redisClients = [];
 var redisClientsDown = []; // TODO checker si on peut les reintegrer
-var serversConf = loadConfig("../chronos-it/configuration.json");
+var serversConf = loadConfig("./conf/redis.servers"); // TODO utiliser la vraie config
 
 // NOTE : current master est tjrs a l index 0 dans redisClients;
 
 emitter.on("masterDown",function(){
-	console.log("event masterDown received for : " + redisClients[0].host + ":" + redisClients[0].port);
+	util.log("event masterDown received for : " + redisClients[0].host + ":" + redisClients[0].port);
 	
 	redisClients[0].end();
 	// TODO valider l incrementation par rapport au max de serveurs dipo
@@ -20,33 +20,50 @@ emitter.on("masterDown",function(){
 
 	redisClients[0].slaveof('no','one');
 	redisClients[0].on("error", function (err) {
-   		console.log("Redis instance" + redisClients[0].host + ":" + redisClients[0].port + " Error " + err);
+   		util.log("Redis instance" + redisClients[0].host + ":" + redisClients[0].port + " Error " + err);
 		if(err.message.indexOf("ECONNREFUSED") != -1){
 			emitter.emit("masterDown");		
 		}
 	});
 	
-	console.log("redis instance "+ redisClients[0].host + ":" + redisClients[0].port+" will be Master");
+	util.log("redis instance "+ redisClients[0].host + ":" + redisClients[0].port+" will be Master");
 
 	for(var i=1;i < redisClients.length;i++){
 	    redisClients[i].slaveof(redisClients[0].host,redisClients[0].port);
-	    console.log("redis instance "+redisClients[i].host + ":" + redisClients[i].port+" will be slaveof " + redisClients[0].host + ":" + redisClients[0].port);
+	    util.log("redis instance "+redisClients[i].host + ":" + redisClients[i].port+" will be slaveof " + redisClients[0].host + ":" + redisClients[0].port);
 	}
 });
 
 emitter.on("slaveDown", function(slave){					
-	console.log("redis server " + slave.host + ":" + slave.port + " down.");
+	util.log("redis server " + slave.host + ":" + slave.port + " down.");
 	slave.end();
 	redisClients = removeServerFromArray(redisClients,slave);
 	redisClientsDown.push(slave);
-
-	//console.log("clients UP: ");
-	//redisClients.forEach(function(s){ console.log(s.port); });
-
-	//console.log("clients DOWN: ");
-	//redisClientsDown.forEach(function(s){ console.log(s.port); });	
 });
 
+
+setInterval(function(){
+    util.log("checking for servers come back from : " + redisClientsDown.length + " server(s).");
+
+    redisClientsDown.forEach(function(client){
+        util.log("try to reintegrate client : " + client.host + ":" + client.port);
+        var newClient = redis.createClient(client.port ,client.host);
+        newClient.ping(function(err,pong){
+              util.log("redis server " + newClient.host + ":" + newClient.port + " coming back.");
+             // emettre un signal server up
+             if(pong){
+                 util.log("redis server " + newClient.host + ":" + newClient.port + " come back.");
+                 newClient.slaveof(redisClients[redisClients.length-1].host,redisClients[redisClients.length-1].port);
+                 newClient.debug_mode=false;
+                 util.log("redis instance "+newClient.host + ":" + newClient.port+
+                            " will be slaveof " + redisClients[redisClients.length-1].host + ":" + redisClients[redisClients.length-1].port);
+                 redisClientsDown= removeServerFromArray(redisClientsDown,client);
+	             redisClients.push(newClient);
+             }
+         });
+
+    });
+},1000); // TODO redefinir
 
 
 // TODO error d slaves
@@ -55,25 +72,27 @@ function createRedisClients(servers){
 	
 	// creation du master initial
 	redisClients[0] = redis.createClient(servers[0].p,servers[0].h);
+    redisClients[0].debug_mode = false;
 	redisClients[0].slaveof('no','one');
 	redisClients[0].on("error", function (err) {
-   		console.log("Redis instance" + redisClients[0].host + ":" + redisClients[0].port + " Error " + err);
+   		util.log("Redis instance" + redisClients[0].host + ":" + redisClients[0].port + " Error " + err);
 		if(err.message.indexOf("ECONNREFUSED") != -1){
 			emitter.emit("masterDown");		
 		}
 	});
 
-	console.log("client of "+redisClients[0].host +":"+redisClients[0].port+" (MASTER) on.");
+	util.log("client of "+redisClients[0].host +":"+redisClients[0].port+" (MASTER) on.");
 
 	for(var i=1;i < servers.length;i++){
-		redisClients[i] = redis.createClient(servers[i].p,servers[i].h);				
+		redisClients[i] = redis.createClient(servers[i].p,servers[i].h);
+        redisClients[i].debug_mode = false;
 		redisClients[i].on("error", function (err) {
-	   		console.log("Redis instance " + this.host + ":" + this.port + " Error " + err);
+	   		util.log("Redis instance " + this.host + ":" + this.port + " Error " + err);
 			if(err.message.indexOf("ECONNREFUSED") != -1){
 				emitter.emit("slaveDown",this);		
 			}
 		});
-		console.log("redis "+redisClients[i].host + ":" + redisClients[i].port+" (SLAVE) on.");
+		util.log("redis "+redisClients[i].host + ":" + redisClients[i].port+" (SLAVE) on.");
 		redisClients[i].slaveof(redisClients[0].host,redisClients[0].port);
 		
 	}
