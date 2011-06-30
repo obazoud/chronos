@@ -78,12 +78,12 @@ if (applyCluster == true) {
   var cluster = require('cluster');
   cluster(server)
     .set('workers', 4)
-    .listen(8080);
+    .listen(8080, process.argv[0]);
+  logger.log('Server running at http://' + process.argv[0] + ':8080');
 } else {
   logger.log('Configure Node.js with *no* workers.');
   server.listen(8080);
+  logger.log('Server running at http://127.0.0.1:8080');
 }
-
-logger.log('Server running at http://127.0.0.1:8080');
 
 
