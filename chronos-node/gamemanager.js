@@ -22,16 +22,16 @@ var logger = require('util');
 function GameState() {
   this.game = {};
   this.nbusersthreshold = 0;
-  this.dureeWarmup = 0;
-  this.questionTimeFrame = 0;
-  this.synchroTimeDuration = 0;
+  this.logintimeout = 0;
+  this.questiontimeframe = 0;
+  this.synchrotime = 0;
   
   this.initGame = function(newGame) {
     this.game = newGame;
     this.nbusersthreshold = parseInt(this.game.gamesession.parameters.nbusersthreshold);
-    this.dureeWarmup = parseInt(this.game.gamesession.parameters.logintimeout) * 1000;
-    this.questionTimeFrame = parseInt(this.game.gamesession.parameters.questiontimeframe) * 1000;
-    this.synchroTimeDuration = parseInt(this.game.gamesession.parameters.synchrotime) * 1000;
+    this.logintimeout = parseInt(this.game.gamesession.parameters.logintimeout) * 1000;
+    this.questiontimeframe = parseInt(this.game.gamesession.parameters.questiontimeframe) * 1000;
+    this.synchrotime = parseInt(this.game.gamesession.parameters.synchrotime) * 1000;
   };
 }
 
@@ -74,9 +74,9 @@ exports.initGame = function(game) {
   redis.hmset("context",
     "maxGamers", parseInt(game.gamesession.parameters.nbusersthreshold),
     "numberOfPlayers", 0,
-    "dureeWarmup", (parseInt(game.gamesession.parameters.logintimeout) * 1000),
-    "questionTimeFrame", (parseInt(game.gamesession.parameters.questiontimeframe) * 1000),
-    "synchroTimeDuration", (parseInt(game.gamesession.parameters.synchrotime) * 1000)
+    "logintimeout", (parseInt(game.gamesession.parameters.logintimeout) * 1000),
+    "questiontimeframe", (parseInt(game.gamesession.parameters.questiontimeframe) * 1000),
+    "synchrotime", (parseInt(game.gamesession.parameters.synchrotime) * 1000)
   );
   redis.del("players");
   redis.set("game", JSON.stringify(game));
@@ -99,13 +99,13 @@ emitter.once("warmupStarted", function() {
   var now = new Date().getTime();
   logger.log("Warmup started... ");
 
-  redis.hmget("context","dureeWarmup",function(err,dureeWarmup){
-    redis.hsetnx("context" ,"dateFinWarmup", (now + parseInt(dureeWarmup)));
+  redis.hmget("context","logintimeout",function(err,logintimeout){
+    redis.hsetnx("context" ,"dateFinWarmup", (now + parseInt(logintimeout)));
     redis.hmset("context",
       "session_" + 0 , now,
-      "session_" + 1 , now + parseInt(dureeWarmup));
+      "session_" + 1 , now + parseInt(logintimeout));
     logger.log("session_0: " + new Date(now));
-    logger.log("session_1: " + new Date(now + parseInt(dureeWarmup)));
+    logger.log("session_1: " + new Date(now + parseInt(logintimeout)));
     redis.save();
     warmupLoop();
   });
@@ -134,16 +134,16 @@ emitter.once('warmupEnd', function(success) {
   logger.log("warmup timer stopped");
   var now = new Date().getTime();
 
-  redis.hmget("context", "synchroTimeDuration", "questionTimeFrame", function(err, params) {
-    var synchroTimeDuration = parseInt(params[0]);
-    var questionTimeFrame = parseInt(params[1]);
+  redis.hmget("context", "synchrotime", "questiontimeframe", function(err, params) {
+    var synchrotime = parseInt(params[0]);
+    var questiontimeframe = parseInt(params[1]);
 
     // initialisation des timeFrames des questions
     logger.log("initialize timeFrames." + now);
     var quizSessions = [];
     quizSessions[1] = now;
     for (i = 2; i <= numberOfQuestions+1; i++) {
-      quizSessions[i] = quizSessions[i-1] + questionTimeFrame + synchroTimeDuration;
+      quizSessions[i] = quizSessions[i-1] + questiontimeframe + synchrotime;
     }
     // logger.log("timeFrames:" + quizSessions);
     redis.hmset("context",
@@ -250,13 +250,13 @@ exports.getQuestion = function(n, login, success, fail) {
 */
 exports.answerQuestion = function(n, login, success, fail) {
   var now = new Date().getTime();
-  redis.hmget("context", "questionEncours", "synchroTimeDuration", "session_" + n, "session_" + (n + 1), function(err, params) {
+  redis.hmget("context", "questionEncours", "synchrotime", "session_" + n, "session_" + (n + 1), function(err, params) {
     var questionEncours = parseInt(params[0]);
-    var synchroTimeDuration = parseInt(params[1]);
+    var synchrotime = parseInt(params[1]);
     var sessionN = parseInt(params[2]);
     var sessionNplus1 = parseInt(params[3]);
 
-    if (now >= sessionN && now < (sessionNplus1 - synchroTimeDuration)) {
+    if (now >= sessionN && now < (sessionNplus1 - synchrotime)) {
       logger.log(login + " answers question : " + n)
       success();
     } else {
@@ -265,12 +265,12 @@ exports.answerQuestion = function(n, login, success, fail) {
       logger.log("  now = " + new Date(now) );
       logger.log("  quizSessions[n] = " + new Date(sessionN));
       logger.log("  quizSessions[n+1] = " + new Date(sessionNplus1));
-      logger.log("  quizSessions[n+1] - synchro  = " + new Date(sessionNplus1 - synchroTimeDuration));
+      logger.log("  quizSessions[n+1] - synchro  = " + new Date(sessionNplus1 - synchrotime));
 
       fail();
       if (n =! questionEncours) {
         logger.log("answered question is not the current one.");
-      } else if (now > sessionN- synchroTimeDuration) {
+      } else if (now > sessionN- synchrotime) {
         logger.log("time for answering question is finished.");
       } else {
         logger.log("unexpected problem on answerQuestion.");
