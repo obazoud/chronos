@@ -2,12 +2,6 @@ var os = require('os');
 //var redisBalancerToken = parseInt(os.hostname().match(/\d/)[0]); // TODO considerer les hostnames sans chiffre
 var redisBalancer = require('./redis-balancer.js').createBalancer(1);
 
-redisBalancer.getMaster().on("error", function (err) {
-    console.log("Error " + err);
-});
-redisBalancer.getSlave().on("error", function (err) {
-    console.log("Error " + err);
-});
 
 function addUser(lastname,firstname,mail,callback){
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});

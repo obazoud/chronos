@@ -6,16 +6,16 @@ var util = require('util');
 var redis = require("redis");
 
 var redisClients = [];
-var redisClientsDown = []; // TODO checker si on peut les reintegrer
-var serversConf = loadConfig("./conf/redis.servers"); // TODO utiliser la vraie config
+var redisClientsDown = [];
 
-// NOTE : current master est tjrs a l index 0 dans redisClients;
-
+/**
+ * NOTE : current master est tjrs a l index 0 dans redisClients;
+ *
+ */
 emitter.on("masterDown",function(){
 	util.log("event masterDown received for : " + redisClients[0].host + ":" + redisClients[0].port);
 	
 	redisClients[0].end();
-	// TODO valider l incrementation par rapport au max de serveurs dipo
 	redisClientsDown.push(redisClients.shift());
 
 	redisClients[0].slaveof('no','one');
@@ -41,7 +41,10 @@ emitter.on("slaveDown", function(slave){
 	redisClientsDown.push(slave);
 });
 
-
+/**
+ * Gere la reintegration des serveurs down qui reprennent
+ *
+ */
 setInterval(function(){
     util.log("checking for servers come back from : " + redisClientsDown.length + " server(s).");
 
@@ -63,15 +66,13 @@ setInterval(function(){
          });
 
     });
-},1000); // TODO redefinir
+},1000); // TODO redefinir ?!
 
-
-// TODO error d slaves
 
 function createRedisClients(servers){
 	
 	// creation du master initial
-	redisClients[0] = redis.createClient(servers[0].p,servers[0].h);
+	redisClients[0] = redis.createClient(servers[0].port,servers[0].ip);
     redisClients[0].debug_mode = false;
 	redisClients[0].slaveof('no','one');
 	redisClients[0].on("error", function (err) {
@@ -84,7 +85,7 @@ function createRedisClients(servers){
 	util.log("client of "+redisClients[0].host +":"+redisClients[0].port+" (MASTER) on.");
 
 	for(var i=1;i < servers.length;i++){
-		redisClients[i] = redis.createClient(servers[i].p,servers[i].h);
+		redisClients[i] = redis.createClient(servers[i].port,servers[i].ip);
         redisClients[i].debug_mode = false;
 		redisClients[i].on("error", function (err) {
 	   		util.log("Redis instance " + this.host + ":" + this.port + " Error " + err);
@@ -116,6 +117,9 @@ function removeServerFromArray(array,server){
 
 function RedisBalancer(token){
     this.token = token;
+
+    var serversConf = loadConfig("./conf/redis.servers");
+
     this.redisClients = createRedisClients(serversConf);
 };
 
@@ -127,8 +131,9 @@ RedisBalancer.prototype.getSlave = function(){
     if (redisClients.length == 1) {
         return this.getMaster();
     }
-    else {
-        return this.redisClients[this.token % (redisClients.length - 1) + 1];
+    else {  // TODO ne fonctionne que dans le cas de nommage  des noeuds actuel
+            // TODO  doit tenir compte de la localite des nodes/redis
+        return this.redisClients[ ( this.token % (redisClients.length - 1) ) + 1];
     }
 };
 
