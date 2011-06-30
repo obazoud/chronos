@@ -19,11 +19,11 @@ var numberOfQuestions = 20;
 exports.initGame = function(game) {
   redis.del("context");
   redis.hmset("context",
-    "maxGamers",parseInt(game.gamesession.parameters.nbusersthreshold),
-    "numberOfPlayers",0,
+    "maxGamers", parseInt(game.gamesession.parameters.nbusersthreshold),
+    "numberOfPlayers", 0,
     "dureeWarmup", (parseInt(game.gamesession.parameters.logintimeout) * 1000),
-    "questionTimeFrame" , (parseInt(game.gamesession.parameters.questiontimeframe) * 1000),
-    "synchroTimeDuration" , (parseInt(game.gamesession.parameters.synchrotime) * 1000)
+    "questionTimeFrame", (parseInt(game.gamesession.parameters.questiontimeframe) * 1000),
+    "synchroTimeDuration", (parseInt(game.gamesession.parameters.synchrotime) * 1000)
   );
   redis.del("players");
   redis.set("game", JSON.stringify(game));
