@@ -1,7 +1,11 @@
 {"redisServers":
 	[
-	{"hostname":"localhost","ip":"127.0.0.1","port":6379}
-       ,{"hostname":"localhost","ip":"127.0.0.1","port":6380}
-       ,{"hostname":"localhost","ip":"127.0.0.1","port":6381}
+	{"hostname":"vfabric1","ip":"192.168.1.1","port":6379}
+	,{"hostname":"vfabric2","ip":"192.168.1.2","port":6379}
+	,{"hostname":"vfabric3","ip":"192.168.1.3","port":6379}
+	,{"hostname":"vfabric4","ip":"192.168.1.4","port":6379}
 	]
 }
+
+	
+
