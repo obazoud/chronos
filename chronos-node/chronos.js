@@ -2,6 +2,7 @@ var journey = require('journey');
 var api = require('./chronos-api.js');
 var security = require('./security.js');
 var tools = require("./tools.js");
+var logger = require('util');
 
 // Create a router
 var router = new(journey.Router)();
@@ -38,19 +39,16 @@ if (process.argv.indexOf('--no-cluster') > -1) {
 
 // Prevent node.js crashing
 if (process.argv.indexOf('--no-uncaught') <= -1) {
-  console.log(tools.toISO8601(new Date()) + 'Add process.on uncaughtException');
+  logger.log('Add process.on uncaughtException');
   process.on('uncaughtException', function(err) {
-    console.log(tools.toISO8601(new Date()) + ': ' + err);
+    logger.log(err);
   });
 } else {
-  console.log(tools.toISO8601(new Date()) + ' : Skip process.on uncaughtException');
+  logger.log('Skip process.on uncaughtException');
 }
 
 process.on('exit', function () {
-  process.nextTick(function () {
-   console.log(tools.toISO8601(new Date()) + ' : This will not run');
-  });
-  console.log(tools.toISO8601(new Date()) + ' : About to exit.');
+  logger.log('Bye bye Chronos server.');
 });
 
 var server = http.createServer(function(req, res) {
@@ -74,16 +72,16 @@ var server = http.createServer(function(req, res) {
 });
 
 if (applyCluster == true) {
-  console.log(tools.toISO8601(new Date()) + ' : Configure Node.js with cluster module (' + applyCluster + ')');
+  logger.log('Configure Node.js with cluster module (' + applyCluster + ')');
   var cluster = require('cluster');
   cluster(server)
     .set('workers', 4)
     .listen(8080);
 } else {
-  console.log(tools.toISO8601(new Date()) + ' : Configure classic Node.js');
+  logger.log('Configure Node.js with *no* workers.');
   server.listen(8080);
 }
 
-console.log(tools.toISO8601(new Date()) + ' : Server running at http://127.0.0.1:8080');
+logger.log('Server running at http://127.0.0.1:8080');
 
 
