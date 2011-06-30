@@ -195,9 +195,15 @@ exports.login = function(req, res, params) {
             } else {
               var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
               logger.log("Login: " + params.mail);
-              gamemanager.login(params.mail);
-              gamemanager.warmup(res);
-              res.send(201, {'Set-Cookie': 'session_key=' + sessionkey}, '');
+              gamemanager.login(params.mail, {
+                error: function(err) {
+                  res.send(400);
+                },
+                success: function(exist) {
+                  gamemanager.warmup(res);
+                  res.send(201, {'Set-Cookie': 'session_key=' + sessionkey}, '');
+                }
+              });
             }
           }
         });
