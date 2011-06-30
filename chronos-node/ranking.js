@@ -132,7 +132,7 @@ exports.ranking = function ranking(lastname,firstname,mail,topN,range,callback){
     });
 };
 
-function reset(callback) {
+exports.reset = function reset(callback) {
     client.zrange("scores",0,-1,function(err,users) {
         users.forEach(function(user,i) {
             client.zscore("scores",user,function(err,score) {

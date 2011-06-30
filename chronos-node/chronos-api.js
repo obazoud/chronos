@@ -38,7 +38,6 @@ exports.newGame = function(req, res, params) {
     }
   }
   paramsJSON.game_id = uuid().toLowerCase();
-  //TODO : purge redis
   chronosCouch.putDoc('game', paramsJSON, {
     error: function(data) {
       if (JSON.parse(data).reason == 'Authentication key is not recognized.') {
@@ -48,7 +47,10 @@ exports.newGame = function(req, res, params) {
       }
     },
     success: function(data) {
-      res.send(201);
+      ranking.reset(function(err,incrementedScore) {
+        console.log("incrementedScore=" + incrementedScore);
+        res.send(201);
+      });
     }
   });
 };
