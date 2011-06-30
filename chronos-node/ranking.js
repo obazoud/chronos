@@ -133,14 +133,16 @@ exports.ranking = function ranking(lastname,firstname,mail,topN,range,callback){
 };
 
 exports.reset = function reset(callback) {
-    client.zrange("scores",0,-1,function(err,users) {
-        users.forEach(function(user,i) {
-            client.zscore("scores",user,function(err,score) {
-                client.zincrby("scores",-score,user,function(err,incrementedScore){
-                    callback(err,incrementedScore);
+    client.zrangebyscore("scores",1,'+inf',function(err,users) {
+        if (users.length == 0) {
+            callback();
+        } else {
+            users.forEach(function(user) {
+                client.zadd("scores",0,user,function(err,score) {
+                    callback(err,score);
                 });
             });
-        });
+        }
     });
 };
 
