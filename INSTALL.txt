@@ -8,6 +8,7 @@ npm install http-proxy
 changer chronos.js en server.js dans /etc/init.d/nodejs ?
 Remove journey, implementation of my own router
 npm install optimist
+restart heartbeat (car la conf haproxy a changé)
 ---------------------------------------------
 1.0
 
