@@ -1,19 +1,28 @@
+var os = require('os');
 var restler = require('restler');
 var sys = require('sys');
 var http = require('http');
 var querystring = require("querystring");
 var events = require('events');
-
+var tools = require("./tools.js");
 var emitter = new events.EventEmitter();
 
 var couchdbAccessFailed = false;
 
-var host = '127.0.0.1';
+var host = '?.?.?.?';
+var hostname = os.hostname();
+if (hostname.match(/^vfabric(\d+)$/) || hostname.match(/^vfabric(\d+)$/)) {
+  // vip
+  host = '192.168.1.150';
+} else {
+  host = '127.0.0.1';
+}
+console.log(tools.toISO8601(new Date()) + ' : Couchdb configuration: ' + hostname + ':' + port);
+
 var port = 5984;
 var couchdbaseburl = 'http://' + host + ':' + port;
 var couchdburl = couchdbaseburl + '/thechallenge';
 var saltvalue = '1';
-
 
 // document in cache is supposed to be read only!!
 // otherwise clone it
@@ -22,6 +31,10 @@ var keys = {
     'game': true
 };
 var timerId;
+
+exports.config = function(options) {
+  options.success({host:host, port:port});
+};
 
 exports.bulk = function(data, batch, json, options) {
   console.log("Bulk: " + data.length);
@@ -39,8 +52,8 @@ exports.bulk = function(data, batch, json, options) {
     }
   })
   .on('complete', function(data, response) {
-    if (options && options.error) {
-      options.error(data);
+    if (options && options.success) {
+      options.success(data);
     }
   });
 };

@@ -19,6 +19,14 @@ exports.frontal = function(req, res) {
   res.send(200, {}, os.hostname());
 };
 
+exports.couchdb = function(req, res) {
+  chronosCouch.config({
+    success: function(config) {
+      res.send(200, {}, config);
+    }
+  });
+};
+
 function validateField(field, mandatory, minlength, maxlength, value) {
   message = "Problems field " + field;
   if (mandatory && !field) {

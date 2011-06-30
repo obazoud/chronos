@@ -21,6 +21,7 @@ router.get(/^api\/audit\/(\d+)$/).bind(api.auditN);
 router.post('/api/tweet').bind(api.tweetHttp);
 router.get(/^api\/mail\/([\w|@|\.]+)$/).bind(api.mail);
 router.get('/api/frontal').bind(api.frontal);
+router.get('/api/couchdb').bind(api.couchdb);
 
 var responses = [];
 var gameStarted = false;
@@ -42,14 +43,14 @@ if (process.argv.indexOf('--no-uncaught') <= -1) {
     console.log(tools.toISO8601(new Date()) + ': ' + err);
   });
 } else {
-  console.log(tools.toISO8601(new Date()) + ': Skip process.on uncaughtException');
+  console.log(tools.toISO8601(new Date()) + ' : Skip process.on uncaughtException');
 }
 
 process.on('exit', function () {
   process.nextTick(function () {
-   console.log(tools.toISO8601(new Date()) + ': This will not run');
+   console.log(tools.toISO8601(new Date()) + ' : This will not run');
   });
-  console.log(tools.toISO8601(new Date()) + ': About to exit.');
+  console.log(tools.toISO8601(new Date()) + ' : About to exit.');
 });
 
 var server = http.createServer(function(req, res) {
