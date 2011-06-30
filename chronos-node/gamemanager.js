@@ -262,8 +262,8 @@ emitter.once('warmupEnd',function(timerId){
                 // logger.log("checking end of time for question : " + n);
                 var now = new Date().getTime();
                 redis.hget("context","session_"+n,function(err,sessionN){    // FIXME une charge en plus pour redis
-                    logger.log('now: ' + new Date(now) + ' -> sessionN: ' + new Date(sessionN));
-                    if(now >= sessionN){
+                    logger.log('now: ' + new Date(now) + ' -> sessionN: ' + new Date(parseInt(sessionN)));
+                    if(now >= parseInt(sessionN)){
                             logger.log("emitting event for sending question : " + n);
                             emitter.emit("sendQuestions",qTimer);
                             if( n < numberOfQuestions ) {
