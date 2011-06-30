@@ -132,6 +132,18 @@ exports.ranking = function ranking(lastname,firstname,mail,topN,range,callback){
     });
 };
 
+function reset(callback) {
+    client.zrange("scores",0,-1,function(err,users) {
+        users.forEach(function(user,i) {
+            client.zscore("scores",user,function(err,score) {
+                client.zincrby("scores",-score,user,function(err,incrementedScore){
+                    callback(err,incrementedScore);
+                });
+            });
+        });
+    });
+};
+
 /*
 addUser("user1","user1","user1@gmail.com");
 updateScore("user1","user1","user1@gmail.com",6);
@@ -166,4 +178,6 @@ ranking ("tebourbi","slim","slim@gmail.com",100,5,function(ranking){
     console.log("slim");
     console.log("\t ranking:" + JSON.stringify(ranking));
 });
+
+reset(function(err,incrementedScore){console.log(incrementedScore);});
 */
