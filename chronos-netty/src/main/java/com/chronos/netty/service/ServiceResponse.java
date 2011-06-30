@@ -2,13 +2,13 @@ package com.chronos.netty.service;
 
 import java.util.Map;
 
-import org.jboss.netty.handler.codec.http.HttpResponse;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * @author bazoud
  * @version $Id$
  */
 public class ServiceResponse {
-    HttpResponse httpResponse;
+    HttpResponseStatus httpResponseStatus;
     Map<String, String> data;
 }

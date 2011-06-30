@@ -3,12 +3,8 @@ package com.chronos.netty.service;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.CREATED;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
-import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import java.util.Map;
-
-import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
-import org.jboss.netty.handler.codec.http.HttpResponse;
 
 import com.chronos.biz.App;
 import com.chronos.biz.QuizzApi;
@@ -27,9 +23,8 @@ public class ChronosDispatcher {
             return user(serviceResquest);
         }
 
-        HttpResponse response = new DefaultHttpResponse(HTTP_1_1, NOT_FOUND);
         ServiceResponse serviceResponse = new ServiceResponse();
-        serviceResponse.httpResponse = response;
+        serviceResponse.httpResponseStatus = NOT_FOUND;
         return serviceResponse;
     }
 
@@ -38,14 +33,12 @@ public class ChronosDispatcher {
             // TODO : throw exception costs !
             Map<String, String> args = serviceResquest.args;
             quizzApi.addUser(args.get("lastname"), args.get("firstname"), args.get("mail"), args.get("password"));
-            HttpResponse response = new DefaultHttpResponse(HTTP_1_1, CREATED);
             ServiceResponse serviceResponse = new ServiceResponse();
-            serviceResponse.httpResponse = response;
+            serviceResponse.httpResponseStatus = CREATED;
             return serviceResponse;
         } catch (Exception e) {
-            HttpResponse response = new DefaultHttpResponse(HTTP_1_1, BAD_REQUEST);
             ServiceResponse serviceResponse = new ServiceResponse();
-            serviceResponse.httpResponse = response;
+            serviceResponse.httpResponseStatus = BAD_REQUEST;
             return serviceResponse;
         }
     }

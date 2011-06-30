@@ -3,6 +3,7 @@ package com.chronos.netty.service;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.isKeepAlive;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_LENGTH;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
+import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
@@ -10,6 +11,7 @@ import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
+import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +47,7 @@ public class ChronosHandler extends SimpleChannelUpstreamHandler {
     }
 
     private void writeResponse(MessageEvent e, ServiceResquest serviceRequest, ServiceResponse serviceResponse) {
-        HttpResponse response = serviceResponse.httpResponse;
+        HttpResponse response = new DefaultHttpResponse(HTTP_1_1, serviceResponse.httpResponseStatus);
         response.setHeader(CONTENT_TYPE, "text/plain; charset=UTF-8");
         boolean keepAlive = isKeepAlive(serviceRequest.httpRequest);
         if (keepAlive) {
