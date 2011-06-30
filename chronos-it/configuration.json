@@ -2,5 +2,6 @@
 	[
 	{"h":"localhost","p":6379}
        ,{"h":"localhost","p":6380}
+       ,{"h":"localhost","p":6381}
 	]
 }
