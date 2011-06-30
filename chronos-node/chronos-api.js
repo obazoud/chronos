@@ -238,6 +238,7 @@ exports.getQuestion = function(req, res, n) {
     var q = gamejson.gamesession.questions.question[n-1];
     var question = {};
     question.question = q.label;
+    // TODO : do not do that each time !
     for (var i = 0; i< q.choice.length; i++) {
       question['answer_' + (i+1)] = q.choice[i];
     }
