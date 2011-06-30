@@ -14,9 +14,12 @@ var numberOfQuestions = 20;
 
 var os = require('os');
 // TODO integrer le mecanisme de fail-over
-var redis = require("redis").createClient(6379, "192.168.1.1");
-var subscriber = require("redis").createClient(6379, "192.168.1.1");
-var publisher = require("redis").createClient(6379, "192.168.1.1");
+//var redis = require("redis").createClient(6379, "192.168.1.1");
+//var subscriber = require("redis").createClient(6379, "192.168.1.1");
+//var publisher = require("redis").createClient(6379, "192.168.1.1");
+var redis = require("redis").createClient();
+var subscriber = require("redis").createClient();
+var publisher = require("redis").createClient();
 
 var channel = '#chronos';
 

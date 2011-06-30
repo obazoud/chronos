@@ -1,5 +1,6 @@
 var os = require('os');
-var redis = require("redis").createClient(6379, "192.168.1.1");
+//var redis = require("redis").createClient(6379, "192.168.1.1");
+var redis = require("redis").createClient();
 
 function initRanking(callback) {
     redis.del("scores");
