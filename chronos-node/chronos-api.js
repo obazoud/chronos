@@ -47,8 +47,11 @@ exports.newGame = function(req, res, params) {
     headers: { 'Content-Type': 'application/json' }
   })
   .on('error', function(data) {
-    res.send(401, {}, data);
-    // res.send(400);
+    if (JSON.parse(data).reason == 'Authentication key is not recognized.') {
+      res.send(401, {}, data);
+    } else {
+      res.send(400, {}, data);
+    }
   })
   .on('complete', function (data) {
     res.send(201);
