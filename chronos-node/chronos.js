@@ -19,6 +19,7 @@ router.get('/api/audit').bind(api.audit);
 router.get(/^api\/audit\/(\d+)$/).bind(api.auditN);
 router.post('/api/tweet').bind(api.tweetHttp);
 router.get(/^api\/mail\/([\w|@|\.]+)$/).bind(api.mail);
+router.get('/api/frontal').bind(api.frontal);
 
 var responses = [];
 var gameStarted = false;

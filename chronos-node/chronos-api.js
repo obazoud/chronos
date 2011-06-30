@@ -1,4 +1,5 @@
 var sys = require('sys');
+var os = require('os');
 var uuid = require('node-uuid');
 var twitterapi = require('./twitter/twitter-api.js');
 var xml2json = require('./externals/xml2json.js');
@@ -12,6 +13,10 @@ var authentication_key = '12IndR6r5V5618';
 
 exports.ping = function(req, res) {
   res.send(201, {}, 'pong');
+};
+
+exports.frontal = function(req, res) {
+  res.send(200, {}, os.hostname());
 };
 
 function validateField(field, mandatory, minlength, maxlength, value) {
