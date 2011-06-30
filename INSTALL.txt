@@ -26,6 +26,13 @@ sudo vi /etc/cron.daily/ntpdate
 ntpdate 10.50.80.7
 sudo chmod 755 /etc/cron.daily/ntpdate
 
+# couchdb http://www.couchbase.com
+su -
+cd /opt
+wget http://c3145442.r42.cf0.rackcdn.com/couchbase-server-enterprise_x86_64_1.1.deb
+dpkg -i couchbase-server-enterprise_x86_64_1.1.deb
+cd couchbase-server
+ln -s /etc/init.d/couchdb etc/init.d/couchdb
 
 # sur usi1
 cd /usr/local
@@ -35,6 +42,14 @@ ln -s apache-maven-3.0.3 apache-maven
 
 deb http://ppa.launchpad.net/git-core/ppa/ubuntu lucid main 
 deb-src http://ppa.launchpad.net/git-core/ppa/ubuntu lucid main 
+
+# redis
+http://library.linode.com/databases/redis/ubuntu-10.04-lucid
+adduser --system --no-create-home --disabled-login --disabled-password --group redis
+sudo chmod 755 /var/lib/redis
+sudo chmod 755 /var/lib/redis/dump.rdb
+# faire tous les fichiers
+update-rc.d -f redis defaults
 
 
 # Optim systeme

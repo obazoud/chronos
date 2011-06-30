@@ -21,29 +21,29 @@ exports.putDoc = function(name, json, options) {
     data: JSON.stringify(json),
     headers: { 'Content-Type': 'application/json' }
   })
-  .on('error', function(data) {
-    if (options.error) {
+  .on('error', function(data, response) {
+    if (options && options.error) {
       options.error(data);
     }
   })
-  .on('complete', function(data) {
+  .on('complete', function(data, response) {
     if (keys[name]) {
       restler.get(couchdburl + '/' + name, {
         data: ''
       })
-      .on('error', function(alldata) {
-        if (options.error) {
+      .on('error', function(alldata, response2) {
+        if (options && options.error) {
           options.error(data);
         }
       })
-      .on('complete', function(alldata) {
+      .on('complete', function(alldata, response2) {
         store[name] = alldata;
-        if (options.success) {
+        if (options && options.success) {
           options.success(data);
         }
       });
     } else {
-      if (options.success) {
+      if (options && options.success) {
         options.success(data);
       }
     }
@@ -54,13 +54,13 @@ exports.putDesign = function(name, options) {
   restler.put(couchdburl + '/' + name, {
     data: ''
   })
-  .on('error', function(data) {
-    if (options.error) {
+  .on('error', function(data, response) {
+    if (options && options.error) {
       options.error(data);
     }
   })
-  .on('complete', function(data) {
-    if (options.success) {
+  .on('complete', function(data, response) {
+    if (options && options.success) {
       options.success(data);
     }
   });
@@ -68,7 +68,7 @@ exports.putDesign = function(name, options) {
 
 exports.getDoc = function(name, options) {
   if (store[name]) {
-    if (options.success) {
+    if (options && options.success) {
       options.success(store[name]);
       return;
     }
@@ -76,19 +76,67 @@ exports.getDoc = function(name, options) {
   restler.get(couchdburl + '/' + name, {
     data: ''
   })
-  .on('error', function(data) {
-    if (options.error) {
+  .on('error', function(data, response) {
+    if (options && options.error) {
       options.error(data);
     }
   })
-  .on('complete', function(data) {
+  .on('complete', function(data, response) {
     if (keys[name]) {
       store[name] = data;
     }
-    if (options.success) {
+    if (options && options.success) {
       options.success(data);
     }
   });
 
+};
+
+exports.head = function(name, options) {
+  restler.request(couchdburl + '/' + name, {
+    data: '',
+    method: 'HEAD'
+  })
+  .on('error', function(data, response) {
+    if (response.statusCode != 404) {
+      if (options && options.error) {
+        options.error(data);
+      }
+    }
+  })
+  .on('complete', function(data, response) {
+    if (options && options.success) {
+      if (response.statusCode == 200) {
+        options.success(data, response.headers.etag.replace(/\"/g, ""));
+      } else {
+        options.success(data, null);
+      }
+    }
+  });
+};
+
+exports.delete = function(name, id, options) {
+  restler.del(couchdburl + '/' + name + '?rev=' + id, {
+    data: ''
+  })
+  .on('error', function(data, response) {
+    if (options && options.error) {
+      options.error(data);
+    }
+  })
+  .on('complete', function(data, response) {
+    if (options && options.success) {
+        options.success(data);
+    }
+  });
+
+};
+
+exports.purge = function(name) {
+  if (name) {
+    delete(store[name]);
+  } else {
+    store = {};
+  };
 };
 

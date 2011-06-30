@@ -1,17 +1,18 @@
-var twitterapi = require('./twitter-api');
-var xml2json = require('./xml2json.js');
 var sys = require('sys');
+var uuid = require('node-uuid');
+var twitterapi = require('./twitter/twitter-api.js');
+var xml2json = require('./externals/xml2json.js');
 var chronosCouch = require('./chronos-couchdb-api.js');
 var security = require('./security.js');
 var ranking = require("./ranking.js");
-var uuid = require('node-uuid');
+var tools = require("./tools.js");
 
 exports.ping = function(req, res) {
   res.send(201, {}, 'pong');
 };
 
 exports.createUser = function(req, res, params) {
-  chronosCouch.putDoc(params.mail, {type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }}, {
+  chronosCouch.putDoc(params.mail, {type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }, cookies: {}}, {
     error: function(data) {
       res.send(400, {}, data);
     },
@@ -23,57 +24,108 @@ exports.createUser = function(req, res, params) {
 };
 
 exports.newGame = function(req, res, params) {
-  var gameXML = params.parameters.replace(/ xmlns:usi/g, " usi").replace(/ xmlns:xsi/g, " xsi").replace(/ xsi:schemaLocation/g, " schemaLocation").replace(/usi:/g, "");
-  gameXML = gameXML.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"");
-
-  var paramsJSON = xml2json.parse(gameXML);
-  paramsJSON.type = 'game';
-  paramsJSON.authentication_key = params.authentication_key || '';
-  delete paramsJSON.value;
-  for(i=0;i<paramsJSON.gamesession.questions.question.length;i++) {
-    if (i<5) {
-      paramsJSON.gamesession.questions.question[i].qvalue=1;
-    } else {
-      paramsJSON.gamesession.questions.question[i].qvalue=parseInt(i/5,10)*5;
-    }
-  }
+  var paramsJSON = processGameXML(params.authentication_key, params.parameters);
   paramsJSON.game_id = uuid().toLowerCase();
+
+  chronosCouch.head('game', {
+    error: function(data) {
+      res.send(400);
+    },
+    success: function(data, id) {
+      if (id != null) {
+        chronosCouch.delete('game', id, {
+          error: function(data) {
+            res.send(400);
+          },
+          success: function(data, id) {
+            putGame(req, res, params, paramsJSON);
+          }
+        });
+      } else {
+        putGame(req, res, params, paramsJSON);
+      }
+    }
+  });
+};
+
+function putGame(req, res, params, paramsJSON) {
+  console.log(tools.toISO8601(new Date()) + ": put a new game.");
   chronosCouch.putDoc('game', paramsJSON, {
     error: function(data) {
-      if (JSON.parse(data).reason == 'Authentication key is not recognized.') {
+      var error = JSON.parse(data);
+      if (error.reason == 'Authentication key is not recognized.') {
+        console.log(data);
         res.send(401);
       } else {
+        console.log(data);
         res.send(400);
       }
     },
     success: function(data) {
-      ranking.reset(function(err,incrementedScore) {
-        console.log("incrementedScore=" + incrementedScore);
+      console.log(tools.toISO8601(new Date()) + ": game successfully added.");
+      ranking.reset(function(err, incrementedScore) {
+        console.log(tools.toISO8601(new Date()) + ": Redis: score to 0: OK " + incrementedScore);
         res.send(201);
       });
     }
   });
 };
 
+function processGameXML(authentication_key, parameters) {
+  var gameXML = parameters.replace(/ xmlns:usi/g, " usi").replace(/ xmlns:xsi/g, " xsi").replace(/ xsi:schemaLocation/g, " schemaLocation").replace(/usi:/g, "");
+  gameXML = gameXML.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"");
+
+  var paramsJSON = xml2json.parse(gameXML);
+  paramsJSON.type = 'game';
+  paramsJSON.authentication_key = authentication_key || '';
+
+  // clean
+  delete paramsJSON.value;
+  delete paramsJSON.gamesession.usi;
+  delete paramsJSON.gamesession.xsi;
+  delete paramsJSON.gamesession.schemalocation;
+
+  for(i = 0;i < paramsJSON.gamesession.questions.question.length; i++) {
+    if (i < 5) {
+      paramsJSON.gamesession.questions.question[i].qvalue = 1;
+    } else {
+      paramsJSON.gamesession.questions.question[i].qvalue = parseInt(i / 5, 10) * 5;
+    }
+  }
+  return paramsJSON;
+};
+
 exports.login = function(req, res, params) {
-  // already login ?
   chronosCouch.getDoc(params.mail, {
     error: function(data) {
-      if (data.error == 'unauthorized') {
-        res.send(401);
-      }
       if (JSON.parse(data).error == 'not_found') {
+        console.log('user not found, ' + params.mail);
         res.send(401);
+      } else {
+        res.send(400);
       }
-      res.send(400);
     },
     success: function(data) {
       var userDocjson = JSON.parse(data);
       if (userDocjson.password != params.password) {
         res.send(401);
       } else {
-        var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
-        res.send(201, {"session_key":sessionkey}, '');
+        chronosCouch.getDoc('game', {
+          error: function(data) {
+            res.send(401, {}, data);
+          },
+          success: function(game) {
+            var gamejson = JSON.parse(game);
+            if (userDocjson.cookies[gamejson.game_id] != null) {
+              res.send(400);
+            } else {
+              var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
+              userDocjson.cookies[gamejson.game_id] = sessionkey;
+              chronosCouch.putDoc(params.mail, userDocjson);
+              res.send(201, {'Set-Cookie': 'session_key=' + sessionkey}, '');
+            }
+          }
+        });
       }
     }
   });
@@ -142,13 +194,19 @@ exports.answerQuestion = function(req, res, n, params) {
 
 exports.tweetHttp = function(req, res, params) {
   sys.puts('Tweet: ' + params.tweet);
-  twitterapi.tweet(params.tweet + ' (' + toISO8601(new Date()) + ')');
+  twitterapi.tweet(params.tweet + ' (' + tools.toISO8601(new Date()) + ')');
   res.send(200);
 };
 
 exports.getRanking = function(req, res) {
+  chronosCouch.getDoc('game', {
+    success: function(gameDoc) {
+      var game = JSON.parse(gameDoc);
+      twitterapi.tweet('Notre application supporte ' + game.gamesession.parameters.nbusersthreshold + ' joueurs #challengeUSI2011');
+    }
+  });
   // TODO: send error if failed
-  ranking.ranking(req.jsonUser.lastname, req.jsonUser.firstname,req.jsonUser.login,100,5,function(ranking) {
+  ranking.ranking(req.jsonUser.lastname, req.jsonUser.firstname, req.jsonUser.login, 100, 5, function(ranking) {
     res.send(200, {}, ranking);
   });
 };

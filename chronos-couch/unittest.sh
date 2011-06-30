@@ -40,17 +40,17 @@ curl -iX POST -H Accept:application/json -H Content-Type:application/json -d '{"
   assertEquals "Creating user, http code" 201 $httpcode
 done
 
-curl -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"mail" : "null@gmail.com", "password" : "secret"}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/login 2>&1 | awk '{ if ($1 == "HTTP/1.1") { httpcode=$2 } if ($1 == "session_key:") { sessionkey=$2 } if ($1 == "session_key:") { data=$2 } } END { print httpcode, sessionkey }' | while read httpcode sessionkey; do
-  sessionkey=`echo ${sessionkey} | sed 's/\r//g'`
+curl -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"mail" : "null@gmail.com", "password" : "secret"}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/login 2>&1 | awk '{ if ($1 == "HTTP/1.1") { httpcode=$2 } if ($1 == "Set-Cookie:") { sessionkey=$2 } if ($1 == "Set-Cookie:") { data=$2 } } END { print httpcode, sessionkey }' | while read httpcode sessionkey; do
+  sessionkey=`echo ${sessionkey} | sed 's/\r//g' | sed 's/session_key=//g'`
   echo $data
   assertEquals "Creating user, http code" 201 $httpcode
   assertNotNull "Creating user, sessionkey" ${sessionkey}
   
-  curl -iX GET -H "session_key:${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/1  2>&1 | awk '{ if ($1 == "HTTP/1.1") { print $2 } } END { print }' | sed ':a;N;$!ba;s/\n/ /g' | while read httpcode data; do
+  curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/1  2>&1 | awk '{ if ($1 == "HTTP/1.1") { print $2 } } END { print }' | sed ':a;N;$!ba;s/\n/ /g' | while read httpcode data; do
     assertEquals "Question, http code" 200 $httpcode
     assertEquals "Score 0" 0 0 #$(echo "$data" | json -C score)
 
-    curl -iX POST -H "session_key:${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/1  2>&1 | awk '{ if ($1 == "HTTP/1.1") { print $2 } } END { print }' | sed ':a;N;$!ba;s/\n/ /g' | while read httpcode data; do
+    curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/1  2>&1 | awk '{ if ($1 == "HTTP/1.1") { print $2 } } END { print }' | sed ':a;N;$!ba;s/\n/ /g' | while read httpcode data; do
       assertEquals "Answer, http code" 200 $httpcode
       assertEquals "are_u_right " false $(echo "$data" | json -C are_u_right)
       assertEquals "good_answer " 1 $(echo "$data" | json -C good_answer)
