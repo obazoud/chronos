@@ -27,14 +27,12 @@ exports.newGame = function(req, res, params) {
 
   chronosCouch.head('game', {
     error: function(data) {
-      console.log("error1: " + data);
       res.send(400);
     },
     success: function(data, id) {
       if (id != null) {
         chronosCouch.delete('game', id, {
           error: function(data) {
-            console.log("error2: " + data);
             res.send(400);
           },
           success: function(data, id) {
@@ -101,11 +99,13 @@ exports.login = function(req, res, params) {
     error: function(data) {
       if (data.error == 'unauthorized') {
         res.send(401);
+      } else {
+          if (JSON.parse(data).error == 'not_found') {
+            res.send(401);
+          } else {
+            res.send(400);
+        }
       }
-      if (JSON.parse(data).error == 'not_found') {
-        res.send(401);
-      }
-      res.send(400);
     },
     success: function(data) {
       var userDocjson = JSON.parse(data);
