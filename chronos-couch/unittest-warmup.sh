@@ -5,7 +5,6 @@ set -x
 # npm install json
 
 ./createdb.sh localhost 5984
-
 redis-cli flushdb
 
 CHRONOS_HOST=localhost

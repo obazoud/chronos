@@ -53,7 +53,7 @@ exports.createUser = function(req, res, params) {
         if (id != null) {
           res.send(400, {}, data);
         } else {
-          var player = {_id:params.mail, firstname:params.firstname || '', lastname:params.lastname || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }, cookies: {}};
+          var player = {_id:params.mail, firstname:params.firstname || '', lastname:params.lastname || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }};
           players.unshift(player);
           ranking.addUser(params.lastname,params.firstname,params.mail,function(err,added) {
             if (err) {
@@ -187,6 +187,7 @@ exports.login = function(req, res, params) {
         console.log('user not found, ' + params.mail);
         res.send(401);
       } else {
+        console.log("Login" + err);
         res.send(400);
       }
     },
@@ -195,18 +196,18 @@ exports.login = function(req, res, params) {
       if (userDocjson.password != params.password) {
         res.send(401);
       } else {
-        chronosCouch.getDoc('game', {
-          error: function(data) {
-            res.send(401, {}, data);
+        gamemanager.isLogin(params.mail, {
+          error: function(err) {
+            //console.log("Login" + err);
+            res.send(400);
           },
-          success: function(game) {
-            var gamejson = JSON.parse(game);
-            if (userDocjson.cookies[gamejson.game_id] != null) {
+          success: function(exist) {
+            if (exist) {
+              //console.log("Login" + exist);
               res.send(400);
             } else {
               var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
-              userDocjson.cookies[gamejson.game_id] = true;
-              chronosCouch.putDoc(params.mail, true, userDocjson);
+              gamemanager.login(params.mail);
               gamemanager.warmup(res);
               res.send(201, {'Set-Cookie': 'session_key=' + sessionkey}, '');
             }

@@ -5,6 +5,7 @@ set -x
 # npm install json
 
 ./createdb.sh localhost 5984
+redis-cli flushdb
 
 CHRONOS_HOST=localhost
 CHRONOS_PORT=8080
@@ -26,20 +27,16 @@ assertNotNull() {
   fi
 }
 
-#USER_REV=`curl --silent -X GET http://superadmin:supersecret@localhost:5984/_users/org.couchdb.user:null@gmail.com | json -C _rev`
-#if [ "$USER_REV" != "" ]; then
-#  curl --silent -X DELETE http://superadmin:supersecret@localhost:5984/_users/org.couchdb.user:null@gmail.com?rev=$USER_REV
-#fi
+curl -iX POST -H Accept:application/json -H Content-Type:application/json -d '{"firstname" : "olivier", "lastname" : "bazoud", "mail" : "null@gmail.com","password" : "secret"}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/user 2>&1 | awk '{ if ($1 == "HTTP/1.1") { httpcode=$2 } } END { print httpcode }' | while read httpcode; do
+  assertEquals "Creating user, http code" 201 $httpcode
+done
 
 GAME_JSON="`cat ./sample/gamesession-sample-encode.json`"
 curl -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d "${GAME_JSON}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/game 2>&1 | awk '{ if ($1 == "HTTP/1.1") { httpcode=$2 } } END { print httpcode}' | while read httpcode; do 
   assertEquals "Creating game, http code" 201 $httpcode
 done
 
-curl -iX POST -H Accept:application/json -H Content-Type:application/json -d '{"firstname" : "olivier", "lastname" : "bazoud", "mail" : "null@gmail.com","password" : "secret"}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/user 2>&1 | awk '{ if ($1 == "HTTP/1.1") { httpcode=$2 } } END { print httpcode }' | while read httpcode; do
-  assertEquals "Creating user, http code" 201 $httpcode
-done
-
+sleep 2
 curl -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"mail" : "null@gmail.com", "password" : "secret"}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/login 2>&1 | awk '{ if ($1 == "HTTP/1.1") { httpcode=$2 } if ($1 == "Set-Cookie:") { sessionkey=$2 } if ($1 == "Set-Cookie:") { data=$2 } } END { print httpcode, sessionkey }' | while read httpcode sessionkey; do
   sessionkey=`echo ${sessionkey} | sed 's/\r//g' | sed 's/session_key=//g'`
   echo $data
