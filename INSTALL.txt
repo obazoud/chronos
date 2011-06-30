@@ -22,6 +22,11 @@ sudo apt-get update && sudo apt-get upgrade --yes --fix-broken
 sudo apt-get install curl
 sudo apt-get install apache2-utils
 
+sudo vi /etc/cron.daily/ntpdate
+ntpdate 10.50.80.7
+sudo chmod 755 /etc/cron.daily/ntpdate
+
+
 # sur usi1
 cd /usr/local
 wget http://mirrors.ukfast.co.uk/sites/ftp.apache.org//maven/binaries/apache-maven-3.0.3-bin.tar.gz 
