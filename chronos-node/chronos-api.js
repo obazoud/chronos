@@ -226,7 +226,7 @@ exports.getScore = function(req, res, params) {
     },
     success: function(userDoc) {
       var userDocJson = JSON.parse(userDoc);
-      ranking.ranking(userDocJson.lastname, userDocJson.firstname,req.jsonUser.login,100,5,function(ranking) {
+      ranking.ranking(userDocJson.lastname, userDocJson.firstname,userDocJson.mail,100,5,function(ranking) {
         res.send(200, {}, ranking);
       });
     }
