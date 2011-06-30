@@ -3,6 +3,7 @@ var xml2json = require('./xml2json.js');
 var sys = require('sys');
 var chronosCouch = require('./chronos-couchdb-api.js');
 var security = require('./security.js');
+var ranking = require("./ranking.js");
 
 exports.ping = function(req, res) {
   res.send(201, {}, 'pong');
@@ -15,6 +16,7 @@ exports.createUser = function(req, res, params) {
       res.send(400, {}, data);
     },
     success: function(data) {
+      ranking.addUser(params.firstname,params.lastname,params.mail);
       res.send(201);
     }
   });
@@ -118,6 +120,7 @@ exports.answerQuestion = function(req, res, n, params) {
           answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
           answer.good_answer=q.goodchoice;
           answer.score=data;
+          //ranking.updateScore(
           res.send(200, {}, answer);
         }
       });

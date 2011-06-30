@@ -7,34 +7,33 @@ client.on("error", function (err) {
 });
 
 
-function addUser(lastname,firstname,mail){
+exports.addUser = function addUser(lastname,firstname,mail){
    var token = "{lastname:"+lastname+",firstname:"+firstname+",mail:"+mail+"}";
    client.zadd("scores",0,token,function(err,reply){
 			console.log("user : " + token + " added");
 			client.save();
 		}
 	);
-}
+};
 
 
-function updateScore(lastname,firstname,mail,increment){
+exports.updateScore = function (lastname,firstname,mail,increment){
     var token = "{lastname:"+lastname+",firstname:"+firstname+",mail:"+mail+"}";
 	client.zincrby("scores",increment,token,function(err,reply){
 		console.log("score of user "+token+"incremented by " + increment);
 		client.save();
 	});	
-}
+};
 
-function getScore(lastname,firstname,mail,callback){
+exports.getScore = function (lastname,firstname,mail,callback){
     var token = "{lastname:"+lastname+",firstname:"+firstname+",mail:"+mail+"}";
     client.zscore("scores",token,function(err,reply){
         callback(reply);
     });    
-}
+};
 
-// TODO bug sur les after
-
-function ranking(lastname,firstname,mail,topN,range,callback){
+// TODO bug sur les before
+exports.ranking = function ranking(lastname,firstname,mail,topN,range,callback){
 	var token = "{lastname:"+lastname+",firstname:"+firstname+",mail:"+mail+"}";
     var topScores = [];
     var topUsers = [];
@@ -97,7 +96,7 @@ function ranking(lastname,firstname,mail,topN,range,callback){
                 
     	});	
     });
-}
+};
 
 /*
 addUser("user1","user1","user1@gmail.com");
@@ -119,7 +118,7 @@ updateScore("tebourbi","slim","slim@gmail.com",1);
 getScore("tebourbi","slim","slim@gmail.com",function(reply){
     console.log("score of user slim@gmail.com : " + reply);
 });
-*/
+
 ranking ("mage","pierre","pierre@gmail.com",2,1,function(afterUsers,afterScores,beforeUsers,beforeScores,topUsers,topScores){
     console.log("\t topUsers:" + topUsers);
     console.log("\t topScores:" + topScores);
@@ -128,5 +127,5 @@ ranking ("mage","pierre","pierre@gmail.com",2,1,function(afterUsers,afterScores,
     console.log("\t afterUsers:" + afterUsers);
     console.log("\t afterScores:" + afterScores);
 });
-
+*/
 
