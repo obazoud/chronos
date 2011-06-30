@@ -233,18 +233,18 @@ emitter.on('warmupEnd', function(success) {
 });
 
 /** Callback getQuestion **/
-function setTimeoutForTimeFrame(timeout, login, n, success, fail) {
-  setTimeout(setTimeoutForTimeFrameCB, timeout, login, n, success, fail);
+function setTimeoutForTimeFrame(timeout, login, n, success) {
+  setTimeout(setTimeoutForTimeFrameCB, timeout, login, n, success);
 };
 
-function setTimeoutForTimeFrameCB(login, n, success, fail) {
+function setTimeoutForTimeFrameCB(login, n, success) {
   gameState.questionEncours = n;
   if (n == 1) {
-    emitter.emit("warmupEnd", success, fail);
+    emitter.emit("warmupEnd", success);
   } else {
     // TODO questionEncours
     // emitter.emit("questionEncours" + n, n);
-    // emitter.emit("sendQuestions", login, n, success, fail);
+    // emitter.emit("sendQuestions", login, n, success);
     success();
   }
 };
@@ -287,7 +287,7 @@ exports.getQuestion = function(n, login, success, fail) {
 
 
   if (n <= numberOfQuestions && now >= sessionNMoins1 && now <= sessionN) {
-    setTimeoutForTimeFrame(sessionN - now, login, n, success, fail);
+    setTimeoutForTimeFrame(sessionN - now, login, n, success);
   } else {
     logger.log("failed for question : " + n + ', login:' + login);
     logger.log("questionEncours = " + gameState.questionEncours);
