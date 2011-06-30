@@ -185,11 +185,11 @@ sudo dpkg-reconfigure ipvsadm
 <-- none
 
 # copy the heartbeat config from repo (authkeys, ha.cf, haresources) :
-sudo cp -r ~/deploiement/install/ha.d/* /etc/ha.d/.
+sudo ln -sf /home/user/deploiement/install/ha.d/* /etc/ha.d/.
 sudo chmod 600 /etc/ha.d/authkeys
 
 # copy the haproxy config from repo (haproxy.cfg) :
-sudo cp -r ~/deploiement/install/haproxy/* /etc/haproxy/.
+sudo ln -sf /home/user/deploiement/install/haproxy/haproxy.cfg /etc/haproxy/.
 
 # add haproxy management by heartbeat (only one LB up at time)
 sudo ln -sf /etc/init.d/haproxy /etc/ha.d/resource.d/.
