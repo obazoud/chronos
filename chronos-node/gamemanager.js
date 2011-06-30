@@ -272,10 +272,9 @@ function setTimeoutForTimeFrameCB(login, n, success) {
 exports.getQuestion = function(n, login, success, fail) {
   var now = new Date().getTime();
 
-  // TODO check questEncours value ?
+  // TODO check questionEncours value ?
   var sessionNMoins1 = gameState.sessions[n - 1];
   var sessionN = gameState.sessions[n];
-
 
   if (n <= numberOfQuestions && now >= sessionNMoins1 && now <= sessionN) {
     setTimeoutForTimeFrame(sessionN - now, login, n, success);
