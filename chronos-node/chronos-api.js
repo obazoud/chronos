@@ -10,6 +10,11 @@ var gamemanager = require('./gamemanager.js');
 var logger = require('util');
 var authentication_key = '12IndR6r5V5618';
 
+// nbquestions : le nombre de questions à jouer. 
+// Doit être inférieur ou égal au nombre de questions présentes dans le fichier (élement <usi:questions>). 
+// --> Ce paramètre est considéré comme inutile. Nous jouerons toujours 20 questions.
+var numberOfQuestions = 20;
+
 // HAProxy
 exports.ping = function(req, res) {
   res.send(200, {}, 'pong');
@@ -54,25 +59,19 @@ exports.createUser = function(req, res, params) {
 //  } else {
     chronosCouch.head(params.mail, {
       error: function(data) {
+        logger.log("FAILED(400)");
         res.send(400, {}, data);
       },
       success: function(data, id) {
         if (id != null) {
+          logger.log("FAILED(400)");
           res.send(400, {}, data);
         } else {
           var player = {_id:params.mail, firstname:params.firstname || '', lastname:params.lastname || '', password:params.password || ''};
           players.unshift(player);
-          ranking.addUser(params.lastname,params.firstname,params.mail,function(err,added) {
-            if (err) {
-              res.send(400, {}, err);
-            } else {
-              if (added == 0) {
-                res.send(400, {}, "user already exist in redis");
-              } else {
-                res.send(201);
-              }
-            }
-          });
+          // Not now but only if user is logged
+          // ranking.addUser(params.lastname,params.firstname,params.mail,function(err,added) {
+          res.send(201);
         }
       }
     });
@@ -80,9 +79,9 @@ exports.createUser = function(req, res, params) {
 };
 
 setInterval(function() {
-  //console.log("Bulk players ?");
+  //logger.log("Bulk players ?");
   if (players.length > 0) {
-    //console.log("Read to bulk players");
+    //logger.log("Read to bulk players");
     var playerIndex = Math.max(0, players.length - playerBatch);
     var playerNumber = Math.min(players.length, playerBatch);
     var playersToBatch = players.splice(playerIndex, playerNumber);
@@ -90,10 +89,10 @@ setInterval(function() {
     chronosCouch.bulk(playersToBatch, {
       error: function(data) {
         players.unshift(playersToBatch);
-        //console.log("Error" + data);
+        //logger.log("Error" + data);
       },
       success: function(data) {
-        //console.log("Error" + data);
+        //logger.log("Error" + data);
       }
     });
   }
@@ -122,25 +121,12 @@ function putGame(req, res, params, paramsJSON) {
   if (message) {
     res.send(401, {}, message);
   } else {
-    console.log(tools.toISO8601(new Date()) + ": a new game is coming.");
-    console.log(tools.toISO8601(new Date()) + ": game successfully added.");
-    gamemanager.initGame(paramsJSON, {
-      error: function(err) {
-        //console.log("Err: " + err);
-        res.send(400, {}, err);
-      },
-      success: function(exist) {
-      }
-    });
-    ranking.reset(function(err, updated) {
-      if (err) {
-        res.send(400, {}, err);
-      }
-      else {
-        //console.log(tools.toISO8601(new Date()) + ": Redis: score to 0: OK " + (updated == 0));
-        res.send(201);
-      }
-    });
+    logger.log("A new game is coming.");
+    logger.log("Game successfully added.");
+    // TODO callback ?
+    gamemanager.initGame(paramsJSON);
+    ranking.initRanking();
+    res.send(201);
   }
 };
 
@@ -168,36 +154,39 @@ function processGameXML(authentication_key, parameters) {
 };
 
 exports.login = function(req, res, params) {
+  // logger.log(Date.now() + " > Http /api/login/" + params.mail);
   chronosCouch.getDoc(params.mail, {
     error: function(data) {
       if (JSON.parse(data).error == 'not_found') {
-        console.log('user not found, ' + params.mail);
+        logger.log('user not found, ' + params.mail);
         res.send(401);
       } else {
-        console.log("Login" + err);
+        logger.log(params.mail + ":" + err);
         res.send(400);
       }
     },
     success: function(data) {
       var userDocjson = JSON.parse(data);
       if (userDocjson.password != params.password) {
+        logger.log(params.mail + ": password does not match");
         res.send(401);
       } else {
-        gamemanager.isLogin(params.mail, {
+        gamemanager.login(params.mail, {
           error: function(err) {
-            //console.log("Login" + err);
+            logger.log(params.mail + ": failed !!" + err);
             res.send(400);
           },
-          success: function(exist) {
-            if (exist) {
-              //console.log("Login" + exist);
+          success: function(successful) {
+            if (!successful) {
+              logger.log(params.mail + ": exists !!");
               res.send(400);
             } else {
               var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
-              logger.log("Login: " + params.mail);
-              gamemanager.login(params.mail);
-              gamemanager.warmup(res);
+              // logger.log(Date.now() + " < Http /api/login/" + params.mail);
               res.send(201, {'Set-Cookie': 'session_key=' + sessionkey}, '');
+              gamemanager.warmup(res);
+              // TODO callback ?
+              ranking.addUser(userDocjson.lastname, userDocjson.firstname, params.mail);
             }
           }
         });
@@ -207,63 +196,72 @@ exports.login = function(req, res, params) {
 };
 
 exports.getQuestion = function(req, res, n) {
-  gamemanager.getQuestion(n, req.jsonUser.login,
-    function () {
-      gamemanager.getGame({
-        error: function(data) {
-          res.send(400, {}, data);
-        },
-        success: function(gamejson) {
+  var gamejson = gamemanager.getGame();
+  // logger.log("> Http /api/question/" + n + " / " + numberOfQuestions + ", login:" + req.jsonUser.login);
+  // preparing response
+  // First score is too slow, do not know why !?
+  if (n > numberOfQuestions) {
+    // logger.log(n + "< Http /api/question/" + n + ", login:" + req.jsonUser.login);
+    // logger.log("FAILED(400)");
+    res.send(400);
+  } else {
+    var question = gamemanager.getGameFragment(n);
+    gamemanager.getQuestion(n, req.jsonUser.login,
+      function () {
+        // logger.log("> Calling score q " + n + ", login:" + req.jsonUser.login);
+        if (n == 1) {
+            // logger.log("< Calling score q " + n + ", login:" + req.jsonUser.login);
+            question.score = "0";
+            // logger.log("< Http /api/question/" + n + ", login:" + req.jsonUser.login + ", " + JSON.stringify(question));
+            // logger.log("< Http /api/question/" + n + ", login:" + req.jsonUser.login);
+            res.send(200, {}, question);
+        } else {
           gamemanager.getScore(req.jsonUser.login, {
             error: function(err) {
+              // logger.log("FAILED(400)");
               res.send(400, {}, err);
             },
             success: function(score) {
-              var q = gamejson.gamesession.questions.question[n-1];
-              var question = {};
-              question.question = q.label;
-              for (i=0; i<q.choice.length;i++) {
-                question['answer_' + (i+1)] = q.choice[i];
-              }
+              // logger.log("< Calling score q " + n + ", login:" + req.jsonUser.login);
               question.score = "" + score + "";
+              // logger.log("< Http /api/question/" + n + ", login:" + req.jsonUser.login);
               res.send(200, {}, question);
             }
           });
         }
-      });
-    },
-    function () {
-      res.send(400);
-    }
-  );
+      },
+      function () {
+        logger.log("< FAILED(400): /api/question/" + n + ", login:" + req.jsonUser.login);
+        res.send(400);
+      }
+    );
+  }
 };
 
 exports.answerQuestion = function(req, res, n, params) {
+  // logger.log("> Http /api/anwser/" + n + ", login:" + req.jsonUser.login);
   gamemanager.answerQuestion(n, req.jsonUser.login,
     function() {
-        gamemanager.getGame({
-          error: function(data) {
-            res.send(400, {}, data);
-          },
-          success: function(gamejson) {
-            var q = gamejson.gamesession.questions.question[n-1];
-            gamemanager.updatingScore(req.jsonUser.lastname, req.jsonUser.fistname, req.jsonUser.login, n, params.answer, q.goodchoice, q.qvalue, {
-              error: function(data) {
-                res.send(400, {}, data);
-              },
-              success: function(score) {
-                var answer = {};
-                answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
-                answer.good_answer = q.choice[q.goodchoice - 1];
-                answer.score = "" + score + "";
-                res.send(201, {}, answer);
-              }
-            });
-          }
-        });
+      var gamejson = gamemanager.getGame();
+      var q = gamejson.gamesession.questions.question[n-1];
+      gamemanager.updatingScore(req.jsonUser.lastname, req.jsonUser.firstname, req.jsonUser.login, n, params.answer, q.goodchoice, q.qvalue, {
+        error: function(data) {
+          logger.log("FAILED(400)");
+          res.send(400, {}, data);
+        },
+        success: function(score) {
+          var answer = {};
+          answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
+          answer.good_answer = q.choice[q.goodchoice - 1];
+          answer.score = "" + score + "";
+          // logger.log("< Http /api/anwser/" + n + ", login:" + req.jsonUser.login);
+          res.send(201, {}, answer);
+        }
+      });
     },
     function() {
-        res.send(400);
+      logger.log("FAILED(400) /api/anwser/" + n + ", login:" + req.jsonUser.login);
+      res.send(400);
     }
   );
 };
@@ -275,22 +273,23 @@ exports.tweetHttp = function(req, res, params) {
 };
 
 exports.getRanking = function(req, res) {
+  // logger.log("> Http /api/ranking, login:" + req.jsonUser.login);
   gamemanager.logged(req.jsonUser.login, {
     error: function(data) {
       res.send(400, {}, data);
     },
     success: function(logged) {
+      // logger.log("> Http /api/ranking, logged:" + logged);
       if (logged == 0) {
-        gamemanager.getGame({
-          success: function(gamejson) {
-            gamemanager.getNumberOfPlayers({
-              error: function(data) {
-                res.send(400, {}, data);
-              },
-              success: function(numberOfPlayers) {
-                // twitterapi.tweet('Notre application supporte ' + numberOfPlayers + ' joueurs #challengeUSI2011');
-              }
-            });
+        var gamejson = gamemanager.getGame();
+        gamemanager.getNumberOfPlayers({
+          error: function(data) {
+            res.send(400, {}, data);
+          },
+          success: function(numberOfPlayers) {
+            var message = 'Notre application supporte ' + numberOfPlayers + ' joueurs #challengeUSI2011';
+            logger.log('Tweet: ' + message);
+            // twitterapi.tweet(message);
           }
         });
       }
@@ -301,12 +300,14 @@ exports.getRanking = function(req, res) {
       res.send(400, {}, err);
     }
     else {
+      // logger.log("< Http /api/ranking, login:" + req.jsonUser.login + ", " + JSON.stringify(ranking));
       res.send(200, {}, ranking);
     }
   });
 };
 
 exports.getScore = function(req, res, params) {
+  logger.log("> Http /api/score , login:" + params.user_mail);
   if (params.authentication_key != authentication_key) {
     res.send(401);
   }
@@ -321,6 +322,7 @@ exports.getScore = function(req, res, params) {
           res.send(400, {}, err);
         }
         else {
+          logger.log("< Http /api/score , login:" + params.user_mail +  JSON.stringify(ranking));
           res.send(200, {}, ranking);
         }
       });
@@ -333,27 +335,23 @@ exports.audit = function(req, res, params) {
     res.send(401);
   }
 
-  gamemanager.getGame({
-    error: function(data) { res.send(400, {}, data); },
-    success: function(gamejson) {
-      gamemanager.getAnswers(params.user_mail, {
-        error: function(data) {
-          res.send(400, {}, data);
-        },
-        success: function(answers) {
-          var audit = {};
-          audit.user_answers = new Array();
-          audit.good_answers = new Array();
-          var question = gamejson.gamesession.questions.question;
-          for (i=0; i<question.length; i++) {
-            audit.good_answers.push(question[i].goodchoice);
-          }
-          for (j=0; j<answers.length; j++) {
-            audit.user_answers.push(answers[j]);
-          }
-          res.send(200, {}, audit);
-        }
-      });
+  var gamejson = gamemanager.getGame();
+  gamemanager.getAnswers(params.user_mail, {
+    error: function(data) {
+      res.send(400, {}, data);
+    },
+    success: function(answers) {
+      var audit = {};
+      audit.user_answers = new Array();
+      audit.good_answers = new Array();
+      var question = gamejson.gamesession.questions.question;
+      for (i=0; i<question.length; i++) {
+        audit.good_answers.push(question[i].goodchoice);
+      }
+      for (j=0; j<answers.length; j++) {
+        audit.user_answers.push(answers[j]);
+      }
+      res.send(200, {}, audit);
     }
   });
 };
@@ -363,23 +361,18 @@ exports.auditN = function(req, res, n, params) {
     res.send(401);
   }
 
-  gamemanager.getGame({
+  var gamejson = gamemanager.getGame();
+  gamemanager.getAnswer(params.user_mail, n, {
     error: function(data) {
       res.send(400, {}, data);
     },
-    success: function(gamejson) {
-      gamemanager.getAnswer(params.user_mail, n, {
-        error: function(data) {
-          res.send(400, {}, data);
-        },
-        success: function(answer) {
-          var audit = {};
-          audit.good_answer = gamejson.gamesession.questions.question[n-1].goodchoice;
-          audit.question = gamejson.gamesession.questions.question[n-1].label;
-          audit.user_answer = answer;
-          res.send(200, {}, audit);
-        }
-      });
+    success: function(answer) {
+      var audit = {};
+      audit.good_answer = gamejson.gamesession.questions.question[n-1].goodchoice;
+      audit.question = gamejson.gamesession.questions.question[n-1].label;
+      audit.user_answer = answer;
+      res.send(200, {}, audit);
     }
   });
+
 };
