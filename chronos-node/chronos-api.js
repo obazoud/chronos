@@ -98,9 +98,11 @@ exports.login = function(req, res, params) {
   chronosCouch.getDoc(params.mail, {
     error: function(data) {
       if (data.error == 'unauthorized') {
+        console.log('unauthorized ' + data);
         res.send(401);
       } else {
           if (JSON.parse(data).error == 'not_found') {
+            console.log('user not found, ' + params.mail);
             res.send(401);
           } else {
             res.send(400);
