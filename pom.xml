@@ -5,10 +5,10 @@
   <artifactId>chronos</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>pom</name>
-  <url>http://maven.apache.org</url>
+  <name>Chronos</name>
   <modules>
     <module>chronos-biz</module>
+    <module>chronos-front</module>
   </modules>
   <dependencyManagement>
     <dependencies>

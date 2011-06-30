@@ -7,11 +7,8 @@
     <artifactId>chronos</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
-  <artifactId>chronos-biz</artifactId>
-  <name>Chronos Bizz</name>
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
+  <artifactId>chronos-front</artifactId>
+  <name>Chronos Front</name>
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
@@ -19,3 +16,4 @@
     </dependency>
   </dependencies>
 </project>
+
