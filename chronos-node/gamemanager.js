@@ -247,13 +247,18 @@ emitter.once('warmupEnd',function(timerId){
                 var now = new Date().getTime();
 		      
 		if(now > quizSessions[numberOfQuestions]){
-	            logger.log("emitting event for end of game (end of time)");
-                    emitter.emit("endOfGame",qTimer);
-	        }else if(now >= quizSessions[n]){
+	        }
+		if(now >= quizSessions[n]){
                     logger.log("emitting event for sending question : " + n);
                     emitter.emit("sendQuestions",qTimer);
         	    redis.hincrby("context","questionEncours",1);          
-		    
+		   /* 
+		   if(n==numberOfQuestions){
+			    logger.log("emitting event for end of game (end of time)");
+	                    emitter.emit("endOfGame",qTimer);
+	        
+		    }
+		    */
                 } 
             });
             
@@ -377,7 +382,15 @@ exports.answerQuestion = function(n, success, fail) {
 
 emitter.on("endOfGame",function(){
 	clearTimeout(qTimer);	
-	// TODO il faut libere/gerer ttes les demande joueurs pas encore traites.
+/*	
+redis.hmget("context","numberOfQuestions",function(err,numberOfQuestions){
+		logger.log("gestion des demandes en suspens apres la fin du jeu");		
+		responses[numberOfQuestions].forEach(function(callback){
+			callback();		
+		});
+			
+	});
+*/
 });
 
 exports.getScore = function(login, options) {
