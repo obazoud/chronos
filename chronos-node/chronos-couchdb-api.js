@@ -9,13 +9,6 @@ var username = 'superadmin';
 var password = 'supersecret';
 var saltvalue = '1';
 
-// document in cache is supposed to be read only!!
-// otherwise clone it
-var store = {};
-var keys = {
-    'game': true
-};
-
 exports.putDoc = function(name, json, options) {
   restler.put(couchdburl + '/' + name, {
     data: JSON.stringify(json),
@@ -27,25 +20,8 @@ exports.putDoc = function(name, json, options) {
     }
   })
   .on('complete', function(data, response) {
-    if (keys[name]) {
-      restler.get(couchdburl + '/' + name, {
-        data: ''
-      })
-      .on('error', function(alldata, response2) {
-        if (options && options.error) {
-          options.error(data);
-        }
-      })
-      .on('complete', function(alldata, response2) {
-        store[name] = alldata;
-        if (options && options.success) {
-          options.success(data);
-        }
-      });
-    } else {
-      if (options && options.success) {
-        options.success(data);
-      }
+    if (options && options.success) {
+      options.success(data);
     }
   });
 };
@@ -67,12 +43,6 @@ exports.putDesign = function(name, options) {
 };
 
 exports.getDoc = function(name, options) {
-  if (store[name]) {
-    if (options && options.success) {
-      options.success(store[name]);
-      return;
-    }
-  }
   restler.get(couchdburl + '/' + name, {
     data: ''
   })
@@ -82,9 +52,6 @@ exports.getDoc = function(name, options) {
     }
   })
   .on('complete', function(data, response) {
-    if (keys[name]) {
-      store[name] = data;
-    }
     if (options && options.success) {
       options.success(data);
     }
@@ -132,11 +99,4 @@ exports.delete = function(name, id, options) {
 
 };
 
-exports.purge = function(name) {
-  if (name) {
-    delete(store[name]);
-  } else {
-    store = {};
-  };
-};
 
