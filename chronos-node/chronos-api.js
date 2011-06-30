@@ -287,7 +287,7 @@ exports.getRanking = function(req, res) {
                 res.send(400, {}, data);
               },
               success: function(numberOfPlayers) {
-                //twitterapi.tweet('Notre application supporte ' + numberOfPlayers + ' joueurs #challengeUSI2011');
+                // twitterapi.tweet('Notre application supporte ' + numberOfPlayers + ' joueurs #challengeUSI2011');
               }
             });
           }
