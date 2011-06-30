@@ -269,18 +269,32 @@ function warmupLoop () {
 /** Timer Question K **/
 function questionTimer(k) {
   var start = Date.now();
-  // logger.log('Fire question: ' + k);
-  // logger.log('Pendings: ' + gameState.pendings[k].length + " " + sys.inspect(gameState.pendings[k], false));
   var count = gameState.pendings[k].length;
   for (var i = 0; i < count; i++) {
     var ctx = gameState.pendings[k][i];
-    // logger.log('Fire question: ' + k + ' ' + ctx.req.jsonUser.login);
     // TODO ctx.req.resume();
     ctx.res.send(200, {}, ctx.question);
+    ctx.fired = true;
     // TODO ctx.res.end();
   }
-  // TODO gameState.pendings[k] = [];
-  logger.log('Fire question: ' + k + ' (' + count + ') in ' + (Date.now() - start) + ' ms.');
+
+  logger.log('Fire question: ' + k + ' phase 1 (' + count + ') in ' + (Date.now() - start) + ' ms.');
+  
+  process.nextTick(function() {
+    var j = 0;
+    var start = Date.now();
+    for (var i = 0; i < count; i++) {
+      var ctx = gameState.pendings[k][i];
+      if (!ctx.fired) {
+        j++;
+        // TODO ctx.req.resume();
+        ctx.res.send(200, {}, ctx.question);
+        // TODO ctx.res.end();
+      }
+    }
+    logger.log('Fire question: ' + k + ' phase 2 (' + j + ') in ' + (Date.now() - start) + ' ms.');
+    gameState.pendings[k] = [];
+  });
 }
 
 /** get question N **/
