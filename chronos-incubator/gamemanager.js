@@ -12,9 +12,11 @@ var events = require('events');
 
 var emitter = new events.EventEmitter();
 
-router.get('/test/warmup').bind(warmup);
 router.get('/test').bind(fake);
+router.get('/test/warmup').bind(warmup);
 router.get(/^test\/question\/(\d+)$/).bind(getQuestion);
+router.get(/^test\/answer\/(\d+)$/).bind(answerQuestion);
+
 
 
 var http = require('http');
@@ -186,11 +188,14 @@ var qTimer = setInterval(function(){
         redis.hmget("context","questionEncours",function(err,n){
             console.log("checking end of time for question : " + n);
             var now = new Date().getTime();
-            if(now >= quizSessions[n] && (now < quizSessions[n] + 500) ){
+            if(now >= quizSessions[n]){
                 console.log("emitting event for sending question : " + n);
                 emitter.emit("sendQuestions",qTimer);
             
-            }
+            }else if(now > quizSessions[numberOfQuestions]){
+	       console.log("emitting event for end of game");
+               emitter.emit("endOfGame",qTimer);
+	    }
         });
         
     }
@@ -200,11 +205,16 @@ var qTimer = setInterval(function(){
 
 emitter.on("sendQuestions",function(){
      redis.hmget("context","questionEncours",function(err,n){
-        console.log("sending question : " + n);
-	redis.hincrby("context","questionEncours",1);        
+        console.log("sending question : " + n + "/" + numberOfQuestions);
+	if( n > numberOfQuestions){
+               console.log("emitting event for end of game");
+               emitter.emit("endOfGame",qTimer);
+	}else{
+		redis.hincrby("context","questionEncours",1);          
+	}
 	responses[n].forEach(function(resp){
-            resp.send(200,{},"question " + n);    
-        });   
+		    resp.send(200,{},"question " + n);    
+	}); 
      });
         
 });
@@ -219,15 +229,22 @@ function getQuestion(req,resp,n){
         }
         ,function(){
             var now = new Date().getTime();
-            if(n <= 0 || n > numberOfQuestions){
-                resp.send(400,{},"le numero de la question demande est incorrect.");
-            }else if(now >= quizSessions[n-1] && now <= (quizSessions[n]- synchroTimeDuration)){
-                console.log("a user requests question : " + n)
-                responses[n].push(resp);
-                //resp.send(200,{},"voici la question " + n);
-            }else if (now > (quizSessions[n]- synchroTimeDuration)){
-                resp.send(400,{},"vous avez rate la question " + n);
-            }
+            redis.hmget("context","questionEncours",function(err,c){
+	    	    if(n <= 0 || n > numberOfQuestions){
+                        resp.send(400,{},"le numero de la question demande est incorrect.");
+		    }else if (n>c){
+			resp.send(400,{},"question demande n est pas encore atteinte.");
+		    }else if(now >= quizSessions[n-1] && now <= (quizSessions[n]- synchroTimeDuration)){
+		        console.log("a user requests question : " + n)
+		        responses[n].push(resp);
+		        //resp.send(200,{},"voici la question " + n);
+		    }else if (now > (quizSessions[n]- synchroTimeDuration)){
+		        resp.send(400,{},"vous avez rate la question " + n);
+		    }else{
+		    	resp.send(400,{},"requete incoherente.");
+		    }
+	    });
+	    
         }
         ,null
     );
@@ -237,16 +254,30 @@ function getQuestion(req,resp,n){
 /*
 
 */
-function answerQuestion(req,resp,n,r){
-    gameState(
-        function(){
-           
-        }
+function answerQuestion(req,resp,n){
+    
+     gameState(
+	function(){
+	   resp.send(400,{},"le jeu n a pas encore commence ");
+	}
         ,function(){
-        
+	    var now = new Date().getTime();
+	    if(n <= 0 || n > numberOfQuestions){
+	        resp.send(400,{},"le numero de la question a la quelle vous repondez est incorrect.");
+	    }else if(now >= quizSessions[n-1] && now <= (quizSessions[n]- synchroTimeDuration)){
+	        console.log("a user answers question : " + n)
+		resp.send(200,{},"voici votre score ... et la reponse correcte a la derniere question...  ");
+	    }else if (now > (quizSessions[n]- synchroTimeDuration)){
+	        resp.send(400,{},"vous avez rate la question " + n);
+	    }else {
+	    	resp.send(400,{},"Requete incoherente.")
+	    }
         }
         ,null
     );
 }
 
+emitter.on("endOfGame",function(){
+	clearTimeout(qTimer);	
+});
 
