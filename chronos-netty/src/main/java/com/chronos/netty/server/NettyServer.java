@@ -1,7 +1,10 @@
 package com.chronos.netty.server;
 
 import java.net.InetSocketAddress;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Executor;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonParser;
@@ -29,8 +32,8 @@ public class NettyServer {
 
     public void start() {
         logger.info("HTTP-Netty-Server: starting on port {}.", port);
-        bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),
-                Executors.newCachedThreadPool()));
+
+        bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(bossExecutor(), workerExecutor()));
         bootstrap.setPipelineFactory(new HttpServerPipelineFactory());
         bootstrap.setOption("child.tcpNoDelay", true);
         bootstrap.setOption("child.keepAlive", true);
@@ -80,5 +83,13 @@ public class NettyServer {
             jp.getCurrentName();
             jp.getText();
         }
+    }
+
+    private Executor bossExecutor() {
+        return new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+    }
+
+    private Executor workerExecutor() {
+        return new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
     }
 }
