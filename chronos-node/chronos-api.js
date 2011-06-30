@@ -11,7 +11,8 @@ var password = 'supersecret';
 exports.createUser = function(req, res, params) {
   var url = couchdAdminburl + params.mail;
   console.log('url: ' + url);
-  restler.put(url, {
+
+restler.put(url, {
         username: username,
         password: password,
         data: JSON.stringify(params.password)
@@ -23,7 +24,8 @@ exports.createUser = function(req, res, params) {
     .on('complete', function (data) {
       var url = couchdburl + '/' + params.mail;
       restler.put(url, {
-        data: { 'id' : 312 }
+        data: JSON.stringify({firstname:params.firstname, lastname:params.lastname, mail:params.mail, password:params.password}),
+        headers: { 'Content-Type': 'application/json' }
       })
       .on('error', function(data) {
         console.log('data: ' + data);
