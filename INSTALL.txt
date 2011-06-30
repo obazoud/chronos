@@ -1,3 +1,4 @@
+ps aux | grep -E (redis|couchdb|node)
 
 # vi ~/.bashrc
 # USI
@@ -79,8 +80,9 @@ redis-cli hget "test" toto
 sudo apt-get install gcc
 sudo apt-get install g++
 sudo apt-get install python
+sudo apt-get install  libssl-dev
 sudo apt-get install openssl
-wget http://nodejs.org/dist/node-v0.4.5.tar.gz
+proxyon && wget http://nodejs.org/dist/node-v0.4.5.tar.gz && proxyoff
 tar -zxf node-v0.4.5.tar.gz
 mv node-v0.4.5 node-v0.4.5-src
 cd node-v0.4.5-src/
@@ -89,6 +91,7 @@ make
 make install
 source ~/.bashrc
 node --version
+proxyon
 curl http://npmjs.org/install.sh | npm_install=rc sh
 npm --version
 npm install cluster
@@ -97,6 +100,7 @@ npm install node-uuid
 npm install redis
 npm install restler
 npm install twitter
+proxyoff
 
 ln -s /home/user/deploiement/install/etc/init.d/nodejs /etc/init.d/nodejs
 update-rc.d -f nodejs defaults
