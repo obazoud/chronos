@@ -167,7 +167,7 @@ exports.login = function(req, res, params) {
               res.send(400);
             } else {
               var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
-              userDocjson.cookies[gamejson.game_id] = sessionkey;
+              userDocjson.cookies[gamejson.game_id] = true;
               chronosCouch.putDoc(params.mail, true, userDocjson);
               gamemanager.warmup(res);
               res.send(201, {'Set-Cookie': 'session_key=' + sessionkey}, '');
