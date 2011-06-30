@@ -230,11 +230,11 @@ emitter.once('warmupEnd',function(timerId){
         var quizSessions = [];
 
         quizSessions[1] = now;
-        for(i=2; i<=numberOfQuestions ; i++){
+        for(i=2; i<=(numberOfQuestions+1) ; i++){
              quizSessions[i] = quizSessions[i-1] + questionTimeFrame + synchroTimeDuration;
         }
 
-        for(j=2; j<=numberOfQuestions ; j++){
+        for(j=2; j<=(numberOfQuestions+1) ; j++){
 		    redis.hset("context",
                         "session_" + j  , quizSessions[j]);
 	    }
@@ -261,7 +261,9 @@ emitter.once('warmupEnd',function(timerId){
                     if(now >= sessionN){
                             logger.log("emitting event for sending question : " + n);
                             emitter.emit("sendQuestions",qTimer);
-                        redis.hincrby("context","questionEncours",1);
+                            if( n < numberOfQuestions ) {
+				    redis.hincrby("context","questionEncours",1);
+			    }
                     }
                 });
 
@@ -270,7 +272,7 @@ emitter.once('warmupEnd',function(timerId){
         }
         ,null);
         
-    },20);// TODO redefinir cette periode 
+    },100);// TODO redefinir cette periode 
    
 });
 
@@ -287,6 +289,7 @@ emitter.on("sendQuestions",function(){
             logger.log("emitting event for end of game (no more questions)");
             emitter.emit("endOfGame",qTimer);
     	}
+	// TODO make this asynch
     	responses[n].forEach(function(callback){
             callback();
     	}); 
@@ -310,27 +313,19 @@ exports.getQuestion = function(n, success, fail ) {
         }
         ,function(){
 
-            redis.hmget("context","synchroTimeDuration","questionEncours","session_" + (n-1),"session_" + n ,function(err,params){
+            redis.hmget("context","synchroTimeDuration","numberOfQuestions","session_" + (n-1),"session_" + n ,function(err,params){
 		    
 	    var synchroTimeDuration = parseInt(params[0]);
-	    var questionEncours = parseInt(params[1]);
+	    var numberOfQuestions = parseInt(params[1]);
 	    var sessionNMoins1 = parseInt(params[2]);
 	    var sessionN = parseInt(params[3]);
 
 		   
-		   if(now >= sessionNMoins1 && now <= sessionN){
+		   if((n<=numberOfQuestions) && (now >= sessionNMoins1 && now <= sessionN)){
 		    	logger.log("a user waiting for question : " + n)
 	                responses[n].push(success);
 		    }else{
 			fail();			
-			if(n=!questionEncours){
-				logger.log("requested question is not the current one.");		    	
-			}else if ( now > ( sessionN - synchroTimeDuration) ){
-				logger.log("time for requesting question is finished.");		    	
-			}else{
-				logger.log("unexpected problem on getQuestion.");
-			}			
-			
 		    }		     
 	    });
 	    

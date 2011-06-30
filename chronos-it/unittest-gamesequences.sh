@@ -174,8 +174,12 @@ curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json
 sleep 1 
 curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/20
 
-sleep 6
+sleep 3
 curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/20
+
+
+sleep 1 
+curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/21
 
 
 
