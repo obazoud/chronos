@@ -249,7 +249,7 @@ exports.getQuestion = function(n, success, fail ) {
 exports.answerQuestion = function(n, success, fail) { 
      gameState(	
 	function(){
-	        error();
+	        fail();
 	}
         ,function(){
 	    var now = new Date().getTime();
