@@ -48,28 +48,25 @@ function GameState() {
   this.questionEncours = 0;
 
   this.initGame = function(newGame) {
-    if (this.state == 0) {
-      logger.log('State changed state: ' + this.state + ' -> ' + 1);
-      this.state = 1;
-      redis.hset("context", "state", this.state);
-      this.game = newGame;
-      this.nbusersthreshold = parseInt(this.game.gamesession.parameters.nbusersthreshold);
-      this.logintimeout = parseInt(this.game.gamesession.parameters.logintimeout) * 1000;
-      this.questiontimeframe = parseInt(this.game.gamesession.parameters.questiontimeframe) * 1000;
-      this.synchrotime = parseInt(this.game.gamesession.parameters.synchrotime) * 1000;
-      this.questionEncours = 0;
+    // Force init game
+    // reload data after crash
+    logger.log('State changed state: ' + this.state + ' -> ' + 1);
+    this.state = 1;
+    redis.hset("context", "state", this.state);
+    this.game = newGame;
+    this.nbusersthreshold = parseInt(this.game.gamesession.parameters.nbusersthreshold);
+    this.logintimeout = parseInt(this.game.gamesession.parameters.logintimeout) * 1000;
+    this.questiontimeframe = parseInt(this.game.gamesession.parameters.questiontimeframe) * 1000;
+    this.synchrotime = parseInt(this.game.gamesession.parameters.synchrotime) * 1000;
+    this.questionEncours = 0;
 
-      for(var i = 0; i < numberOfQuestions; i++) {
-        var q = this.game.gamesession.questions.question[i];
-        this.gameFragments[i] = {};
-        this.gameFragments[i].question = q.label;
-        for (var j = 0; j < q.choice.length; j++) {
-          this.gameFragments[i]['answer_' + (j+1)] = q.choice[j];
-        }
+    for(var i = 0; i < numberOfQuestions; i++) {
+      var q = this.game.gamesession.questions.question[i];
+      this.gameFragments[i] = {};
+      this.gameFragments[i].question = q.label;
+      for (var j = 0; j < q.choice.length; j++) {
+        this.gameFragments[i]['answer_' + (j+1)] = q.choice[j];
       }
-      // logger.log(sys.inspect(this.gameFragments, false));
-    } else {
-      logger.log('Already in state 1');
     }
   };
 
@@ -119,13 +116,16 @@ function GameState() {
   this.retrieve = function() {
     // TODO at node startup get state from redis
     // TODO block everything during loading...
+    logger.log("****** Game manager loads data from database ******");
     this.state == 0;
+    that = this;
     redis.get("game", function(err, rgame) {
       try {
-        initGame(JSON.parse(rgame));
+        // reinit game
+        that.initGame(JSON.parse(rgame));
         // TODO: ...
       } catch (err2) {
-         logger.log("Something wrong here");
+         logger.log("Something wrong here -> " + err2);
          return;
       }
     });
@@ -134,6 +134,9 @@ function GameState() {
 }
 
 var gameState = new GameState();
+// TODO reload stuff when node up
+// TODO or after a reboot
+gameState.retrieve();
 
 var channel = '#chronos';
 subscriber.subscribe(channel);
