@@ -15,7 +15,7 @@ if [ -f ${PIDFILE} ]; then
 
 fi
 
-PID=$!
+PID=`ps -ef | grep ${SCRIPTNAME} | head -n1 |  awk ' {print $2;} '`
 echo ${PID} > ${PIDFILE}
 
 ##
