@@ -52,7 +52,7 @@ exports.createUser = function(req, res, params) {
         if (id != null) {
           res.send(400, {}, data);
         } else {
-          var player = {_id:params.mail, type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }, cookies: {}};
+          var player = {_id:params.mail, type:'player', firstname:params.firstname || '', lastname:params.lastname || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }, cookies: {}};
           players.unshift(player);
           ranking.addUser(params.lastname,params.firstname,params.mail,function(err,added) {
           });
@@ -311,15 +311,13 @@ exports.getScore = function(req, res, params) {
   if (params.authentication_key != authentication_key) {
     res.send(401);
   }
-  // TODO: avoid this call to CouchDB by putting lastname and firstname in req.jsonUser
-  // TODO : /!\ can not do that, score is admin level not user
   chronosCouch.getDoc(params.user_mail, {
     error: function(data) {
       res.send(400, {}, data);
     },
     success: function(userDoc) {
       var userDocJson = JSON.parse(userDoc);
-      ranking.ranking(userDocJson.lastname, userDocJson.firstname,userDocJson.mail,100,5,function(err,ranking) {
+      ranking.ranking(userDocJson.lastname, userDocJson.firstname,userDocJson._id,100,5,function(err,ranking) {
         if (err) {
           res.send(400, {}, err);
         }
