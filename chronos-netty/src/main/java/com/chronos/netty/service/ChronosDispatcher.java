@@ -17,6 +17,8 @@ import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 
+import static org.jboss.netty.handler.codec.http.HttpMethod.GET;
+import static org.jboss.netty.handler.codec.http.HttpMethod.POST;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.CREATED;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
@@ -48,30 +50,35 @@ public class ChronosDispatcher {
 
     private HttpResponse question(HttpRequest httpRequest) {
         try {
-            String uri = URLDecoder.decode(httpRequest.getUri(), "UTF-8");
-            String question = uri.substring(uri.lastIndexOf("/") + 1);
+            if (httpRequest.getMethod().equals(GET)) {
+                String uri = URLDecoder.decode(httpRequest.getUri(), "UTF-8");
+                String question = uri.substring(uri.lastIndexOf("/") + 1);
 
-            // TODO: Business stuff!
+                // TODO: Business stuff!
 
-            final ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer(128);
-            final OutputStream stream = new ChannelBufferOutputStream(channelBuffer);
+                final ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer(128);
+                final OutputStream stream = new ChannelBufferOutputStream(channelBuffer);
 
-            JsonGenerator generator = jsonFactory.createJsonGenerator(stream, JsonEncoding.UTF8);
-            generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
-            generator.disable(JsonGenerator.Feature.AUTO_CLOSE_JSON_CONTENT);
-            generator.writeStartObject();
-            generator.writeStringField("question", question);
-            generator.writeStringField("answer_1", "string");
-            generator.writeStringField("answer_2", "string");
-            generator.writeStringField("answer_3", "string");
-            generator.writeStringField("answer_4", "string");
-            generator.writeNumberField("score", 100);
-            generator.writeEndObject();
-            generator.close();
+                JsonGenerator generator = jsonFactory.createJsonGenerator(stream, JsonEncoding.UTF8);
+                generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
+                generator.disable(JsonGenerator.Feature.AUTO_CLOSE_JSON_CONTENT);
+                generator.writeStartObject();
+                generator.writeStringField("question", question);
+                generator.writeStringField("answer_1", "string");
+                generator.writeStringField("answer_2", "string");
+                generator.writeStringField("answer_3", "string");
+                generator.writeStringField("answer_4", "string");
+                generator.writeNumberField("score", 100);
+                generator.writeEndObject();
+                generator.close();
 
-            HttpResponse httpResponse = new DefaultHttpResponse(HTTP_1_1, OK);
-            httpResponse.setContent(ChannelBuffers.wrappedBuffer(channelBuffer));
-            return httpResponse;
+                HttpResponse httpResponse = new DefaultHttpResponse(HTTP_1_1, OK);
+                httpResponse.setContent(ChannelBuffers.wrappedBuffer(channelBuffer));
+                return httpResponse;
+            } else {
+                HttpResponse httpResponse = new DefaultHttpResponse(HTTP_1_1, BAD_REQUEST);
+                return httpResponse;
+            }
         } catch (Exception e) {
             HttpResponse httpResponse = new DefaultHttpResponse(HTTP_1_1, BAD_REQUEST);
             return httpResponse;
@@ -80,10 +87,15 @@ public class ChronosDispatcher {
 
     private HttpResponse user(HttpRequest httpRequest) {
         try {
-            Map<String, String> args = getArgs(httpRequest);
-            // TODO: Business stuff!
-            HttpResponse httpResponse = new DefaultHttpResponse(HTTP_1_1, CREATED);
-            return httpResponse;
+            if (httpRequest.getMethod().equals(POST)) {
+                Map<String, String> args = getArgs(httpRequest);
+                // TODO: Business stuff!
+                HttpResponse httpResponse = new DefaultHttpResponse(HTTP_1_1, CREATED);
+                return httpResponse;
+            } else {
+                HttpResponse httpResponse = new DefaultHttpResponse(HTTP_1_1, BAD_REQUEST);
+                return httpResponse;
+            }
         } catch (Exception e) {
             HttpResponse httpResponse = new DefaultHttpResponse(HTTP_1_1, BAD_REQUEST);
             return httpResponse;
@@ -113,13 +125,13 @@ public class ChronosDispatcher {
         if (offset < 0) {
             return null;
         }
-        
+
         String next = uri.substring(offset + 1, uri.length());
         offset = next.indexOf(delimiter);
         if (offset < 0) {
             return null;
         }
-        
+
         String service = next.substring(offset + 1, next.length());
         offset = service.indexOf(delimiter);
         if (offset < 0) {
@@ -127,6 +139,6 @@ public class ChronosDispatcher {
         } else {
             return service.substring(0, offset);
         }
-        
+
     }
 }
