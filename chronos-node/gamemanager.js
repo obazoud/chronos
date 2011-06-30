@@ -222,11 +222,14 @@ emitter.once('warmupEnd',function(timerId){
 	    }
 
 	    // initialisation des timeFrames des questions
-	    redis.hset("context",
-                        "session_" + 1 , new Date().getTime());
+	    var now = new Date().getTime();
+        redis.hset("context",
+                        "session_" + 1 , now);
 
 
         var quizSessions = [];
+
+        quizSessions[1] = now;
         for(i=2; i<=numberOfQuestions ; i++){
              quizSessions[i] = quizSessions[i-1] + questionTimeFrame + synchroTimeDuration;
         }
@@ -234,7 +237,6 @@ emitter.once('warmupEnd',function(timerId){
         for(j=2; j<=numberOfQuestions ; j++){
 		    redis.hset("context",
                         "session_" + j  , quizSessions[j]);
-
 	    }
         redis.save();
 
