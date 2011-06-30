@@ -21,24 +21,21 @@ exports.initGame = function(game) {
   redis.hmset("context",
     "maxGamers",parseInt(game.gamesession.parameters.nbusersthreshold),
     "numberOfPlayers",0,
-    "dureeWarmup", ( parseInt(game.gamesession.parameters.logintimeout) * 1000),
-    "questionTimeFrame" , ( parseInt(game.gamesession.parameters.questiontimeframe) * 1000),
-    "synchroTimeDuration" , ( parseInt(game.gamesession.parameters.synchrotime) * 1000)
+    "dureeWarmup", (parseInt(game.gamesession.parameters.logintimeout) * 1000),
+    "questionTimeFrame" , (parseInt(game.gamesession.parameters.questiontimeframe) * 1000),
+    "synchroTimeDuration" , (parseInt(game.gamesession.parameters.synchrotime) * 1000)
   );
-
   redis.del("players");
   redis.set("game", JSON.stringify(game));
   redis.save();
 };
 
-/**
-gere les demandes d inscription au quiz
-*/
+/** Warmup quizz **/
 exports.warmup = function() {
   emitter.emit('warmupStarted');
-  redis.hincrby("context", "numberOfPlayers",1, function(err,counter){
-    redis.hmget("context","maxGamers",function(err,max){
-      if(parseInt(counter)==parseInt(max)){
+  redis.hincrby("context", "numberOfPlayers", 1, function(err,counter){
+    redis.hmget("context", "maxGamers", function(err, max){
+      if(parseInt(counter) == parseInt(max)) {
         emitter.emit('warmupEnd');
       }
     });
@@ -61,7 +58,7 @@ emitter.once("warmupStarted",function(){
     redis.save();
   });
 
-  redis.hsetnx("context" ,"questionEncours",1);
+  redis.hsetnx("context", "questionEncours", 1);
 });
 
 /**
@@ -75,7 +72,7 @@ emitter.once('warmupEnd',function(){
   var now = new Date().getTime();
   // emitter.emit("sendQuestions"); // envoi de la question 1
 
-  redis.hmget("context", "synchroTimeDuration","questionTimeFrame", function(err, params) {
+  redis.hmget("context", "synchroTimeDuration", "questionTimeFrame", function(err, params) {
     var synchroTimeDuration = parseInt(params[1]);
     var questionTimeFrame = parseInt(params[2]);
 
@@ -84,11 +81,11 @@ emitter.once('warmupEnd',function(){
     var quizSessions = [];
 
     quizSessions[1] = now;
-    for(i=2; i<=(numberOfQuestions+1) ; i++){
+    for(i = 2; i<= (numberOfQuestions + 1); i++) {
       quizSessions[i] = quizSessions[i-1] + questionTimeFrame + synchroTimeDuration;
     }
 
-    for(j=2; j<=(numberOfQuestions+1); j++) {
+    for(j = 2; j <= (numberOfQuestions + 1); j++) {
       redis.hset("context", "session_" + j  , quizSessions[j]);
     }
     redis.save();
@@ -148,19 +145,18 @@ exports.getQuestion = function(n, login, success, fail) {
   });
 }
 
-
 /*
 
 */
 exports.answerQuestion = function(n, login, success, fail) {
   var now = new Date().getTime();
-  redis.hmget("context","questionEncours","synchroTimeDuration","session_" + n,"session_" + (n+1) ,function(err,params){
+  redis.hmget("context", "questionEncours", "synchroTimeDuration", "session_" + n, "session_" + (n + 1), function(err, params) {
     var questionEncours = parseInt(params[0]);
     var synchroTimeDuration = parseInt(params[1]);
     var sessionN = parseInt(params[2]);
     var sessionNplus1 = parseInt(params[3]);
 
-    if(now >= sessionN && now < (sessionNplus1- synchroTimeDuration)){
+    if (now >= sessionN && now < (sessionNplus1 - synchroTimeDuration)) {
       logger.log(login + " answers question : " + n)
       success();
     } else {
@@ -172,9 +168,9 @@ exports.answerQuestion = function(n, login, success, fail) {
       logger.log("  quizSessions[n+1] - synchro  = " + new Date(sessionNplus1 - synchroTimeDuration));
 
       fail();
-      if (n=!questionEncours) {
+      if (n =! questionEncours) {
         logger.log("answered question is not the current one.");
-      } else if (now > sessionN- synchroTimeDuration ){
+      } else if (now > sessionN- synchroTimeDuration) {
         logger.log("time for answering question is finished.");
       } else {
         logger.log("unexpected problem on answerQuestion.");
@@ -183,7 +179,7 @@ exports.answerQuestion = function(n, login, success, fail) {
   });
 }
 
-emitter.on("endOfGame",function(){
+emitter.on("endOfGame",function() {
   logger.log("event endOfGame recu.");
 });
 
@@ -231,6 +227,7 @@ exports.updatingScore = function(lastname, firstname, login, question, reponse, 
       } else {
         lastbonus = 0;
       }
+
       logger.log("updatingScore: " + score)
       redis.hmset("players", login + ":score", score, login + ':lastbonus', lastbonus, login + ':q:' + question, reponse);
       var token = JSON.stringify({"lastname":lastname, "firstname":firstname, "mail":login});
