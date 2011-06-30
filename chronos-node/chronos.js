@@ -53,6 +53,7 @@ var server = http.createServer(function(req, res) {
 //        });
 //        return;
 //      }
+      result.headers["Server"] = 'Chronos/1.0';
       res.writeHead(result.status, result.headers);
       res.end(result.body);
     });
