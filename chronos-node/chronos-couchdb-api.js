@@ -25,6 +25,28 @@ var keys = {
 };
 var timerId;
 
+exports.bulk = function(data, batch, json, options) {
+  console.log("Bulk: " + data.length);
+  var url = couchdburl + '/_bulk_docs';
+  var docs = {};
+  docs.docs = data;
+
+  restler.post(url, {
+    data: JSON.stringify(docs),
+    headers: { 'Content-Type': 'application/json' }
+  })
+  .on('error', function(data, response) {
+    if (options && options.error) {
+      options.error(data);
+    }
+  })
+  .on('complete', function(data, response) {
+    if (options && options.error) {
+      options.error(data);
+    }
+  });
+};
+
 exports.putDoc = function(name, batch, json, options) {
   var url = couchdburl + '/' + name;
   if (batch == true) {

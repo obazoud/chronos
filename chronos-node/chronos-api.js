@@ -37,6 +37,11 @@ function validateField(field, mandatory, minlength, maxlength, value) {
   }
 };
 
+var players = [];
+var playerBatch = 15000;
+// TODO: clean timer when game begins
+var playersId;
+
 exports.createUser = function(req, res, params) {
 //  if (validateField(params.firstname, true, 2, 50) || validateField(params.lastname, true, 2, 50) || validateField(params.mail, true, 2, 50) || validateField(params.password, true, 2, 50)) {
 //    res.send(400, {}, message);
@@ -49,29 +54,36 @@ exports.createUser = function(req, res, params) {
         if (id != null) {
           res.send(400, {}, data);
         } else {
-          chronosCouch.putDoc(params.mail, true, {type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }, cookies: {}}, {
-            error: function(data) {
-              res.send(400, {}, data);
-            },
-            success: function(data) {
-              ranking.addUser(params.lastname,params.firstname,params.mail,function(err,added){
-                if (err) {
-                  res.send(400, {}, err);
-                }
-                else if (added == 0) {
-                  res.send(400, {}, "user already exist in redis");
-                }
-                else {
-                  res.send(201);
-                }
-              });
-            }
+          var player = {_id:params.mail, type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }, cookies: {}};
+          players.unshift(player);
+          ranking.addUser(params.lastname,params.firstname,params.mail,function(err,added) {
           });
+          res.send(201);
         }
       }
     });
 //  }
 };
+
+playersId = setInterval(function() {
+    //console.log("Bulk players ?");
+    if (players.length > 0) {
+      //console.log("Read to bulk players");
+      var playerIndex = Math.max(0, players.length - playerBatch);
+      var playerNumber = Math.min(players.length, playerBatch);
+      var playersToBatch = players.splice(playerIndex, playerNumber);
+
+      chronosCouch.bulk(playersToBatch, {
+        error: function(data) {
+          players.unshift(playersToBatch);
+          //console.log("Error" + data);
+        },
+        success: function(data) {
+          //console.log("Error" + data);
+        }
+      });
+    }
+  }, 10000);
 
 exports.mail = function(req, res, mail) {
   chronosCouch.getDoc(mail, {
