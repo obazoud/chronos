@@ -302,7 +302,7 @@ exports.getQuestion = function(n, login, success, fail) {
 
   // logger.log(login + ": sessionNMoins1: " + new Date(sessionNMoins1));
   // logger.log(login + ": sessionN: " + new Date(sessionN));
-  if (n <= numberOfQuestions && now >= sessionNMoins1 && now < sessionN) {
+  if (n <= numberOfQuestions && now >= sessionNMoins1 && now <= sessionN) {
     timeout = sessionN - now;
     // logger.log(login + ": is waiting for question : " + n + ', timeout ' + timeout + ' ms.');
     if (n == 1) {
@@ -324,7 +324,7 @@ exports.answerQuestion = function(n, login, success, fail) {
     var sessionN = gameState.sessions[n];
     var sessionNplus1 = gameState.sessions[n + 1];
 
-    if (now >= sessionN && now < (sessionNplus1 - gameState.synchrotime)) {
+    if (now >= sessionN && now <= (sessionNplus1 - gameState.synchrotime)) {
       // logger.log(login + " answers question : " + n)
       success();
     } else {
