@@ -30,6 +30,7 @@ exports.initGame = function(config){
     redis.hdel("context", "questionEncours");
     redis.hdel("context", "dateFinWarmup");
 
+    redis.save();
     /**
     Timer active une tache de fond qui s execute tous les X ms
     pour verfier si on depasser le temps de warmup ou atteint le nombre
@@ -194,7 +195,7 @@ emitter.on("sendQuestions",function(){
 /*
     sert la question n
 */
-exports.getQuestion = function(n, success, fail) {
+exports.getQuestion = function(n, success, fail ) {
    console.log("getQuestion " + n);
 
     gameState(
