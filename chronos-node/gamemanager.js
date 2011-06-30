@@ -31,6 +31,39 @@ publisher.on("error", function (err) {
     logger.log("Error " + err);
 });
 
+subscriber.subscribe(channel);
+
+subscriber.on("subscribe", function (channel, count) {
+  logger.log('Client subscribed to channel ' + channel + ', ' + count + ' total subscriptions.');
+});
+
+// TODO: unsubcribe on exit ?
+subscriber.on("unsubscribe", function (channel, count) {
+    console.log('Client unsubscribed from ' + channel + ', ' + count + ' total subscriptions.');
+});
+
+subscriber.on('message', function(channel, message) {
+  logger.log(channel + ': ' + message);
+  var json = JSON.parse(message);
+  switch (json.event) {
+    case 'initGame':
+        gameState.initGame(json.message);
+        // logger.log(sys.inspect(gameState, false));
+      break;
+    case 'warmupStarts':
+        gameState.warmupStarts(json.warmupStartDate);
+        // logger.log(sys.inspect(gameState, false));
+      break;
+    case 'warmupEnds':
+        gameState.warmupEnds(json.warmupEnd);
+        // logger.log(sys.inspect(gameState, false));
+      break;
+    default:
+      logger.log('Unknow event:' + json.event);
+      break;
+  }
+});
+
 // state 0: RAS
 // state 1: game starts
 // state 2: warmup starts
