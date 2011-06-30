@@ -1,13 +1,12 @@
 var sys = require('sys');
 var fs = require('fs');
 var logger = require('util');
-var journey = require('journey');
+var router = require('./router');
 
 var chronosSettings = require('./conf/settings.js').create();
 // Show settings
 logger.log('Loading Chronos settings: ' + sys.inspect(chronosSettings, false));
 
-var security = require('./security.js');
 var api = require('./chronos-api.js');
 
 // Prevent node.js crashing
@@ -25,26 +24,22 @@ process.on('exit', function () {
   logger.log('Bye bye Chronos server.');
 });
 
-// Create a router
-logger.log('Creating Router');
-var router = new(journey.Router)();
-
 // Create the routes
 logger.log('Creating Routes');
 // admin
-router.get('/api/ping').bind(api.ping);
-router.get('/api/frontal').bind(api.frontal);
-router.get('/api/couchdb').bind(api.couchdb);
+router.get('/api/ping', api.ping);
+router.get('/api/frontal', api.frontal);
+router.get('/api/couchdb', api.couchdb);
 // app
-router.post('/api/user').bind(api.createUser); 
-router.post('/api/game').bind(api.newGame);
-router.post('/api/login').bind(api.login);
-router.get(/^api\/question\/(\d+)$/).filter(security.authorize).bind(api.getQuestion);
-router.post(/^api\/answer\/(\d+)$/).filter(security.authorize).bind(api.answerQuestion);
-router.get('/api/ranking').filter(security.authorize).bind(api.getRanking);
-router.get('/api/score').bind(api.getScore);
-router.get('/api/audit').bind(api.audit);
-router.get(/^api\/audit\/(\d+)$/).bind(api.auditN);
+router.post('/api/user', api.createUser); 
+router.post('/api/game', api.newGame);
+router.post('/api/login', api.login);
+router.get(/^\/api\/question\/(\d+)$/, api.getQuestion);
+router.post(/^\/api\/answer\/(\d+)$/, api.answerQuestion);
+router.get('/api/ranking', api.getRanking);
+router.get('/api/score', api.getScore);
+router.get(/^\/api\/audit$/, api.audit);
+router.get(/^\/api\/audit\/(\d+)$/, api.auditN);
 
 // Create the http server
 logger.log('Creating Http server');
@@ -57,17 +52,26 @@ module.exports = http.createServer(function(req, res) {
   });
 
   req.on('end', function() {
-    // logger.log(Date.now() + ' >>');
     // Dispatch the request to router
     req.incomeDate = Date.now();
-    router.handle(req, body, function(result) {
+    router.handle(req, res, body, function(result) {
       result.headers['Server'] = 'Chronos/1.0';
       if (result.headers['Set-Cookie'] == null && req.headers['cookie'] != null) {
         result.headers['Set-Cookie'] = req.headers['cookie'];
       }
+      result.headers["Date"] = new(Date)().toUTCString();
+      if (result.body) {
+        if (typeof(result.body) !== 'string') {
+          result.headers["Content-Type"] = "application/json";
+          result.body = JSON.stringify(result.body);
+        }
+        result.headers['Content-Length'] = Buffer.byteLength(result.body);
+      } else {
+        delete(result.headers["Content-Type"]);
+      }
+
       res.writeHead(result.status, result.headers);
       res.end(result.body);
-      //logger.log(Date.now() + ' <<');
     });
   });
 });

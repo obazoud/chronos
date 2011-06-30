@@ -372,7 +372,6 @@ exports.answerQuestion = function(req, res, n, params) {
   }
 };
 
-
 /** Get Score **/
 exports.getScore = function(login, options) {
   redis.hget("players", login + ":score", function(err, reply) {
@@ -410,6 +409,8 @@ exports.updatingScore = function(lastname, firstname, login, question, reponse, 
       if (replies[1]) {
         lastbonus = parseInt(replies[1]);
       }
+
+      // TODO : checks if bonus is correct, answer last question ?
 
       if (reponse == correct) {
         var bonus = lastbonus;

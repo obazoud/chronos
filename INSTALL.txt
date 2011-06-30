@@ -6,6 +6,7 @@ remettre la conf Redis avec les IPs / plugger le settings.js
 verifier que les couchdb soit up / vor pq plusieurs instances ?
 npm install http-proxy
 changer chronos.js en server.js dans /etc/init.d/nodejs ?
+Remove journey, implementation of my own router
 
 ---------------------------------------------
 1.0
@@ -116,11 +117,11 @@ proxyon
 curl http://npmjs.org/install.sh | npm_install=rc sh
 npm --version
 npm install cluster
-npm install journey
+#npm install journey
 npm install node-uuid
 npm install redis
 npm install restler
-npm install twitter
+#npm install twitter
 npm install json
 npm install http-proxy
 

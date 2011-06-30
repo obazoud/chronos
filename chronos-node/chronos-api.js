@@ -54,7 +54,8 @@ function validateField(field, mandatory, minlength, maxlength, value) {
 var players = [];
 var playerBatch = 15000;
 
-exports.createUser = function(req, res, params) {
+exports.createUser = function(req, res, body) {
+  var params = JSON.parse(body);
 //  if (validateField(params.firstname, true, 2, 50) || validateField(params.lastname, true, 2, 50) || validateField(params.mail, true, 2, 50) || validateField(params.password, true, 2, 50)) {
 //    res.send(400, {}, message);
 //  } else {
@@ -99,7 +100,8 @@ setInterval(function() {
   }
 }, 5000);
 
-exports.newGame = function(req, res, params) {
+exports.newGame = function(req, res, body) {
+  var params = JSON.parse(body);
   var paramsJSON = processGameXML(params.authentication_key, params.parameters);
   putGame(req, res, params, paramsJSON);
 };
@@ -142,7 +144,9 @@ function processGameXML(authentication_key, parameters) {
   return paramsJSON;
 };
 
-exports.login = function(req, res, params) {
+exports.login = function(req, res, body) {
+  var params = JSON.parse(body);
+
   // logger.log(Date.now() + " > Http /api/login/" + params.mail);
   chronosCouch.getDoc(params.mail, {
     error: function(data) {
@@ -189,81 +193,92 @@ exports.login = function(req, res, params) {
   });
 };
 
-exports.getQuestion = function(req, res, n) {
-  // logger.log(Date.now() + " > Http /api/question/" + n + " / " + numberOfQuestions + ", login:" + req.jsonUser.login);
-  if (n <= 0 || n > numberOfQuestions) {
-    // logger.log("FAILED(400) " + n + "< Http /api/question/" + n + ", login:" + req.jsonUser.login);
-    res.send(400);
-  } else {
-    gamemanager.getQuestion(req, res, n);
+exports.getQuestion = function(req, res, body, query, part) {
+  if (security.authorize(req, res)) {
+    var n = parseInt(part);
+    // logger.log(Date.now() + " > Http /api/question/" + n + " / " + numberOfQuestions + ", login:" + req.jsonUser.login);
+    if (n <= 0 || n > numberOfQuestions) {
+      // logger.log("FAILED(400) " + n + "< Http /api/question/" + n + ", login:" + req.jsonUser.login);
+      res.send(400);
+    } else {
+      gamemanager.getQuestion(req, res, n);
+    }
   }
 };
 
-exports.answerQuestion = function(req, res, n, params) {
-  // TODO 350 ms
-  //req.connection.setTimeout(350);
-  //req.connection.on('timeout', function() {
-  //  logger.log('connection timeout answerQuestion ' + n + '[' + req.jsonUser.login + ']');
-  //});
-
-  if (n <= 0 || n > numberOfQuestions) {
-    res.send(400);
-  } else {
-    gamemanager.answerQuestion(req, res, n, params);
+exports.answerQuestion = function(req, res, body, query, part) {
+  if (security.authorize(req, res)) {
+    // TODO 350 ms
+    //req.connection.setTimeout(350);
+    //req.connection.on('timeout', function() {
+    //  logger.log('connection timeout answerQuestion ' + n + '[' + req.jsonUser.login + ']');
+    //});
+    var n = parseInt(part);
+    if (n <= 0 || n > numberOfQuestions) {
+      res.send(400);
+    } else {
+      var params = JSON.parse(body);
+      gamemanager.answerQuestion(req, res, n, params);
+    }
   }
 };
 
-exports.tweetHttp = function(req, res, params) {
+exports.tweetHttp = function(req, res, body, query) {
+  var params = JSON.parse(body);
   sys.puts('Tweet: ' + params.tweet);
   twitterapi.tweet(params.tweet + ' (' + Date.now() + ')');
   res.send(200);
 };
 
-exports.getRanking = function(req, res) {
-  // TODO 350 ms
-  // logger.log("> Http /api/ranking, login:" + req.jsonUser.login);
-  gamemanager.logged(req.jsonUser.login, {
-    error: function(data) {
-      res.send(400);
-    },
-    success: function(logged) {
-      // logger.log("> Http /api/ranking, logged:" + logged);
-      if (logged == 0) {
-        gamemanager.getNumberOfPlayers({
-          error: function(data) {
-            res.send(400);
-          },
-          success: function(numberOfPlayers) {
-            var message = 'Notre application supporte ' + numberOfPlayers + ' joueurs #challengeUSI2011';
-            logger.log('Tweet: ' + message);
-            if (chronosSettings.tweet) {
-              twitterapi.tweet(message);
-            } else {
-              logger.log('Tweet settings is: ' + chronosSettings.tweet);
+exports.getRanking = function(req, res, body, query) {
+  if (security.authorize(req, res)) {
+    // TODO 350 ms
+    // logger.log("> Http /api/ranking, login:" + req.jsonUser.login);
+
+    // TODO less call
+    gamemanager.logged(req.jsonUser.login, {
+      error: function(data) {
+        res.send(400);
+      },
+      success: function(logged) {
+        // logger.log("> Http /api/ranking, logged:" + logged);
+        if (logged == 0) {
+          gamemanager.getNumberOfPlayers({
+            error: function(data) {
+              res.send(400);
+            },
+            success: function(numberOfPlayers) {
+              var message = 'Notre application supporte ' + numberOfPlayers + ' joueurs #challengeUSI2011';
+              logger.log('Tweet: ' + message);
+              if (chronosSettings.tweet) {
+                twitterapi.tweet(message);
+              } else {
+                logger.log('Tweet settings is: ' + chronosSettings.tweet);
+              }
             }
-          }
-        });
+          });
+        }
       }
-    }
-  });
-  ranking.ranking(req.jsonUser.lastname, req.jsonUser.firstname, req.jsonUser.login, 100, 5, function(err, ranking) {
-    if (err) {
-      res.send(400);
-    }
-    else {
-      // logger.log("< Http /api/ranking, login:" + req.jsonUser.login + ", " + JSON.stringify(ranking));
-      res.send(200, {}, ranking);
-    }
-  });
+    });
+    ranking.ranking(req.jsonUser.lastname, req.jsonUser.firstname, req.jsonUser.login, 100, 5, function(err, ranking) {
+      if (err) {
+        res.send(400);
+      }
+      else {
+        // logger.log("< Http /api/ranking, login:" + req.jsonUser.login + ", " + JSON.stringify(ranking));
+        res.send(200, {}, ranking);
+      }
+    });
+  }
 };
 
-exports.getScore = function(req, res, params) {
+exports.getScore = function(req, res, body, query) {
   // TODO 350 ms
   // logger.log("> Http /api/score , login:" + params.user_mail);
-  if (params.authentication_key != authentication_key) {
+  if (query.authentication_key != authentication_key) {
     res.send(401);
   }
-  chronosCouch.getDoc(params.user_mail, {
+  chronosCouch.getDoc(query.user_mail, {
     error: function(data) {
       res.send(400);
     },
@@ -282,15 +297,15 @@ exports.getScore = function(req, res, params) {
   });
 };
 
-exports.audit = function(req, res, params) {
+exports.audit = function(req, res, body, query) {
   // TODO 350 ms
   // logger.log(Date.now() + "> Http /api/audit");
-  if (params.authentication_key != authentication_key) {
+  if (query.authentication_key != authentication_key) {
     res.send(401);
   }
 
   var gamejson = gamemanager.getGame();
-  gamemanager.getAnswers(params.user_mail, {
+  gamemanager.getAnswers(query.user_mail, {
     error: function(data) {
       res.send(400);
     },
@@ -311,14 +326,15 @@ exports.audit = function(req, res, params) {
   });
 };
 
-exports.auditN = function(req, res, n, params) {
+exports.auditN = function(req, res, body, query, part) {
+  // logger.log(Date.now() + "> Http /api/audit/" + part);
   // TODO 350 ms
-  if (params.authentication_key != authentication_key) {
+  if (query.authentication_key != authentication_key) {
     res.send(401);
   }
-
   var gamejson = gamemanager.getGame();
-  gamemanager.getAnswer(params.user_mail, n, {
+  var n = parseInt(part);
+  gamemanager.getAnswer(query.user_mail, n, {
     error: function(data) {
       res.send(400);
     },

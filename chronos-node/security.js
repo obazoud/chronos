@@ -7,9 +7,10 @@ Unauthorized = function (msg) {
     this.body = { error: msg || 'Unauthorized' };
 };
 
-exports.authorize = function(req, body, cb) {
+exports.authorize = function(req, res) {
   if (!req.headers['cookie']) {
-    return cb(new Unauthorized());
+    res.send(401, {}, {error: 'Unauthorized'});
+    return false;
   }
   var session_key = exports.decrypt(req.headers['cookie'].split('=')[1]);
   var sessionkeyjson;
@@ -17,9 +18,10 @@ exports.authorize = function(req, body, cb) {
     sessionkeyjson = JSON.parse(session_key);
     req.jsonUser = sessionkeyjson;
   } catch (err) {
-    return cb(new Unauthorized());
+    res.send(401, {}, {error: 'Unauthorized'});
+    return false;
   }
-  return cb(null);
+  return true;
 };
 
 exports.encode = function(data) {
