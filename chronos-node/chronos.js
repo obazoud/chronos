@@ -34,7 +34,7 @@ if (process.argv.indexOf('--no-cluster') > -1) {
     applyCluster = false;
 }
 
-// TODO remettre ca
+// Prevent node.js crashing
 if (process.argv.indexOf('--no-uncaught') <= -1) {
   console.log('Add process.on uncaughtException');
   process.on('uncaughtException', function(err) {
