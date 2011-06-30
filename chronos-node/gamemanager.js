@@ -121,6 +121,10 @@ function GameState() {
       this.warmupEndDate = now + parseInt(this.logintimeout);
       this.sessions[0] = this.warmupStartDate;
       this.sessions[1] = this.warmupEndDate;
+      logger.log('sessions0: ' + this.sessions[0] + ' / ' + new Date(this.sessions[0]));
+      logger.log('sessions1: ' + this.sessions[1] + ' / ' + new Date(this.sessions[1]));
+    } else {
+      logger.log('Already in state 2');
     }
   };
 
