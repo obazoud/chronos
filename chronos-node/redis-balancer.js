@@ -46,7 +46,7 @@ emitter.on("slaveDown", function(slave){
  *
  */
 setInterval(function(){
-    util.log("checking for servers come back from : " + redisClientsDown.length + " server(s).");
+    // util.log("checking for servers come back from : " + redisClientsDown.length + " server(s).");
 
     redisClientsDown.forEach(function(client){
         util.log("try to reintegrate client : " + client.host + ":" + client.port);
