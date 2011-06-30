@@ -10,10 +10,14 @@ sudo apt-get install nodejs
 #curl http://npmjs.org/install.sh | sudo sh
 #sudo npm install cloud9
 sudo apt-get install libxml2-dev
-git clone http://github.com/ajaxorg/o3
+git clone git://github.com/ajaxorg/o3
 git clone git://github.com/ajaxorg/cloud9.git
 git co -b devel remotes/origin/devel
 ./bin/cloud9.sh
+
+# restler
+curl http://npmjs.org/install.sh | sudo sh
+sudo npm install restler
 
 2. Installation de journey https://github.com/cloudhead/journey
 $ npm install journey
