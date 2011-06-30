@@ -9,8 +9,13 @@ var username = 'superadmin';
 var password = 'supersecret';
 var saltvalue = '1';
 
-exports.putDoc = function(name, json, options) {
-  restler.put(couchdburl + '/' + name, {
+exports.putDoc = function(name, batch, json, options) {
+  var url = couchdburl + '/' + name;
+  if (batch == true) {
+    url += '?batch=ok';
+  }
+  //console.log('use ' + url);
+  restler.put(url, {
     data: JSON.stringify(json),
     headers: { 'Content-Type': 'application/json' }
   })

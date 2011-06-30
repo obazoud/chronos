@@ -12,7 +12,7 @@ exports.ping = function(req, res) {
 };
 
 exports.createUser = function(req, res, params) {
-  chronosCouch.putDoc(params.mail, {type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }, cookies: {}}, {
+  chronosCouch.putDoc(params.mail, true, {type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }, cookies: {}}, {
     error: function(data) {
       res.send(400, {}, data);
     },
@@ -50,7 +50,7 @@ exports.newGame = function(req, res, params) {
 
 function putGame(req, res, params, paramsJSON) {
   console.log(tools.toISO8601(new Date()) + ": put a new game.");
-  chronosCouch.putDoc('game', paramsJSON, {
+  chronosCouch.putDoc('game', false, paramsJSON, {
     error: function(data) {
       var error = JSON.parse(data);
       if (error.reason == 'Authentication key is not recognized.') {
@@ -121,7 +121,7 @@ exports.login = function(req, res, params) {
             } else {
               var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
               userDocjson.cookies[gamejson.game_id] = sessionkey;
-              chronosCouch.putDoc(params.mail, userDocjson);
+              chronosCouch.putDoc(params.mail, true, userDocjson);
               res.send(201, {'Set-Cookie': 'session_key=' + sessionkey}, '');
             }
           }
