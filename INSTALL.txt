@@ -34,7 +34,6 @@ dpkg -i couchbase-server-enterprise_x86_64_1.1.deb
 cd couchbase-server
 ln -s /etc/init.d/couchdb etc/init.d/couchdb
 
-
 # sur usi1
 cd /usr/local
 wget http://mirrors.ukfast.co.uk/sites/ftp.apache.org//maven/binaries/apache-maven-3.0.3-bin.tar.gz 
@@ -47,6 +46,11 @@ deb-src http://ppa.launchpad.net/git-core/ppa/ubuntu lucid main
 # redis
 http://library.linode.com/databases/redis/ubuntu-10.04-lucid
 adduser --system --no-create-home --disabled-login --disabled-password --group redis
+sudo chmod 755 /var/lib/redis
+sudo chmod 755 /var/lib/redis/dump.rdb
+# faire tous les fichiers
+update-rc.d -f redis defaults
+
 
 # Optim systeme
 http://www.ubuntu-unleashed.com/2008/04/howto-harden-ubuntu-linux-kernel-with.html
