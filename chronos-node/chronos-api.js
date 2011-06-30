@@ -56,6 +56,8 @@ exports.createUser = function(req, res, params) {
         } else {
           var player = {_id:params.mail, type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }, cookies: {}};
           players.unshift(player);
+          ranking.addUser(params.lastname,params.firstname,params.mail,function(err,added) {
+          });
           res.send(201);
         }
       }
@@ -74,12 +76,10 @@ playersId = setInterval(function() {
       chronosCouch.bulk(playersToBatch, {
         error: function(data) {
           players.unshift(playersToBatch);
-          console.log("Error" + data);
+          //console.log("Error" + data);
         },
         success: function(data) {
-          console.log("Error" + data);
-//          ranking.addUser(params.lastname,params.firstname,params.mail,function(err,added) {
-//          });
+          //console.log("Error" + data);
         }
       });
     }
