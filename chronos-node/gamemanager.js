@@ -449,6 +449,19 @@ exports.logged = function(mail, options) {
   });
 }
 
+exports.getNumberOfPlayers = function(options) {
+  redis.hmget("context", "numberOfPlayers", function(err, reply) {
+    if (err) {
+      if (options && options.error) {
+        options.error(err);
+      }
+    } else {
+      if (options && options.success) {
+        options.success(parseInt(reply));
+      }
+    }
+  });
+};
 
 exports.getAnswers = function(login, options) {
   redis.hmget("players",
