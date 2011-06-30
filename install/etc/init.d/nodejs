@@ -61,7 +61,7 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin # modify if you need
 
 LOCAL_VAR_LOGS_DIR=/usr/local/var/log
 LOCAL_VAR_LOGS=$LOCAL_VAR_LOGS_DIR/nodejs.log
-DAEMON_ARGS="/home/user/deploiement/chronos-node/chronos.js 2>> $LOCAL_VAR_LOGS 1>> $LOCAL_VAR_LOGS"               # path to your node.js server/app
+DAEMON_ARGS="/home/user/deploiement/chronos-node/chronos.js"               # path to your node.js server/app
                                             # NB: don't use ~/ in path
 
 DESC="node.js http server"                  # whatever fancy description you like
@@ -75,8 +75,8 @@ LOCAL_VAR_RUN=/usr/local/var/run            # in case the init script is run by 
                                             #      or choose one of your own liking.
                                             #      2) node, npm,... are best NOT installed/run as ROOT.
                                             #         (see here: https://github.com/isaacs/npm/blob/master/README.md)
-NAME=node                                   # name of the node.js executable
-DAEMON=/home/user/node-v0.4.5/bin/$NAME     # this SHOULD POINT TO where your node executable is
+NAME=nodejs                                 # name of the node.js executable
+DAEMON=/home/user/deploiement/install/bin/$NAME     # this SHOULD POINT TO where your node executable is
 #
 #                                                                              #
 #                   END </MODIFY TO REFLECT YOUR SETTINGS>                     #
