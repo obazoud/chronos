@@ -6,26 +6,27 @@ client.on("error", function (err) {
     console.log("Error " + err);
 });
 
-
 exports.addUser = function addUser(lastname,firstname,mail){
-   var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
-   client.zadd("scores",0,token,function(err,reply){
-			console.log("user : " + token + " added");
-			client.save();
-		}
-	);
-};
-
-
-exports.updateScore = function updateScore(lastname,firstname,mail,increment){
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
-	client.zincrby("scores",increment,token,function(err,reply){
-		console.log("score of user "+token+"incremented by " + increment);
-		client.save();
-	});	
+    client.zadd("scores",0,token,function(err,reply){
+        console.log("user : " + token + " added");
+        client.save();
+    });
 };
 
-exports.getScore = function (lastname,firstname,mail,callback){
+exports.updateScore = function updateScore(lastname,firstname,mail,newScore){
+    var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
+    // TODO: avoid this call to redis by replacing newScore by increment
+    client.zscore("scores",token,function(err,currentScore){
+        var increment = newScore - currentScore;
+        client.zincrby("scores",increment,token,function(err,updatedScore){
+            console.log("score of user " + token + "incremented by " + increment);
+            client.save();
+        });
+    });
+};
+
+exports.getScore = function getScore(lastname,firstname,mail,callback){
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
     client.zscore("scores",token,function(err,reply){
         callback(reply);
@@ -35,9 +36,10 @@ exports.getScore = function (lastname,firstname,mail,callback){
 exports.ranking = function ranking(lastname,firstname,mail,topN,range,callback){
     topN = topN - 1;
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
-    var ranking = {"top_scores":{"mail":[],"scores":[],"firstname":[],"lastname":[]}
-                  ,"before":{"mail":[],"scores":[],"firstname":[],"lastname":[]}
-                  ,"after":{"mail":[],"scores":[],"firstname":[],"lastname":[]}
+    var ranking = {
+         "top_scores":{"mail":[],"scores":[],"firstname":[],"lastname":[]}
+        ,"before":{"mail":[],"scores":[],"firstname":[],"lastname":[]}
+        ,"after":{"mail":[],"scores":[],"firstname":[],"lastname":[]}
     };
     client.zscore("scores",token,function(err,userScore){
         ranking.score = userScore;
@@ -128,7 +130,7 @@ exports.ranking = function ranking(lastname,firstname,mail,topN,range,callback){
             });
         });
     });
-}
+};
 
 /*
 addUser("user1","user1","user1@gmail.com");

@@ -10,14 +10,13 @@ exports.ping = function(req, res) {
   res.send(201, {}, 'pong');
 };
 
-// TODO appeler rancking#addUser(params.mail);
 exports.createUser = function(req, res, params) {
   chronosCouch.putDoc(params.mail, {type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }}, {
     error: function(data) {
       res.send(400, {}, data);
     },
     success: function(data) {
-      ranking.addUser(params.firstname,params.lastname,params.mail);
+      ranking.addUser(params.lastname,params.firstname,params.mail);
       res.send(201);
     }
   });
@@ -114,26 +113,34 @@ exports.getQuestion = function(req, res, n) {
   });
 };
 
-// appeler rancking#updateScore(user,increment) a chaque reponse
 exports.answerQuestion = function(req, res, n, params) {
-  chronosCouch.getDoc('game', {
+  // TODO: avoid this call to CouchDB by putting lastname and firstname in req.jsonUser
+  chronosCouch.getDoc(req.jsonUser.login, {
     error: function(data) {
       res.send(400, {}, data);
     },
-    success: function(data) {
-      var game = JSON.parse(data);
-      var q = game.gamesession.questions.question[n-1];
-      chronosCouch.putDesign('/_design/answer/_update/accumulate/' + req.jsonUser.login + '?question=' + n + '&reponse=' + params.answer + '&correct=' + q.goodchoice + '&valeur=' + q.qvalue + '&game_id=' + game.game_id, {
+    success: function(userDoc) {
+      var userDocJson = JSON.parse(userDoc);
+      chronosCouch.getDoc('game', {
         error: function(data) {
           res.send(400, {}, data);
         },
-        success: function(data) {
-          var answer = {};
-          answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
-          answer.good_answer=q.goodchoice;
-          answer.score=data;
-          //ranking.updateScore(
-          res.send(200, {}, answer);
+        success: function(gameDoc) {
+          var game = JSON.parse(gameDoc);
+          var q = game.gamesession.questions.question[n-1];
+          chronosCouch.putDesign('/_design/answer/_update/accumulate/' + req.jsonUser.login + '?question=' + n + '&reponse=' + params.answer + '&correct=' + q.goodchoice + '&valeur=' + q.qvalue + '&game_id=' + game.game_id, {
+            error: function(data) {
+              res.send(400, {}, data);
+            },
+            success: function(scoreDoc) {
+              var answer = {};
+              answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
+              answer.good_answer=q.goodchoice;
+              answer.score=scoreDoc;
+              ranking.updateScore(userDocJson.lastname,userDocJson.fistname,req.jsonUser.login,scoreDoc);
+              res.send(200, {}, answer);
+            }
+          });
         }
       });
     }
@@ -147,16 +154,41 @@ exports.tweetHttp = function(req, res, params) {
 };
 
 exports.getRanking = function(req, res) {
-  // Clé de session non reconnue : 401
-  // Autre erreur : 400
-  res.send(200, {}, {});
+  // TODO : Clé de session non reconnue : 401
+  // session_key
+  // TODO: avoid this call to CouchDB by putting lastname and firstname in req.jsonUser
+  chronosCouch.getDoc(req.jsonUser.login, {
+    error: function(data) {
+      res.send(400, {}, data);
+    },
+    success: function(userDoc) {
+      var userDocJson = JSON.parse(userDoc);
+      ranking.ranking(userDocJson.lastname, userDocJson.firstname,req.jsonUser.login,100,5,function(ranking) {
+        res.send(200, {}, ranking);
+      });
+    }
+  });
 };
 
 exports.getScore = function(req, res, params) {
-  // Erreur : 400
-  params.user_mail;
-  params.authentication_key;
-  res.send(200, {}, {score:42, ranking:42});
+  // TODO
+  /*
+  if (params.authentication_key is invalid) {
+    res.send(401);
+  }
+  */
+  // TODO: avoid this call to CouchDB by putting lastname and firstname in req.jsonUser
+  chronosCouch.getDoc(params.user_mail, {
+    error: function(data) {
+      res.send(400, {}, data);
+    },
+    success: function(userDoc) {
+      var userDocJson = JSON.parse(userDoc);
+      ranking.ranking(userDocJson.lastname, userDocJson.firstname,req.jsonUser.login,100,5,function(ranking) {
+        res.send(200, {}, ranking);
+      });
+    }
+  });
 };
 
 exports.audit = function(req, res, params) {
