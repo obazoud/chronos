@@ -10,9 +10,9 @@ var password = 'supersecret';
 
 exports.createUser = function(req, res, params) {
   var url = couchdAdminburl + params.mail;
-  console.log('url: ' + url);
+  // console.log('url: ' + url);
 
-restler.put(url, {
+  restler.put(url, {
         username: username,
         password: password,
         data: JSON.stringify(params.password)
@@ -28,8 +28,9 @@ restler.put(url, {
         headers: { 'Content-Type': 'application/json' }
       })
       .on('error', function(data) {
-        console.log('data: ' + data);
-        res.send(400);
+        // if user already exists, couchdb sends: {"error":"conflict","reason":"Document update conflict."}
+        // so no need to test if a user exists via a HEAD request
+        res.send(400, {}, data);
       })
       .on('complete', function (data) {
         res.send(201);
