@@ -1,4 +1,5 @@
 var journey = require('journey');
+var nodestatic = require('node-static');
 var api = require('./chronos-api.js');
 
 // Create a router
@@ -21,6 +22,8 @@ var gameStarted = false;
 
 // Create the htt server
 var http = require('http');
+var files = new(nodestatic.Server)('./public');
+
 var server = http.createServer(function(req, res) {
 
   var body = '';
@@ -32,6 +35,15 @@ var server = http.createServer(function(req, res) {
   req.on('end', function() {
     // Dispatch the request to router
     router.handle(req, body, function(result) {
+//      if (result.status === 404) {
+//        files.serve(req, res, function (err, result) {
+//          if (err && (err.status === 404)) {
+//            res.writeHead(404);
+//            res.end('File not found.');
+//          }
+//        });
+//        return;
+//      }
       res.writeHead(result.status, result.headers);
       res.end(result.body);
     });

@@ -19,6 +19,9 @@ git co -b devel remotes/origin/devel
 curl http://npmjs.org/install.sh | sudo sh
 sudo npm install restler
 
+# node-static
+npm install node-static
+
 2. Installation de journey https://github.com/cloudhead/journey
 $ npm install journey
 NB : vérifier que le fichier journey.js est bien dans sa dernière version https://github.com/cloudhead/journey/blob/master/lib/journey.js
