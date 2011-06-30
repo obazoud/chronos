@@ -18,13 +18,15 @@ var qTimer;
 
 exports.initGame = function(config){
     
+	
+    console.log(config);
     redis.hmset("context"
-                        , "maxGamers",15
+                        , "maxGamers",parseInt(config.nbusersthreshold)
                         , "numberOfPlayers",0
-			, "dureeWarmup",5000
-			, "numberOfQuestions",5
-			, "questionTimeFrame" , 5000
-			, "synchroTimeDuration" , 2000
+			, "dureeWarmup", ( parseInt(config.logintimeout) * 1000)
+			, "numberOfQuestions", parseInt(config.nbquestions)
+			, "questionTimeFrame" , ( parseInt(config.questiontimeframe) * 1000)
+			, "synchroTimeDuration" , ( parseInt(config.synchrotime) * 1000)
                         );    
                           
     redis.hdel("context", "questionEncours");
@@ -45,7 +47,7 @@ exports.initGame = function(config){
         	}
         	,null);
         
-    	},1000);// TODO redefinir cette periode par ex 5O ms
+    	},1000);// TODO redefinir cette periode en benchmarquant
 }
 
 

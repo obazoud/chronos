@@ -117,7 +117,7 @@ function putGame(req, res, params, paramsJSON) {
       },
       success: function(data) {
         console.log(tools.toISO8601(new Date()) + ": game successfully added.");
-        gamemanager.initGame(paramsJSON);
+        gamemanager.initGame(paramsJSON.gamesession.parameters);
         ranking.reset(function(err, updated) {
           if (err) {
             res.send(400, {}, err);
