@@ -6,5 +6,6 @@ node vfabric1
 node vfabric2
 node vfabric3
 node vfabric4
+node usi1
 respawn hacluster /usr/lib/heartbeat/ipfail
 apiauth ipfail gid=haclient uid=hacluster
