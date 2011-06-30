@@ -169,7 +169,7 @@ function GameState() {
         // TODO: ...
       logger.log("****** Game manager loads data from database: DONE ******");
       } catch (err2) {
-         logger.log("Something wrong here -> " + err2);
+         logger.log("Something wrong here (if your Redis is empty, forget this message) " + err2);
          return;
       }
     });
