@@ -13,7 +13,9 @@ function addUser(lastname,firstname,mail,callback){
     redisBalancer.getMaster().zadd("scores",0,token,function(err,added){
         // added == 1 if the element was added.
         // added == 0 if the element was already a member of the sorted set and the score was updated.
-        callback(err,added);
+        if (callback) {
+          callback(err,added);
+        }
     });
 };
 exports.addUser = addUser;
