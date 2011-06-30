@@ -261,7 +261,7 @@ function setTimeoutForTimeFrameCB(login, n, success, fail) {
 };
 
 function setTimeoutForTimeFrameCB1(login, n, success, fail) {
-  logger.log("------> time out for answering question : (" + login + ") " + n);
+  logger.log("------> (CB1) time out for answering question : (" + login + ") " + n);
   emitter.emit("warmupEnd", success, fail);
 };
 
