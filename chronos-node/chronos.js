@@ -6,6 +6,7 @@ var api = require('./chronos-api.js');
 var router = new(journey.Router)();
 
 // Create the routes
+router.get('/api/ping').bind(api.ping);
 router.get('/api/drop').bind(api.dropDatabase);
 router.post('/api/user').bind(api.createUser); 
 router.post('/api/game').bind(api.newGame);

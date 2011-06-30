@@ -2,6 +2,10 @@ var xml2json = require('./xml2json.js');
 var sys = require('sys');
 var chronosCouch = require('./chronos-couchdb-api.js');
 
+exports.ping = function(req, res) {
+  res.send(201, {}, 'pong');
+}
+
 exports.createUser = function(req, res, params) {
   chronosCouch.createCouchUser(params.mail, params.password, {
     error: function(data, response) {
