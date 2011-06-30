@@ -48,7 +48,7 @@ function GameState() {
 
   this.warmupStarts = function(now) {
     if (this.state == 1) {
-      logger.log('State changed state:' + this.state + ' -> ' + 2);
+      logger.log('State changed state: ' + this.state + ' -> ' + 2);
       this.state = 2;
       this.warmupStartDate = now;
       this.warmupEndDate = now + parseInt(this.logintimeout);
@@ -62,7 +62,7 @@ function GameState() {
 
   this.warmupEnds = function(now) {
     if (this.state == 2) {
-      logger.log('State changed state:' + this.state + ' -> ' + 3);
+      logger.log('State changed state: ' + this.state + ' -> ' + 3);
       this.state = 3;
       this.sessions[1] = now;
       for (i = 2; i <= numberOfQuestions + 1; i++) {
@@ -191,44 +191,45 @@ gere l evenement d arret de la phase de warmup en :
     3. definitions des fenetres de sessions de reponses
 */
 emitter.on('warmupEnd', function(success) {
-  if (gameState.state == 1) {
+  if (gameState.state == 2) {
     logger.log("warmup timer stopped");
     var now = new Date().getTime();
-    logger.log("initialize timeFrames." + now);
+    logger.log("initialize timeFrames: " + new Date(now));
     gameState.warmupEnds(now);
 
     // logger.log("timeFrames:" + gameState.sessions);
     // TODO : hsetnx ? exception is for index 1
     redis.hmset("context",
-      "session_1", sessions[1],
-      "session_2", sessions[2],
-      "session_3", sessions[3],
-      "session_4", sessions[4],
-      "session_5", sessions[5],
-      "session_6", sessions[6],
-      "session_7", sessions[7],
-      "session_8", sessions[8],
-      "session_9", sessions[9],
-      "session_10", sessions[10],
-      "session_11", sessions[11],
-      "session_12", sessions[12],
-      "session_13", sessions[13],
-      "session_14", sessions[14],
-      "session_15", sessions[15],
-      "session_16", sessions[16],
-      "session_17", sessions[17],
-      "session_18", sessions[18],
-      "session_19", sessions[19],
-      "session_20", sessions[20],
-      "session_21", sessions[21],
+      "session_1", gameState.sessions[1],
+      "session_2", gameState.sessions[2],
+      "session_3", gameState.sessions[3],
+      "session_4", gameState.sessions[4],
+      "session_5", gameState.sessions[5],
+      "session_6", gameState.sessions[6],
+      "session_7", gameState.sessions[7],
+      "session_8", gameState.sessions[8],
+      "session_9", gameState.sessions[9],
+      "session_10", gameState.sessions[10],
+      "session_11", gameState.sessions[11],
+      "session_12", gameState.sessions[12],
+      "session_13", gameState.sessions[13],
+      "session_14", gameState.sessions[14],
+      "session_15", gameState.sessions[15],
+      "session_16", gameState.sessions[16],
+      "session_17", gameState.sessions[17],
+      "session_18", gameState.sessions[18],
+      "session_19", gameState.sessions[19],
+      "session_20", gameState.sessions[20],
+      "session_21", gameState.sessions[21],
       function() {
-        logger.log("initialize timeFrames done.");
-        if (success) {
-          success();
-        }
+        logger.log("Initialize timeFrames done.");
         redis.save();
     });
 
+    if (success) {
+      logger.log("warmupEnd: First success.");
+      success();
+    }
     var message = {
       'event': 'warmupEnds',
       'warmupEnd': now,
@@ -236,7 +237,11 @@ emitter.on('warmupEnd', function(success) {
 
     publisher.publish(channel, JSON.stringify(message));
   } else {
-    sucess();
+    logger.log("warmupEnd: success.");
+    if (success) {
+      // logger.log(success);
+      success();
+    }
   }
 });
 
@@ -284,7 +289,7 @@ exports.getQuestion = function(n, login, success, fail) {
     function(err, params) {
       var questionEncours = parseInt(params[0]);
       var sessionNMoins1 = gameState.sessions[n - 1];
-      var sessionN = gameState.sessions[n - 1];
+      var sessionN = gameState.sessions[n];
 
       logger.log(login + ": sessionNMoins1: " + new Date(sessionNMoins1));
       logger.log(login + ": sessionN: " + new Date(sessionN));
@@ -308,13 +313,12 @@ exports.getQuestion = function(n, login, success, fail) {
 */
 exports.answerQuestion = function(n, login, success, fail) {
   var now = new Date().getTime();
-  redis.hmget("context", "questionEncours", "synchrotime", "session_" + n, "session_" + (n + 1), function(err, params) {
+  redis.hmget("context", "questionEncours", function(err, params) {
     var questionEncours = parseInt(params[0]);
-    var synchrotime = parseInt(params[1]);
-    var sessionN = parseInt(params[2]);
-    var sessionNplus1 = parseInt(params[3]);
+    var sessionN = gameState.sessions[n];
+    var sessionNplus1 = gameState.sessions[n + 1];
 
-    if (now >= sessionN && now < (sessionNplus1 - synchrotime)) {
+    if (now >= sessionN && now < (sessionNplus1 - gameState.synchrotime)) {
       logger.log(login + " answers question : " + n)
       success();
     } else {
@@ -323,12 +327,12 @@ exports.answerQuestion = function(n, login, success, fail) {
       logger.log("  now = " + new Date(now) );
       logger.log("  quizSessions[n] = " + new Date(sessionN));
       logger.log("  quizSessions[n+1] = " + new Date(sessionNplus1));
-      logger.log("  quizSessions[n+1] - synchro  = " + new Date(sessionNplus1 - synchrotime));
+      logger.log("  quizSessions[n+1] - synchro  = " + new Date(sessionNplus1 - gameState.synchrotime));
 
       fail();
       if (n =! questionEncours) {
         logger.log("answered question is not the current one.");
-      } else if (now > sessionN- synchrotime) {
+      } else if (now > sessionN - gameState.synchrotime) {
         logger.log("time for answering question is finished.");
       } else {
         logger.log("unexpected problem on answerQuestion.");
@@ -405,17 +409,7 @@ exports.updatingScore = function(lastname, firstname, login, question, reponse, 
 };
 
 exports.getGame = function(options) {
-  redis.get("game", function(err, reply) {
-    if (err) {
-      if (options && options.error) {
-        options.error(err);
-      }
-    } else {
-      if (options && options.success) {
-        options.success(JSON.parse(reply));
-      }
-    }
-  });
+  return gameState.game;
 };
 
 exports.getAnswer = function(login, n, options) {
