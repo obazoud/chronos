@@ -52,6 +52,14 @@ curl -iX GET http://localhost:5984
 curl -iX PUT -d "{}" http://localhost:5984/thechallenge/test
 curl -iX GET http://localhost:5984/thechallenge/test
 
+# Replication couchdb
+Via la vip sur le port 5984
+vfabric3 est "master"
+les autres sont en read only
+On écrit seulement pendant la phase création de users & création du game
+Le script install/couchdb/replication.sh est à placer dans un cron / 5mn
+*/5 * * * * /home/user/deploiement/install/couchdb/replication.sh
+
 # sur usi1
 cd /usr/local
 wget http://mirrors.ukfast.co.uk/sites/ftp.apache.org//maven/binaries/apache-maven-3.0.3-bin.tar.gz 
