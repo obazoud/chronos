@@ -100,6 +100,7 @@ npm install node-uuid
 npm install redis
 npm install restler
 npm install twitter
+npm install json
 proxyoff
 
 ln -s /home/user/deploiement/install/etc/init.d/nodejs /etc/init.d/nodejs
