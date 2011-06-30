@@ -52,7 +52,7 @@ exports.createUser = function(req, res, params) {
         if (id != null) {
           res.send(400, {}, data);
         } else {
-          var player = {_id:params.mail, type:'player', firstname:params.firstname || '', lastname:params.lastname || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }, cookies: {}};
+          var player = {_id:params.mail, firstname:params.firstname || '', lastname:params.lastname || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }, cookies: {}};
           players.unshift(player);
           ranking.addUser(params.lastname,params.firstname,params.mail,function(err,added) {
           });
@@ -152,7 +152,6 @@ function processGameXML(authentication_key, parameters) {
   gameXML = gameXML.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"");
 
   var paramsJSON = xml2json.parse(gameXML);
-  paramsJSON.type = 'game';
   paramsJSON.authentication_key = authentication_key || '';
 
   // clean
