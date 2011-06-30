@@ -1,10 +1,33 @@
+var restler = require('restler');
+var host = '127.0.0.1';
+var port = 5984;
+var username = 'superadmin';
+var password = 'supersecret';
+var couchdbAdminurl = 'http://superadmin:supersecret@127.0.0.1:5984';
+var couchdburl = 'http://' + host + ':' + port;
+
 exports.createUser = function(req, res, params) {
+  // curl -i -X PUT http://superadmin:supersecret@127.0.0.1:5984/_config/admins/anna -d '"secret"'
+  console.log('Creating user: ' + req);
+  console.log('Creating user: ' + res);
+  console.log('Creating user: ' + params);
+  console.log('Creating user: ' + params.mail);
+  var url = couchdbAdminurl + '/_config/admins/' + params.mail;
+  console.log('url: ' + url);
+  restler.put(url, { data : params.password })
+    .on('complete', function (data) {
+      console.log('complete:' + data);
+    })
+    .on('error', function(data) {
+      console.log('error:' + data);
+  });
+
   // Si un utilisateur ayant la même adresse mail existe déjà, une erreur est retournée
-  if (params.mail == 'mail.existant@test.com') {
-    res.send(400);
-  }
-  console.log(params);
-  res.send(201, {}, {firstname:params.firstname, lastname:params.lastname, mail:params.mail, password:params.password});
+  // if (params.mail == 'mail.existant@test.com') {
+  //  res.send(400);
+  // }
+  // console.log(params);
+  // res.send(201, {}, {firstname:params.firstname, lastname:params.lastname, mail:params.mail, password:params.password});
 }
 
 exports.newGame = function(req, res, params) {
