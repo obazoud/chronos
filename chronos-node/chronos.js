@@ -76,7 +76,9 @@ var server = http.createServer(function(req, res) {
 if (applyCluster == true) {
   console.log(tools.toISO8601(new Date()) + ' : Configure Node.js with cluster module (' + applyCluster + ')');
   var cluster = require('cluster');
-  cluster(server).listen(8080);
+  cluster(server)
+    .set('workers', 4)
+    .listen(8080);
 } else {
   console.log(tools.toISO8601(new Date()) + ' : Configure classic Node.js');
   server.listen(8080);
