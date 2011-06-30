@@ -11,7 +11,7 @@ var couchdbAccessFailed = false;
 
 var host = '?.?.?.?';
 var hostname = os.hostname();
-if (hostname.match(/^vfabric(\d+)$/) || hostname.match(/^vfabric(\d+)$/)) {
+if (hostname.match(/^vfabric(\d+)$/) || hostname.match(/^usi(\d+)$/)) {
   // vip
   host = '192.168.1.150';
 } else {
