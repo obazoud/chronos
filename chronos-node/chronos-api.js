@@ -41,12 +41,18 @@ exports.createUser = function(req, res, params) {
 }
 
 exports.newGame = function(req, res, params) {
-  // Clé d'authentification non reconnue : 401
-  if (params.authentication_key == 'unknown') {
-    res.send(401);
-  }
-  // Autre erreur : 401
-  res.send(201, {}, {authentication_key:params.authentication_key, parameters:params.parameters});
+  var url = couchdburl + '/game';
+  restler.put(url, {
+    data: JSON.stringify({type:'game', authentication_key:params.authentication_key || '', parameters:params.parameters || ''}),
+    headers: { 'Content-Type': 'application/json' }
+  })
+  .on('error', function(data) {
+    res.send(401, {}, data);
+    // res.send(400);
+  })
+  .on('complete', function (data) {
+    res.send(201);
+  });
 }
 
 exports.login = function(req, res, params) {

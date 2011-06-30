@@ -8,7 +8,11 @@
           throw({forbidden : message});
       }
       var data = newDoc[field] || '';
-      if (data.length < minlength || data.length > maxlength) {
+
+      if (minlength && data.length < minlength) {
+        throw({forbidden : message});
+      }
+      if (maxlength && data.length > maxlength) {
         throw({forbidden : message});
       }
     };
@@ -31,6 +35,12 @@
       return;
     }
 
-    throw({forbidden: 'doc.type is required or unknown'});
+    if ((oldDoc && oldDoc.type == 'game') || newDoc.type == 'game') {
+      validateField('authentication_key', true, 2, 50);
+      validateField('parameters', true);
+      return;
+    }
+
+    throw({forbidden: 'doc.type is required or unknown: ' + newDoc['type']});
   }"
 }
