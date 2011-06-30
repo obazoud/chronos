@@ -83,6 +83,7 @@ exports.login = function(mail, options) {
       }
     } else {
       if (options && options.success) {
+        redis.hincrby('players', 'logged', 1);
         options.success();
       }
     }
