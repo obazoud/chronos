@@ -27,6 +27,12 @@ var gameStarted = false;
 var http = require('http');
 // var files = new(nodestatic.Server)('./public');
 
+// console.log(process.argv);
+var applyCluster = true;
+if (process.argv.indexOf('--no-cluster') > -1) {
+    applyCluster = false;
+}
+
 var server = http.createServer(function(req, res) {
 
   var body = '';
@@ -51,10 +57,17 @@ var server = http.createServer(function(req, res) {
       res.end(result.body);
     });
   });
-});//.listen(8080);
+});
 
-var cluster = require('cluster');
-cluster(server).listen(8080);
+if (applyCluster == true) {
+  console.log('Configure Node.js with cluster module (' + applyCluster + ')');
+  var cluster = require('cluster');
+  cluster(server).listen(8080);
+} else {
+  console.log('Configure classic Node.js');
+  server.listen(8080);
+}
+
 
 console.log('Server running at http://127.0.0.1:8080/');
 
