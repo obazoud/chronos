@@ -8,7 +8,7 @@ var security = require('./security.js');
 var api = require('./chronos-api.js');
 
 // Show settings
-logger.log('Loading Chronos settings' + sys.inspect(chronosSettings, false));
+logger.log('Loading Chronos settings: ' + sys.inspect(chronosSettings, false));
 
 // Prevent node.js crashing
 if (chronosSettings.uncaughtException) {
@@ -79,12 +79,12 @@ if (chronosSettings.cluster.activate) {
   var cluster = require('cluster');
   cluster(server)
     .set('workers', chronosSettings.cluster.workers)
-    .listen(chronosSettings.httpPort, chronosSettings.httpAdress);
-  logger.log('Server running at http://' + chronosSettings.httpAdress + ':8080');
+    .listen(chronosSettings.port, chronosSettings.hostname);
+  logger.log('Server running at http://' + chronosSettings.hostname + ':' + chronosSettings.port);
 } else {
   logger.log('Configure Node.js with *no* workers.');
-  server.listen(chronosSettings.httpPort);
-  logger.log('Server running at http://127.0.0.1:' + chronosSettings.httpPort);
+  server.listen(chronosSettings.port, chronosSettings.hostname);
+  logger.log('Server running at http://' + chronosSettings.hostname + ':' + chronosSettings.port);
 }
 
 

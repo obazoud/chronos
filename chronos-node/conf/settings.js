@@ -6,8 +6,8 @@ exports.create = function() {
 
   // Default settings
   var defaults = {
-    httpAdress: '127.0.0.1',
-    httpPort: 8080,
+    hostname: '127.0.0.1',
+    port: 8080,
     uncaughtException: true,
     cluster:  {
       activate : true,
@@ -22,7 +22,8 @@ exports.create = function() {
   chronosSettings.olivier = {
     uncaughtException: false,
     cluster:  {
-      activate : false
+      activate : false,
+      workers: 2
     }
   };
 
@@ -32,8 +33,8 @@ exports.create = function() {
   // vfabricXX
   for (var i = 1; i < 5; i++) {
     chronosSettings['vfabric' + i] = {
-      httpAdress: '192.168.1.' + i,
-      httpPort: 8080,
+      hostname: '192.168.1.' + i,
+      port: 8080,
       uncaughtException: true,
       cluster:  {
         activate : true,
@@ -42,8 +43,8 @@ exports.create = function() {
     };
   }
   chronosSettings['usi' + i] = {
-    httpAdress: '192.168.1.201',
-    httpPort: 8080,
+    hostname: '192.168.1.201',
+    port: 8080,
     uncaughtException: true,
     cluster:  {
       activate : true,
