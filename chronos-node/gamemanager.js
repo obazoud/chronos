@@ -252,6 +252,7 @@ emitter.on('warmupEnd', function(success) {
 /** Callback getQuestion **/
 function setTimeoutForTimeFrame(timeout, login, n, success) {
   setTimeout(setTimeoutForTimeFrameCB, timeout, login, n, success);
+  // logger.log(Date.now() + " login " + login + " waiting for " + timeout + "ms.");
 };
 
 function setTimeoutForTimeFrameCB(login, n, success) {
