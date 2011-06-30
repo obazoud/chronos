@@ -7,7 +7,7 @@ exports.create = function() {
   // Default settings
   var defaults = {
     hostname: '127.0.0.1',
-    port: 8082,
+    port: 8080,
     uncaughtException: true,
     tweet: true,
     cluster:  {
