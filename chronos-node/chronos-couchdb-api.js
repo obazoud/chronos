@@ -18,7 +18,7 @@ if (hostname.match(/^vfabric(\d+)$/) || hostname.match(/^usi(\d+)$/)) {
 } else {
   host = '127.0.0.1';
 }
-console.log(tools.toISO8601(new Date()) + ' : Couchdb configuration: ' + hostname + ':' + port);
+console.log(tools.toISO8601(new Date()) + ' : Couchdb configuration: ' + host + ':' + port);
 
 var couchdbaseburl = 'http://' + host + ':' + port;
 var couchdburl = couchdbaseburl + '/thechallenge';
