@@ -194,6 +194,7 @@ exports.login = function(req, res, params) {
               res.send(400);
             } else {
               var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
+              console.log("Login: " + params.mail);
               gamemanager.login(params.mail);
               gamemanager.warmup(res);
               res.send(201, {'Set-Cookie': 'session_key=' + sessionkey}, '');
