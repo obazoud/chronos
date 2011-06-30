@@ -73,7 +73,7 @@ exports.newGame = function(req, res, params) {
   });
 }
 
-
+// TODO: cookie persistence ?
 exports.login = function(req, res, params) {
   var url = couchdbaseburl + '/_session';
   restler.post(url, {
@@ -81,7 +81,8 @@ exports.login = function(req, res, params) {
     headers: {
       'Content-Type': 'application/x-www-form-urlencodeddata',
       'Host': 'localhost:8080',
-      'Referer': 'http://localhost:8080/_api'
+      'Referer': 'http://localhost:8080/_api',
+      'Domain': '.chronos.fr',
     }
   })
   .on('error', function(data) {
@@ -97,15 +98,51 @@ exports.login = function(req, res, params) {
     // After 10 minutes you need to authenticate your user again. 
     // The token lifetime can be configured with the timeout (in seconds) setting in the couch_httpd_auth configuration section.
     // http://guide.couchdb.org/draft/security.html
-    var cookie = response.headers['set-cookie'][0].split('=')[1].split(';')[0];
+    var cookie = response.headers['set-cookie'][0].split(';')[0];
     res.send(201, {"session_key":cookie}, data);
   });
 }
 
 exports.getQuestion = function(req, res, n) {
+  var url = couchdbaseburl + '/_session';
+  // sys.puts(req.headers.cookie);
+  restler.get(url, {
+    data: '',
+    headers: {
+      'Domain': '.chronos.fr',
+      'Cookie': req.headers.session_key
+    }
+  })
+  .on('error', function(data) {
+    res.send(400, {}, data);
+  })
+  .on('complete', function (data, response) {
+    var json = JSON.parse(data);
+    if (!json.userCtx.name) {
+      sys.puts(data);
+      res.send(401, {}, data);
+    } else {
+      var url = couchdburl + '/game';
+      restler.get(url, {
+        data: '',
+        headers: {
+          'Domain': '.chronos.fr',
+          'Cookie': req.headers.session_key
+        }
+      })
+      .on('error', function(data) {
+        res.send(400, {}, data);
+      })
+      .on('complete', function (data, response) {
+        res.send(200, {}, data);
+      });
+    }
+  });
+
+  // Test if cookie still present
+
   // Clé de session non reconnue : 401
   // Non respect de la séquence ou autre erreur : 400
-  res.send(200, {}, {question:n, answer_1:'answer_1', answer_2:'answer_2', score:42});
 }
 
 exports.answerQuestion = function(req, res, n, params) {
