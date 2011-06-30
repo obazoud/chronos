@@ -10,4 +10,4 @@ curl -X PUT http://superadmin:supersecret@localhost:5984/thechallenge/game1 -d '
 
 curl -X PUT http://superadmin:supersecret@localhost:5984/thechallenge/_design/validate -d @design/validate.json
 
-curl -X PUT http://superadmin:supersecret@localhost:5984/thechallenge/_design/game -d @design/game.json
+#curl -X PUT http://superadmin:supersecret@localhost:5984/thechallenge/_design/game -d @design/game.json

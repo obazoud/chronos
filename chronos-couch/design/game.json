@@ -13,7 +13,7 @@
         }
         doc._id= 'gamejson';
         doc.type='gamejson';
-        doc.title = 'title';
+        doc.title = gamesession.parameters.trackeduseridmail.text();
         return [doc, \"ok!\\n\"];
       }
     "

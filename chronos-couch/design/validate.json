@@ -40,7 +40,6 @@
       if (newDoc['authentication_key'] != '12IndR6r5V5618') {
         throw({forbidden : 'Authentication key is not recognized.'});
       }
-      validateField('parameters', true);
       return;
     }
 

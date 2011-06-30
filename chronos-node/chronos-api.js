@@ -1,5 +1,6 @@
 var restler = require('restler');
 var querystring = require('querystring');
+var xml2json = require('./xml2json.js');
 
 var host = '127.0.0.1';
 var port = 5984;
@@ -43,8 +44,15 @@ exports.createUser = function(req, res, params) {
 
 exports.newGame = function(req, res, params) {
   var url = couchdburl + '/game';
+  var gameXML = params.parameters;
+  // gameXML = gameXML.replace(/usi:/g, "");
+  var paramsJSON = xml2json.parse(gameXML);
+  paramsJSON['type'] = 'game';
+  paramsJSON['authentication_key'] = params.authentication_key || '';
+  delete paramsJSON['value'];
+  console.log('paramsJSON: ' + paramsJSON);
   restler.put(url, {
-    data: JSON.stringify({type:'game', authentication_key:params.authentication_key || '', parameters:params.parameters || ''}),
+    data: JSON.stringify(paramsJSON),
     headers: { 'Content-Type': 'application/json' }
   })
   .on('error', function(data) {
@@ -59,6 +67,7 @@ exports.newGame = function(req, res, params) {
     res.send(201);
   });
 }
+
 
 exports.login = function(req, res, params) {
   // Si l'utilisateur n'existe pas ou si l'utilisateur est déjà loggé : 400
