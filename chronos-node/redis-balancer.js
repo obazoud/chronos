@@ -17,7 +17,7 @@ function RedisBalancer(){
 var balancer = new RedisBalancer();
 
 exports.init = function(){
-    var servers = loadConfig("./conf/redis.servers");
+    var servers = loadConfig("/home/user/deploiement/chronos-node/conf/redis.servers");
 
         // creation du master initial
         balancer.redisClients[0] = redis.createClient(servers[0].port,servers[0].ip);
