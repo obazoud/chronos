@@ -102,7 +102,7 @@ npm install restler
 npm install twitter
 npm install json
 proxyoff
-
+sudo chown -R user:user /usr/local/var/log
 ln -s /home/user/deploiement/install/etc/init.d/nodejs /etc/init.d/nodejs
 update-rc.d -f nodejs defaults
 

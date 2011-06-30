@@ -1,6 +1,7 @@
 var journey = require('journey');
 var api = require('./chronos-api.js');
 var security = require('./security.js');
+var tools = require("./tools.js");
 
 // Create a router
 var router = new(journey.Router)();
@@ -36,13 +37,20 @@ if (process.argv.indexOf('--no-cluster') > -1) {
 
 // Prevent node.js crashing
 if (process.argv.indexOf('--no-uncaught') <= -1) {
-  console.log('Add process.on uncaughtException');
+  console.log(tools.toISO8601(new Date()) + 'Add process.on uncaughtException');
   process.on('uncaughtException', function(err) {
-    console.log(err);
+    console.log(tools.toISO8601(new Date()) + err);
   });
 } else {
-  console.log('Skip process.on uncaughtException');
+  console.log(tools.toISO8601(new Date()) + 'Skip process.on uncaughtException');
 }
+
+process.on('exit', function () {
+  process.nextTick(function () {
+   console.log(tools.toISO8601(new Date()) + 'This will not run');
+  });
+  console.log(tools.toISO8601(new Date()) + 'About to exit.');
+});
 
 var server = http.createServer(function(req, res) {
 
@@ -66,15 +74,15 @@ var server = http.createServer(function(req, res) {
 });
 
 if (applyCluster == true) {
-  console.log('Configure Node.js with cluster module (' + applyCluster + ')');
+  console.log(tools.toISO8601(new Date()) + 'Configure Node.js with cluster module (' + applyCluster + ')');
   var cluster = require('cluster');
   cluster(server).listen(8080);
 } else {
-  console.log('Configure classic Node.js');
+  console.log(tools.toISO8601(new Date()) + 'Configure classic Node.js');
   server.listen(8080);
 }
 
-console.log('Server running at http://127.0.0.1:8080/');
+console.log(tools.toISO8601(new Date()) + 'Server running at http://127.0.0.1:8080/');
 
 // New game every 120 seconds
 /*
