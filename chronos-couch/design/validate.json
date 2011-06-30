@@ -46,6 +46,10 @@
     if ((oldDoc && oldDoc.type == 'gamejson') || newDoc.type == 'gamejson') {
       return;
     }
+   
+    if ((oldDoc && oldDoc.type == 'warmup') || newDoc.type == 'warmup') {
+      return;
+    }
 
     throw({forbidden: 'doc.type is required or unknown: ' + newDoc['type']});
   }"
