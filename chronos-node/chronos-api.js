@@ -12,10 +12,10 @@ exports.ping = function(req, res) {
 
 exports.createUser = function(req, res, params) {
   chronosCouch.createChronosUser(params.firstname, params.lastname, params.mail, params.password, {
-    error: function(data, response) {
+    error: function(data) {
       res.send(400, {}, data);
     },
-    success: function(data, response) {
+    success: function(data) {
       res.send(201);
     }
   });
@@ -38,14 +38,14 @@ exports.newGame = function(req, res, params) {
   }
   
   chronosCouch.putDoc('game', paramsJSON, {
-    error: function(data, response) {
+    error: function(data) {
       if (JSON.parse(data).reason == 'Authentication key is not recognized.') {
         res.send(401);
       } else {
         res.send(400);
       }
     },
-    success: function(data, response) {
+    success: function(data) {
       res.send(201);
     }
   });
@@ -54,7 +54,7 @@ exports.newGame = function(req, res, params) {
 exports.login = function(req, res, params) {
   // already login ?
   chronosCouch.getDoc(params.mail, {
-    error: function(data, response) {
+    error: function(data) {
       if (data.error == 'unauthorized') {
         res.send(401);
       }
@@ -63,7 +63,7 @@ exports.login = function(req, res, params) {
       }
       res.send(400);
     },
-    success: function(data, response) {
+    success: function(data) {
       var userDocjson = JSON.parse(data);
       if (userDocjson.password != params.password) {
         res.send(401);
@@ -77,15 +77,15 @@ exports.login = function(req, res, params) {
 
 exports.getQuestion = function(req, res, n) {
   chronosCouch.getDoc(req.jsonUser.login, {
-    error: function(data, response) {
+    error: function(data) {
       res.send(400, {}, data);
     },
-    success: function(userDoc, response) {
+    success: function(userDoc) {
       chronosCouch.getDoc('game', {
-        error: function(data, response) {
+        error: function(data) {
           res.send(400, {}, data);
         },
-        success: function(game, response) {
+        success: function(game) {
           var q = JSON.parse(game).gamesession.questions.question[n-1];
           var userDocjson = JSON.parse(userDoc);
           var question = {};
@@ -104,16 +104,16 @@ exports.getQuestion = function(req, res, n) {
 
 exports.answerQuestion = function(req, res, n, params) {
   chronosCouch.getDoc('game', {
-    error: function(data, response) {
+    error: function(data) {
       res.send(400, {}, data);
     },
-    success: function(data, response) {
+    success: function(data) {
       var q = JSON.parse(data).gamesession.questions.question[n-1];
       chronosCouch.putDesign('/_design/answer/_update/accumulate/' + req.jsonUser.login + '?question=' + n + '&reponse=' + params.answer + '&correct=' + q.goodchoice + '&valeur=' + q.qvalue, {
-        error: function(data, response) {
+        error: function(data) {
           res.send(400, {}, data);
         },
-        success: function(data, response) {
+        success: function(data) {
           var answer = {};
           answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
           answer.good_answer=q.goodchoice;
@@ -190,13 +190,13 @@ exports.audit = function(req, res, params) {
   }
   */
   chronosCouch.getDoc(params.user_mail, {
-    error: function(data, response) {
+    error: function(data) {
       res.send(400, {}, data);
     },
-    success: function(player, response) {
+    success: function(player) {
       chronosCouch.getDoc('game', {
-        error: function(data, response) { res.send(400, {}, data); },
-        success: function(game, response) {
+        error: function(data) { res.send(400, {}, data); },
+        success: function(game) {
           var audit = {};
           audit.user_answers = new Array();
           audit.good_answers = new Array();
@@ -223,15 +223,15 @@ exports.audit = function(req, res, n, params) {
   }
   */
   chronosCouch.getDoc(params.user_mail, {
-    error: function(data, response) {
+    error: function(data) {
       res.send(400, {}, data);
     },
-    success: function(player, response) {
+    success: function(player) {
       chronosCouch.getDoc('game', {
-        error: function(data, response) {
+        error: function(data) {
           res.send(400, {}, data);
         },
-        success: function(game, response) {
+        success: function(game) {
           var audit = {};
           audit.good_answer = JSON.parse(game).gamesession.questions.question[n-1].goodchoice;
           audit.question = JSON.parse(game).gamesession.questions.question[n-1].label;
