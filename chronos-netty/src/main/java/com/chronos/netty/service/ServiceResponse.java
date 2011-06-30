@@ -1,4 +1,4 @@
-package com.chronos.netty;
+package com.chronos.netty.service;
 
 import java.util.Map;
 

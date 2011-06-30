@@ -38,7 +38,7 @@
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <configuration>
-          <mainClass>com.chronos.netty.NettyServer</mainClass>
+          <mainClass>com.chronos.netty.server.NettyServer</mainClass>
         </configuration>
       </plugin>
     </plugins>

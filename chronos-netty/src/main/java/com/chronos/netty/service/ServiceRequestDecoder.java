@@ -1,4 +1,4 @@
-package com.chronos.netty;
+package com.chronos.netty.service;
 
 import java.net.URLDecoder;
 import java.util.HashMap;

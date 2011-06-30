@@ -1,4 +1,4 @@
-package com.chronos.netty;
+package com.chronos.netty.service;
 
 import static org.jboss.netty.handler.codec.http.HttpHeaders.isKeepAlive;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_LENGTH;
@@ -13,6 +13,10 @@ import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.chronos.netty.service.ChronosDispatcher;
+import com.chronos.netty.service.ServiceResponse;
+import com.chronos.netty.service.ServiceResquest;
 
 /**
  * @author bazoud

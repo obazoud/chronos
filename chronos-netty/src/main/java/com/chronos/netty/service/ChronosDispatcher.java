@@ -1,4 +1,4 @@
-package com.chronos.netty;
+package com.chronos.netty.service;
 
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.CREATED;

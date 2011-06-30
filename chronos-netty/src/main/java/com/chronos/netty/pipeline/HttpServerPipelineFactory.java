@@ -1,4 +1,4 @@
-package com.chronos.netty;
+package com.chronos.netty.pipeline;
 
 import static org.jboss.netty.channel.Channels.pipeline;
 
@@ -7,6 +7,11 @@ import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
+
+import com.chronos.netty.security.SecurityHandler;
+import com.chronos.netty.service.ChronosHandler;
+import com.chronos.netty.service.JsonEncoder;
+import com.chronos.netty.service.ServiceRequestDecoder;
 
 /**
  * @author bazoud

@@ -1,9 +1,11 @@
-package com.chronos.netty;
+package com.chronos.netty.service;
 
 import org.jboss.netty.channel.ChannelDownstreamHandler;
 import org.jboss.netty.channel.ChannelEvent;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.MessageEvent;
+
+;
 
 /**
  * @author bazoud
@@ -18,10 +20,10 @@ public class JsonEncoder implements ChannelDownstreamHandler {
             return;
         }
 
-//        MessageEvent msg = (MessageEvent) e;
-//        Object originalMessage = msg.getMessage();
-//        String json = new Gson().toJson(xxx);
-//        Channels.write(ctx, e.getFuture(), json, msg.getRemoteAddress());
+        // MessageEvent msg = (MessageEvent) e;
+        // Object originalMessage = msg.getMessage();
+        // String json = new Gson().toJson(xxx);
+        // Channels.write(ctx, e.getFuture(), json, msg.getRemoteAddress());
         ctx.sendDownstream(e);
     }
 }

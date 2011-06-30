@@ -1,4 +1,4 @@
-package com.chronos.netty;
+package com.chronos.netty.server;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
@@ -11,6 +11,8 @@ import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.chronos.netty.pipeline.HttpServerPipelineFactory;
 
 /**
  * @author bazoud
