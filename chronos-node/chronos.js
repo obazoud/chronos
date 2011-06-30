@@ -53,7 +53,6 @@ process.on('exit', function () {
 });
 
 var server = http.createServer(function(req, res) {
-
   var body = '';
 
   req.on('data', function(chunk) { 
@@ -86,9 +85,4 @@ if (applyCluster == true) {
 
 console.log(tools.toISO8601(new Date()) + ' : Server running at http://127.0.0.1:8080');
 
-// New game every 120 seconds
-/*
-setInterval(function() {
-  gameStarted = false;
-}, 120000);
-*/
+
