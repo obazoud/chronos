@@ -17,7 +17,7 @@ responses[1] = [];
 
 exports.initGame = function(game) {
   redis.del("context");
-  redis.hmset("context"
+  redis.hmset("context",
     "maxGamers",parseInt(game.gamesession.parameters.nbusersthreshold),
     "numberOfPlayers",0,
     "dureeWarmup", ( parseInt(game.gamesession.parameters.logintimeout) * 1000),
