@@ -58,7 +58,7 @@ vfabric3 est "master"
 les autres sont en read only
 On écrit seulement pendant la phase création de users & création du game
 Le script install/couchdb/replication.sh est à placer dans un cron / 5mn
-*/5 * * * * /home/user/deploiement/install/couchdb/replication.sh
+* * * * * /home/user/deploiement/install/couchdb/replication.sh
 sudo apt-get install mailutils
 
 # sur usi1
