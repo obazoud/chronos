@@ -1,26 +1,10 @@
-var os = require('os');
 var restler = require('restler');
-var sys = require('sys');
 var http = require('http');
-var querystring = require("querystring");
-var events = require('events');
-var emitter = new events.EventEmitter();
 var logger = require('util');
+var chronosSettings = require('./conf/settings.js').create();
 
-var host = '?.?.?.?';
-var port = 5984;
-var hostname = os.hostname();
-if (hostname.match(/^vfabric(\d+)$/) || hostname.match(/^usi(\d+)$/)) {
-  // vip
-  host = '192.168.1.150';
-} else {
-  host = '127.0.0.1';
-}
-logger.log('Couchdb configuration: ' + host + ':' + port);
-
-var couchdbaseburl = 'http://' + host + ':' + port;
-var couchdburl = couchdbaseburl + '/thechallenge';
-var saltvalue = '1';
+var couchdburl = 'http://' + chronosSettings.couchdb.host + ':' + chronosSettings.couchdb.port + '/' + chronosSettings.couchdb.database;
+logger.log('Couchdb configuration: ' + couchdburl);
 
 exports.config = function(options) {
   options.success({host:host, port:port});

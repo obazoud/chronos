@@ -2,12 +2,13 @@ var sys = require('sys');
 var fs = require('fs');
 var logger = require('util');
 var journey = require('journey');
-var chronosSettings = require('./conf/settings.js').create();
-var security = require('./security.js');
-var api = require('./chronos-api.js');
 
+var chronosSettings = require('./conf/settings.js').create();
 // Show settings
 logger.log('Loading Chronos settings: ' + sys.inspect(chronosSettings, false));
+
+var security = require('./security.js');
+var api = require('./chronos-api.js');
 
 // Prevent node.js crashing
 if (chronosSettings.uncaughtException) {

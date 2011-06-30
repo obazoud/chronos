@@ -12,6 +12,11 @@ exports.create = function() {
     cluster:  {
       activate : true,
       workers: 2
+    },
+    couchdb: {
+      host: '127.0.0.1',
+      port: 5984,
+      database: 'thechallenge'
     }
   };
 
@@ -39,6 +44,11 @@ exports.create = function() {
       cluster:  {
         activate : true,
         workers: 4
+      },
+      couchdb: {
+        host: '192.168.1.150',
+        port: 5984,
+        database: 'thechallenge'
       }
     };
   }
@@ -49,6 +59,11 @@ exports.create = function() {
     cluster:  {
       activate : true,
       workers: 4
+    },
+    couchdb: {
+      host: '192.168.1.150',
+      port: 5984,
+      database: 'thechallenge'
     }
   };
 
