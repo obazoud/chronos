@@ -44,42 +44,56 @@ function fake(req,resp){
     resp.send(200,{},"c note, mais je suis un fake!") ;
 }
 
-var counter = 1; // sera mis dans redis
-var dureeWarmup = 10000;
-var dateFinWarmup = new Date().getTime() + dureeWarmup;
+var dureeWarmup = 10000; // dans redis
+var numberOfQuestions = 5; // dans redis
+var maxGamers = 15; // dans redis
+var questionTimeFrame = 5000; // dans redis
+var synchroTimeDuration = 2000; // dans redis
+
+var counter = 1; // dans redis
+
+var dateFinWarmup = new Date().getTime() + dureeWarmup; // dans redis
 var responses = [];
 responses[0] = [];
 
-var numberOfQuestions = 5; 
-
-var questionTimeFrame = 5000;
-var synchroTimeDuration = 2000;
-var quizSessions = []; // sera mis dans redis
-var currentQuestion = 0;
+var quizSessions = []; // dans redis
+var currentQuestion = 0; // dans redis
 
 
+/*
+gere les demandes d inscription au quiz
+*/
 function warmup(req,resp){
      restler.get('http://127.0.0.1:8080/test')
        .on('complete', function(data) {
             if(!gameStarted()){
                 counter++;
-                responses[0] = [];
                 responses[0].push(resp);
-            }else{
+                if(counter==maxGamers){
+                    emitter.emit('warmupEnd',timerId);
+                }
+            }else{ // TODO a verfifier
                 console.log("sending immediatly");
                 resp.send(400,{},"temps de reponse depasse!");
             }
         });
 }
 
+/*
+gere l evenement d arret de la phase de warmup en :
+    1. arretant le timer
+    2. repondant a tout les utilisateurs
+    3. definitions des fenetres de sessions de reponses
+*/
 emitter.once('warmupEnd',function(timerId){
+    clearTimeout(timerId);
+    console.log("warmup timer stopped");
+    
     responses[0].forEach(function(resp){
         console.log("sending...");
         resp.send(200,{},"question 1");    
     });
     responses[0] = [];// verfifier si avec le comportement asynch ca peux poser des problemes
-    clearTimeout(timerId);
-    console.log("warmup timer stopped");
     
     // initialisation des time frames des questions
     quizSessions[0] = new Date().getTime();
@@ -89,9 +103,13 @@ emitter.once('warmupEnd',function(timerId){
     currentQuestion = 1;
 });
 
-
+/*
+Timer active une tache de fond qui s execute tous les X ms
+pour verfier si on depasser le temps de warmup ou atteint le nombre
+maximum de joueurs.
+*/
 var timerId = setInterval(function(){
-        if(counter==15 || new Date().getTime() >= dateFinWarmup){
+        if(gameStarted()){
             emitter.emit('warmupEnd',timerId);
         }else{
             console.log("waiting... " + counter);
@@ -99,15 +117,31 @@ var timerId = setInterval(function(){
 },1000);
 
 function gameStarted(){
-    return (counter==15);
+    return (counter == maxGamers || new Date().getTime() >= dateFinWarmup);
 }
 
+
+/*
+
+*/
 function getQuestion(req,resp,n){
     var now = new Date().getTime();
     // voir avec pierre les cas
-    if(now >=quizSessions[n-1] && now <= (quizSessions[n-1]- synchroTimeDuration)){
+    if(!gameStarted()){
+        resp.send(400,{},"le jeu n a pas encore commence ");
+    }
+    if(n <= 0 || n > numberOfQuestions){
+        resp.send(400,{},"le numero de la question demande est incorrect.");
+    }
+    if(now >= quizSessions[n-1] && now <= (quizSessions[n]- synchroTimeDuration)){
         resp.send(200,{},"voici la question " + n);
-    }else if (now < quizSessions[n-1]){
+    }else if (now > quizSessions[n]){
         resp.send(400,{},"vous avez rate la question " + n);
     }
 }
+
+
+
+
+
+
