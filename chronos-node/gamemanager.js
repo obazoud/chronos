@@ -6,6 +6,11 @@ var logger = require('util');
 // TODO Think about multiples nodes instances
 // TODO Think about multiples servers
 
+// nbquestions : le nombre de questions à jouer. 
+// Doit être inférieur ou égal au nombre de questions présentes dans le fichier (élement <usi:questions>). 
+// --> Ce paramètre est considéré comme inutile. Nous jouerons toujours 20 questions.
+var numberOfQuestions = 20;
+
 // TODO integrer le mecanisme de fail-over
 var redis = require("redis").createClient();
 var subscriber = require("redis").createClient();
@@ -138,11 +143,6 @@ subscriber.on('message', function(channel, message) {
       break;
   }
 });
-
-// nbquestions : le nombre de questions à jouer. 
-// Doit être inférieur ou égal au nombre de questions présentes dans le fichier (élement <usi:questions>). 
-// --> Ce paramètre est considéré comme inutile. Nous jouerons toujours 20 questions.
-var numberOfQuestions = 20;
 
 /** Initialize game **/
 exports.initGame = function(game) {
