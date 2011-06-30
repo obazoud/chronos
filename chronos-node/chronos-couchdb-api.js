@@ -4,8 +4,8 @@ var sys = require('sys');
 var http = require('http');
 var querystring = require("querystring");
 var events = require('events');
-var tools = require("./tools.js");
 var emitter = new events.EventEmitter();
+var logger = require('util');
 
 var couchdbAccessFailed = false;
 
@@ -18,7 +18,7 @@ if (hostname.match(/^vfabric(\d+)$/) || hostname.match(/^usi(\d+)$/)) {
 } else {
   host = '127.0.0.1';
 }
-console.log(tools.toISO8601(new Date()) + ' : Couchdb configuration: ' + host + ':' + port);
+logger.log('Couchdb configuration: ' + host + ':' + port);
 
 var couchdbaseburl = 'http://' + host + ':' + port;
 var couchdburl = couchdbaseburl + '/thechallenge';

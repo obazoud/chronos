@@ -1,7 +1,6 @@
 var sys = require('sys');
 var fs = require('fs');
 var logger = require('util');
-var tools = require("./tools.js");
 var journey = require('journey');
 var chronosSettings = require('./conf/settings.js').create();
 var security = require('./security.js');

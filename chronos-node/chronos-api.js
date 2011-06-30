@@ -5,7 +5,6 @@ var xml2json = require('./externals/xml2json.js');
 var chronosCouch = require('./chronos-couchdb-api.js');
 var security = require('./security.js');
 var ranking = require("./ranking.js");
-var tools = require("./tools.js");
 var gamemanager = require('./gamemanager.js');
 var logger = require('util');
 var authentication_key = '12IndR6r5V5618';
@@ -273,7 +272,7 @@ exports.answerQuestion = function(req, res, n, params) {
 
 exports.tweetHttp = function(req, res, params) {
   sys.puts('Tweet: ' + params.tweet);
-  twitterapi.tweet(params.tweet + ' (' + tools.toISO8601(new Date()) + ')');
+  twitterapi.tweet(params.tweet + ' (' + Date.now() + ')');
   res.send(200);
 };
 
