@@ -4,27 +4,25 @@ var querystring = require('querystring');
 var host = '127.0.0.1';
 var port = 5984;
 var couchdburl = 'http://' + host + ':' + port;
+var couchdAdminburl = 'http://' + host + ':' + port + '/_config/admins/';
 var username = 'superadmin';
 var password = 'supersecret';
 
 exports.createUser = function(req, res, params) {
-  // curl -i -X PUT http://superadmin:supersecret@127.0.0.1:5984/_config/admins/anna -d '"secret"'
-  console.log('JSON: ' + params.mail + ',' + params.password);
-  var url = couchdburl + '/_config/admins/' + params.mail;
-  console.log('url: ' + url);
+  var url = couchdAdminburl + params.mail;
+  // console.log('url: ' + url);
   restler.put(url, {
-  	  username: username,
+        username: username,
         password: password,
         data: JSON.stringify(params.password)
       }
     )
    .on('error', function(data) {
-      console.log('error:' + data);
       res.send(400, {}, data);
     })
     .on('complete', function (data) {
-      console.log('complete:' + data);
-      res.send(404);
+      var url = couchdAdminburl + params.mail;
+      res.send(201);
     });
 
   // Si un utilisateur ayant la même adresse mail existe déjà, une erreur est retournée
