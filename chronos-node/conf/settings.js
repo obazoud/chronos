@@ -1,4 +1,5 @@
 var os = require('os');
+var logger = require('util');
 var argv = require('optimist').argv;
 
 // Settings object
