@@ -47,6 +47,7 @@ exports.newGame = function(req, res, params) {
 };
 
 function putGame(req, res, params, paramsJSON) {
+  console.log(toISO8601(new Date()) + ": put a new game.");
   chronosCouch.putDoc('game', paramsJSON, {
     error: function(data) {
       var error = JSON.parse(data);
@@ -59,14 +60,36 @@ function putGame(req, res, params, paramsJSON) {
       }
     },
     success: function(data) {
-      console.log("Put game successfully.");
+      console.log(toISO8601(new Date()) + ": game successfully added.");
       ranking.reset(function(err, incrementedScore) {
-        console.log("incrementedScore=" + incrementedScore);
+        console.log(toISO8601(new Date()) + ": Redis: score to 0: OK " + incrementedScore);
         res.send(201);
       });
     }
   });
 };
+
+toISO8601 = function (date) {
+  var pad_two = function(n) {
+    return (n < 10 ? '0' : '') + n;
+  };
+  var pad_three = function(n) {
+    return (n < 100 ? '0' : '') + (n < 10 ? '0' : '') + n;
+  };
+  return [
+    date.getUTCFullYear(),
+    '-',
+    pad_two(date.getUTCMonth() + 1),
+    '-',
+    pad_two(date.getUTCDate()),
+    ' ',
+    pad_two(date.getUTCHours()),
+    ':',
+    pad_two(date.getUTCMinutes()),
+    ':',
+    pad_two(date.getUTCSeconds())
+  ].join('');
+}
 
 function processGameXML(authentication_key, parameters) {
   var gameXML = parameters.replace(/ xmlns:usi/g, " usi").replace(/ xmlns:xsi/g, " xsi").replace(/ xsi:schemaLocation/g, " schemaLocation").replace(/usi:/g, "");
