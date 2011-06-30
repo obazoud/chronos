@@ -487,7 +487,7 @@ exports.getAnswers = function(login, options) {
       } else {
         if (options && options.success) {
           var answers = new Array();
-          for (i = 0; i < 19; i++) {
+          for (i = 0; i < numberOfQuestions; i++) {
             if (replies[i] == null) {
               answers[i] = 0;
             } else {
