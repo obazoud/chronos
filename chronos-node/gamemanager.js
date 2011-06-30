@@ -223,7 +223,7 @@ exports.getQuestion = function(n, success, fail ) {
 /*
 
 */
-exports.answerQuestion = function(n, success, fail) { 
+exports.answerQuestion = function(n, login, success, fail) {
      gameState(	
 	function(){
 	        fail();
@@ -244,7 +244,7 @@ exports.answerQuestion = function(n, success, fail) {
 	                success();
 		    }else{
 
-			logger.log("n = " + n);
+			logger.log("n = " + n + ', login:' + login);
 			logger.log("questionEncours = " + questionEncours);
 			logger.log("  now = " + new Date(now) );
 			logger.log("  quizSessions[n] = " + new Date(sessionN));

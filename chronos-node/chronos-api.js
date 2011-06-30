@@ -238,7 +238,7 @@ exports.getQuestion = function(req, res, n) {
 };
 
 exports.answerQuestion = function(req, res, n, params) {
-  gamemanager.answerQuestion(n,
+  gamemanager.answerQuestion(n, req.jsonUser.login,
     function() {
         gamemanager.getGame({
           error: function(data) {
