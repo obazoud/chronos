@@ -1,4 +1,5 @@
 var os = require('os');
+var logger = require('util');
 var redis = require("redis"),
   client = redis.createClient();
 
