@@ -18,6 +18,10 @@ exports.create = function() {
       host: '127.0.0.1',
       port: 5984,
       database: 'thechallenge'
+    },
+    redis: {
+      host: '127.0.0.1',
+      port: 6379
     }
   };
 
@@ -55,6 +59,10 @@ exports.create = function() {
         host: '192.168.1.150',
         port: 5984,
         database: 'thechallenge'
+      },
+      redis: {
+        host: '192.168.1.1',
+        port: 6379
       }
     };
   }

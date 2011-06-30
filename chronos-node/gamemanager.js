@@ -2,6 +2,7 @@ var sys = require('sys');
 var events = require('events');
 var emitter = new events.EventEmitter();
 var logger = require('util');
+var chronosSettings = require('./conf/settings.js').create();
 
 // TODO Think about multiples nodes instances
 // TODO Think about multiples servers
@@ -16,9 +17,9 @@ var os = require('os');
 //var redis = require("redis").createClient(6379, "192.168.1.1");
 //var subscriber = require("redis").createClient(6379, "192.168.1.1");
 //var publisher = require("redis").createClient(6379, "192.168.1.1");
-var redis = require("redis").createClient();
-var subscriber = require("redis").createClient();
-var publisher = require("redis").createClient();
+var redis = require("redis").createClient(chronosSettings.redis.port, chronosSettings.redis.host);
+var subscriber = require("redis").createClient(chronosSettings.redis.port, chronosSettings.redis.host);
+var publisher = require("redis").createClient(chronosSettings.redis.port, chronosSettings.redis.host);
 
 var channel = '#chronos';
 

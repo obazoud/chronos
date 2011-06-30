@@ -1,6 +1,9 @@
 var os = require('os');
+var chronosSettings = require('./conf/settings.js').create();
+
+// TODO
 //var redis = require("redis").createClient(6379, "192.168.1.1");
-var redis = require("redis").createClient();
+var redis = require("redis").createClient(chronosSettings.redis.port, chronosSettings.redis.host);
 
 function initRanking(callback) {
     redis.del("scores");
