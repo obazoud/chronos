@@ -61,7 +61,7 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin # modify if you need
 
 LOCAL_VAR_LOGS_DIR=/usr/local/var/log
 LOCAL_VAR_LOGS=$LOCAL_VAR_LOGS_DIR/nodejs.log
-DAEMON_ARGS="/home/user/deploiement/chronos-node/chronos.js"               # path to your node.js server/app
+DAEMON_ARGS="/home/user/deploiement/chronos-node/chronos.js --no-cluster --no-uncaught"               # path to your node.js server/app
                                             # NB: don't use ~/ in path
 
 DESC="node.js http server"                  # whatever fancy description you like
