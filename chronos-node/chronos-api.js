@@ -369,9 +369,9 @@ exports.auditN = function(req, res, n, params) {
     },
     success: function(answer) {
       var audit = {};
-      audit.good_answer = gamejson.gamesession.questions.question[n-1].goodchoice;
-      audit.question = gamejson.gamesession.questions.question[n-1].label;
       audit.user_answer = "" + answer + "";
+      audit.good_answer = "" + gamejson.gamesession.questions.question[n-1].goodchoice + "";
+      audit.question = gamejson.gamesession.questions.question[n-1].label;
       res.send(200, {}, audit);
     }
   });
