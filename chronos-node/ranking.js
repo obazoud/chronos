@@ -1,3 +1,4 @@
+// TODO il faut configurer la connexion au serveur redis
 var redis = require("redis"),
     client = redis.createClient();
 
@@ -6,34 +7,36 @@ client.on("error", function (err) {
 });
 
 
-/*
-client.zadd("scores",28,"user1",redis.print);
-client.zadd("scores",2,"user2",redis.print);
-client.zadd("scores",3,"user3",redis.print);
-client.zadd("scores",8,"user4",redis.print);
-client.zadd("scores",23,"user5",redis.print);
-
-client.zadd("scores",15,"user6",redis.print);
-client.zadd("scores",6,"user7",redis.print);
-client.zadd("scores",32,"user8",redis.print);
-client.zadd("scores",20,"user9",redis.print);
-client.zadd("scores",17,"user10",redis.print);
+function addUser(lastname,firstname,mail){
+   var token = "{lastname:"+lastname+",firstname:"+firstname+",mail:"+mail+"}";
+   client.zadd("scores",0,token,function(err,reply){
+			console.log("user : " + token + " added");
+			client.save();
+		}
+	);
+}
 
 
+function updateScore(lastname,firstname,mail,increment){
+    var token = "{lastname:"+lastname+",firstname:"+firstname+",mail:"+mail+"}";
+	client.zincrby("scores",increment,token,function(err,reply){
+		console.log("score of user "+token+"incremented by " + increment);
+		client.save();
+	});	
+}
 
-client.zrevrangebyscore("scores","+inf","-inf", function (err,replies) {
-		console.log("classement global par score: ");
-		replies.forEach(function(resp,i){
-			console.log("\t " + i + " - " + resp );
-		});
-});
-*/
+function getScore(lastname,firstname,mail,callback){
+    var token = "{lastname:"+lastname+",firstname:"+firstname+",mail:"+mail+"}";
+    client.zscore("scores",token,function(err,reply){
+        callback(reply);
+        });    
+}
 
-function scoring(user,range,totalNumberOfUsers,callback){
-	client.zrevrank("scores",user,function(err,reply){
-			console.log("user: "+user+", rank : "+reply);
-            
-            low = reply-range;
+function ranking(lastname,firstname,mail,range,totalNumberOfUsers,callback){
+	var token = "{lastname:"+lastname+",firstname:"+firstname+",mail:"+mail+"}";
+    client.zrevrank("scores",token,function(err,reply){
+			console.log("user: "+firstname+", rank : "+reply);
+           low = reply-range;
             high = reply+range;
             if(low<0){
               low = 0;
@@ -52,11 +55,21 @@ function scoring(user,range,totalNumberOfUsers,callback){
 	});	
 }
 
+addUser("bazoud","olivier","olivier@gmail.com");
+addUser("mage","pierre","pierre@gmail.com");
+addUser("tebourbi","slim","slim@gmail.com");
 
-scoring ("user8",6,10,function(i,resp,score){
+updateScore("bazoud","olivier","olivier@gmail.com",3);
+updateScore("mage","pierre","pierre@gmail.com",4);
+updateScore("tebourbi","slim","slim@gmail.com",1);
+/*
+getScore("tebourbi","slim","slim@gmail.com",function(reply){
+    console.log("score of user slim@gmail.com : " + reply);
+});
+*/
+ranking ("tebourbi","slim","slim@gmail.com",2,6,function(i,resp,score){
 	console.log("\t " + i + " - " + resp + "("+score+")");
+    
 });
 
-
-//client.quit();
 
