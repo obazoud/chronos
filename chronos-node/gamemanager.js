@@ -96,8 +96,8 @@ exports.login = function(mail, options) {
         options.error(err);
       }
     } else {
+      redis.hincrby('players', 'logged', 1);
       if (options && options.success) {
-        redis.hincrby('players', 'logged', 1);
         options.success();
       }
     }
@@ -128,7 +128,7 @@ exports.logged = function(mail, options) {
     } else {
       var value = parseInt(reply);
       if (value >= 0) {
-        redis.hincrby('players', 'logged', "-1", function(err, reply2) {
+        redis.hincrby('players', 'logged', -1, function(err, reply2) {
           if (err) {
             if (options && options.error) {
               options.error(err);
@@ -140,7 +140,7 @@ exports.logged = function(mail, options) {
           }
         });
       } else {
-        redis.hget('players', 'logged', "-1", function(err, reply2) {
+        redis.hget('players', 'logged', function(err, reply2) {
           if (err) {
             if (options && options.error) {
               options.error(err);
