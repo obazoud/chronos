@@ -1,9 +1,0 @@
-curl -X POST http://localhost:8080/api/user -H "Content-Type: application/json" -d '{"firstname":"firstname", "lastname":"lastname", "mail":"mail", "password":"password"}' -i
-curl -X POST http://localhost:8080/api/user -H "Content-Type: application/json" -d '{"firstname":"firstname", "lastname":"lastname", "mail":"mail.existant@test.com", "password":"password"}' -i
-curl -X POST http://localhost:8080/api/game -H "Content-Type: application/json" -d '{"authentication_key":"authentication_key", "parameters":"gamesession.xml"}' -i
-curl -X POST http://localhost:8080/api/game -H "Content-Type: application/json" -d '{"authentication_key":"unknown", "parameters":"gamesession.xml"}' -i
-curl -X POST http://localhost:8080/api/login -H "Content-Type: application/json" -d '{"mail":"mail", "password":"password"}' -i
-curl -X POST http://localhost:8080/api/login -H "Content-Type: application/json" -d '{"mail":"deja.logge@test.com", "password":"password"}' -i
-curl -X GET http://localhost:8080/api/question/1 -i
-
-curl -X GET http://localhost:8080/api/score -H "Content-Type: application/json" -d '{"user_mail":"user_mail", "authentication_key":"authentication_key"}' -i
