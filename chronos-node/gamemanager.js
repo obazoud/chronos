@@ -41,12 +41,17 @@ function GameState() {
   this.questionEncours = 0;
 
   this.initGame = function(newGame) {
-    this.state = 1;
-    this.game = newGame;
-    this.nbusersthreshold = parseInt(this.game.gamesession.parameters.nbusersthreshold);
-    this.logintimeout = parseInt(this.game.gamesession.parameters.logintimeout) * 1000;
-    this.questiontimeframe = parseInt(this.game.gamesession.parameters.questiontimeframe) * 1000;
-    this.synchrotime = parseInt(this.game.gamesession.parameters.synchrotime) * 1000;
+    if (this.state == 0) {
+      logger.log('State changed state: ' + this.state + ' -> ' + 1);
+      this.state = 1;
+      this.game = newGame;
+      this.nbusersthreshold = parseInt(this.game.gamesession.parameters.nbusersthreshold);
+      this.logintimeout = parseInt(this.game.gamesession.parameters.logintimeout) * 1000;
+      this.questiontimeframe = parseInt(this.game.gamesession.parameters.questiontimeframe) * 1000;
+      this.synchrotime = parseInt(this.game.gamesession.parameters.synchrotime) * 1000;
+    } else {
+      logger.log('Already in state 1');
+    }
   };
 
   this.warmupStarts = function(now) {
@@ -101,7 +106,7 @@ subscriber.on("unsubscribe", function (channel, count) {
 });
 
 subscriber.on('message', function(channel, message) {
-  logger.log(channel + ': ' + message);
+  // logger.log(channel + ': ' + message);
   var json = JSON.parse(message);
   switch (json.event) {
     case 'initGame':
@@ -130,17 +135,21 @@ var numberOfQuestions = 20;
 /** Initialize game **/
 exports.initGame = function(game) {
   redis.del("context");
-  redis.hmset("context",
-    "nbusersthreshold", parseInt(game.gamesession.parameters.nbusersthreshold),
-    "numberOfPlayers", 0,
-    "logintimeout", (parseInt(game.gamesession.parameters.logintimeout) * 1000),
-    "questiontimeframe", (parseInt(game.gamesession.parameters.questiontimeframe) * 1000),
-    "synchrotime", (parseInt(game.gamesession.parameters.synchrotime) * 1000)
-  );
+  // TODO really ?
+//  redis.hmset("context",
+//    "nbusersthreshold", parseInt(game.gamesession.parameters.nbusersthreshold),
+//    "numberOfPlayers", 0,
+//    "logintimeout", (parseInt(game.gamesession.parameters.logintimeout) * 1000),
+//    "questiontimeframe", (parseInt(game.gamesession.parameters.questiontimeframe) * 1000),
+//    "synchrotime", (parseInt(game.gamesession.parameters.synchrotime) * 1000)
+//  );
   redis.del("players");
+  redis.hset("context", "numberOfPlayers", 0);
   redis.set("game", JSON.stringify(game));
-  redis.save();
+  // redis.save();
   // TODO: callback save ?
+  // Init locally first !
+  gameState.initGame(game);
   var message = {
     'event': 'initGame',
     'message': game
@@ -163,10 +172,11 @@ emitter.once("warmupStarted", function() {
 
   redis.hsetnx("context", "warmupStartDate", gameState.warmupStartDate);
   redis.hsetnx("context", "warmupEndDate", gameState.warmupEndDate);
-  redis.hsetnx("context", "session_0" , gameState.session_0);
-  redis.hsetnx("context", "session_1" , gameState.session_1);
-  redis.hsetnx("context", "questionEncours", 1);
-  redis.save();
+  // redis.hsetnx("context", "session_0" , gameState.session_0);
+  // redis.hsetnx("context", "session_1" , gameState.session_1);
+  // redis.hsetnx("context", "questionEncours", 1);
+  // TODO to save or to save ?
+  // redis.save();
 
   var message = {
     'event': 'warmupStarts',
@@ -184,7 +194,7 @@ function warmupLoop () {
       emitter.emit("warmupEnd");
     } else {
       // TODO : timeout ?
-      setTimeout(warmupLoop, 250);
+      setTimeout(warmupLoop, 1000);
     }
   });
 };
@@ -284,6 +294,8 @@ for (var k = 1; k <= 20; k++) {
   // logger.log(login + ": sending question (" + n + ") : " + gameState.questionEncours + "/" + numberOfQuestions);
 
   // TODO still need ?
+  // End of party when first ranking ?
+  // End of lastest session/frame ?
 //  if (gameState.questionEncours > numberOfQuestions) {
 //    logger.log(login + ": emitting event for end of game (no more questions)");
 //    emitter.emit("endOfGame");
@@ -312,45 +324,49 @@ exports.getQuestion = function(n, login, success, fail) {
       setTimeoutForTimeFrame(sessionN - now, login, n, success, fail);
     }
   } else {
-    logger.log("failed for question : " + n);
+    logger.log("failed for question : " + n + ', login:' + login);
+    logger.log("questionEncours = " + gameState.questionEncours);
+    logger.log("  now = " + now);
+    logger.log("  sessions[n-1] = " + sessionNMoins1);
+    logger.log("  sessions[n] = " + sessionN);
     fail();
   }
-}
+};
 
 /** Answer Question N **/
 exports.answerQuestion = function(n, login, success, fail) {
   var now = new Date().getTime();
-  redis.hmget("context", "questionEncours", function(err, params) {
-    var questionEncours = parseInt(params[0]);
-    var sessionN = gameState.sessions[n];
-    var sessionNplus1 = gameState.sessions[n + 1];
+  var sessionN = gameState.sessions[n];
+  var sessionNplus1 = gameState.sessions[n + 1];
 
-    if (now >= sessionN && now <= (sessionNplus1 - gameState.synchrotime)) {
-      // logger.log(login + " answers question : " + n)
-      success();
+  // TODO questionEncours ?
+  if (now >= sessionN && now <= (sessionNplus1 - gameState.synchrotime)) {
+    // logger.log(login + " answers question : " + n)
+    success();
+  } else {
+    logger.log("n = " + n + ', login:' + login);
+    logger.log("questionEncours = " + gameState.questionEncours);
+    logger.log("  now = " + new Date(now) );
+    logger.log("  sessions[n] = " + new Date(sessionN));
+    logger.log("  sessions[n+1] = " + new Date(sessionNplus1));
+    logger.log("  sessions[n+1] - synchro  = " + new Date(sessionNplus1 - gameState.synchrotime));
+
+    fail();
+    if (n =! questionEncours) {
+      logger.log("answered question is not the current one.");
+    } else if (now > sessionN - gameState.synchrotime) {
+      logger.log("time for answering question is finished.");
     } else {
-      logger.log("n = " + n + ', login:' + login);
-      logger.log("questionEncours = " + questionEncours);
-      logger.log("  now = " + new Date(now) );
-      logger.log("  sessions[n] = " + new Date(sessionN));
-      logger.log("  sessions[n+1] = " + new Date(sessionNplus1));
-      logger.log("  sessions[n+1] - synchro  = " + new Date(sessionNplus1 - gameState.synchrotime));
-
-      fail();
-      if (n =! questionEncours) {
-        logger.log("answered question is not the current one.");
-      } else if (now > sessionN - gameState.synchrotime) {
-        logger.log("time for answering question is finished.");
-      } else {
-        logger.log("unexpected problem on answerQuestion.");
-      }
+      logger.log("unexpected problem on answerQuestion.");
     }
-  });
-}
+  }
+};
 
+/* TODO ?
 emitter.on("endOfGame",function() {
   logger.log("event endOfGame recu.");
 });
+*/
 
 /** Get Score **/
 exports.getScore = function(login, options) {
@@ -400,19 +416,10 @@ exports.updatingScore = function(lastname, firstname, login, question, reponse, 
       }
 
       // logger.log("updatingScore: " + score)
-      redis.hmset("players", login + ":score", score, login + ':lastbonus', lastbonus, login + ':q:' + question, reponse);
       var token = JSON.stringify({"lastname":lastname, "firstname":firstname, "mail":login});
-      redis.zadd("scores", -score, token, function(err, updated) {
-        if (err) {
-          if (options && options.error) {
-            options.error(err);
-          }
-        } else {
-          if (options && options.success) {
-            options.success(score);
-          }
-        }
-      });
+      redis.hmset("players", login + ":score", score, login + ':lastbonus', lastbonus, login + ':q:' + question, reponse);
+      redis.zadd("scores", -score, token);
+      options.success(score);
     }
   });
 };
@@ -422,59 +429,42 @@ exports.getGame = function(options) {
 };
 
 exports.getAnswer = function(login, n, options) {
-  redis.hmget("players",
-    login + ':q:' + n,
-    function(err, reply) {
-      if (err) {
-        if (options && options.error) {
-          options.error(err);
-        }
-      } else {
-        if (options && options.success) {
-          if (reply == null) {
-            options.success(0);
-          } else {
-            options.success(parseInt(reply));
-          }
+  redis.hmget("players", login + ':q:' + n, function(err, reply) {
+    if (err) {
+      if (options && options.error) {
+        options.error(err);
+      }
+    } else {
+      if (options && options.success) {
+        if (reply == null) {
+          options.success(0);
+        } else {
+          options.success(parseInt(reply));
         }
       }
     }
-  );
+  });
 };
 
 
 /** Register users **/
 exports.login = function(mail, options) {
-  redis.hset('players', mail + ':login', "1", function(err, reply) {
+  redis.hsetnx('players', mail + ':login', "1", function(err, reply) {
     if (err) {
       if (options && options.error) {
         options.error(err);
       }
     } else {
-      redis.hincrby('players', 'logged', 1);
-      if (options && options.success) {
-        options.success();
+      if (parseInt(reply) == 1) {
+        options.success(true);
+      } else {
+        options.success(false);
       }
     }
   });
-}
+};
 
-/** Is a user logged ? **/
-exports.isLogin = function(mail, options) {
-  return redis.hexists('players', mail + ':login', function(err, reply) {
-    if (err) {
-      if (options && options.error) {
-        options.error(err);
-      }
-    } else {
-      var exist = (reply == 1);
-      if (options && options.success) {
-        options.success(exist);
-      }
-    }
-  });
-}
-
+/** Unregister users **/
 exports.logged = function(mail, options) {
   redis.hincrby('players', mail + ':login', -1, function(err, reply) {
     if (err) {
@@ -510,7 +500,7 @@ exports.logged = function(mail, options) {
       }
     }
   });
-}
+};
 
 exports.getNumberOfPlayers = function(options) {
   redis.hmget("context", "numberOfPlayers", function(err, reply) {

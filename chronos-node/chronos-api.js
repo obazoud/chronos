@@ -194,29 +194,20 @@ exports.login = function(req, res, params) {
         logger.log(params.mail + ": password does not match");
         res.send(401);
       } else {
-        gamemanager.isLogin(params.mail, {
+        gamemanager.login(params.mail, {
           error: function(err) {
             logger.log(params.mail + ": failed !!" + err);
             res.send(400);
           },
-          success: function(exist) {
-            if (exist) {
+          success: function(successful) {
+            if (!successful) {
               logger.log(params.mail + ": exists !!");
               res.send(400);
             } else {
+              gamemanager.warmup(res);
               var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
-              // logger.log("Login: " + params.mail);
-              gamemanager.login(params.mail, {
-                error: function(err) {
-                  logger.log("Login: " + params.mail + ", " + err);
-                  res.send(400);
-                },
-                success: function(exist) {
-                  gamemanager.warmup(res);
-                  // logger.log("< Http /api/login/" + params.mail);
-                  res.send(201, {'Set-Cookie': 'session_key=' + sessionkey}, '');
-                }
-              });
+              // logger.log("< Http /api/login/" + params.mail);
+              res.send(201, {'Set-Cookie': 'session_key=' + sessionkey}, '');
             }
           }
         });
@@ -322,7 +313,7 @@ exports.getRanking = function(req, res) {
             res.send(400, {}, data);
           },
           success: function(numberOfPlayers) {
-            twitterapi.tweet('Notre application supporte ' + numberOfPlayers + ' joueurs #challengeUSI2011');
+            // twitterapi.tweet('Notre application supporte ' + numberOfPlayers + ' joueurs #challengeUSI2011');
           }
         });
       }
