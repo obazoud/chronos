@@ -187,8 +187,14 @@ exports.tweetHttp = function(req, res, params) {
 };
 
 exports.getRanking = function(req, res) {
+  chronosCouch.getDoc('game', {
+    success: function(gameDoc) {
+      var game = JSON.parse(gameDoc);
+      twitterapi.tweet('Notre application supporte ' + game.gamesession.parameters.nbusersthreshold + ' joueurs #challengeUSI2011');
+    }
+  });
   // TODO: send error if failed
-  ranking.ranking(req.jsonUser.lastname, req.jsonUser.firstname,req.jsonUser.login,100,5,function(ranking) {
+  ranking.ranking(req.jsonUser.lastname, req.jsonUser.firstname, req.jsonUser.login, 100, 5, function(ranking) {
     res.send(200, {}, ranking);
   });
 };

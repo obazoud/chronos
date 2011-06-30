@@ -15,3 +15,5 @@ fi;
 
 ./ttytter "$@"
 
+echo $?
+
