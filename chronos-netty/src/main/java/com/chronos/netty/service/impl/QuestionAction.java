@@ -1,12 +1,8 @@
 package com.chronos.netty.service.impl;
 
-import static org.jboss.netty.handler.codec.http.HttpMethod.GET;
-import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
-import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
-import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
-
 import java.io.OutputStream;
 import java.net.URLDecoder;
+import java.util.concurrent.CountDownLatch;
 
 import org.codehaus.jackson.JsonEncoding;
 import org.codehaus.jackson.JsonFactory;
@@ -18,7 +14,13 @@ import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 
+import com.chronos.netty.server.NettyServer;
 import com.chronos.netty.service.Action;
+
+import static org.jboss.netty.handler.codec.http.HttpMethod.GET;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
+import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 /**
  * @author bazoud
@@ -26,6 +28,7 @@ import com.chronos.netty.service.Action;
  */
 public class QuestionAction implements Action {
     JsonFactory jsonFactory = new JsonFactory();
+    CountDownLatch latch = new CountDownLatch(NettyServer.countDown);
 
     @Override
     public HttpResponse execute(HttpRequest httpRequest) {
@@ -34,7 +37,9 @@ public class QuestionAction implements Action {
                 String uri = URLDecoder.decode(httpRequest.getUri(), "UTF-8");
                 String question = uri.substring(uri.lastIndexOf("/") + 1);
 
-                // TODO: Business stuff!
+                latch.countDown();
+//                TODO: Business stuff!
+                latch.await();
 
                 final ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer(128);
                 final OutputStream stream = new ChannelBufferOutputStream(channelBuffer);

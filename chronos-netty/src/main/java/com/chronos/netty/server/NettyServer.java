@@ -28,12 +28,14 @@ public class NettyServer {
     final Logger logger = LoggerFactory.getLogger(NettyServer.class);
     ServerBootstrap bootstrap;
     ChannelGroup channels;
-    int port = 8080;
-
+    public final static int port = 8080;
+    public final static int workerCount = 1510;
+    public final static int countDown = 1500;
+    
     public void start() {
         logger.info("HTTP-Netty-Server: starting on port {}.", port);
 
-        bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(bossExecutor(), workerExecutor()));
+        bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(bossExecutor(), workerExecutor(), workerCount));
         bootstrap.setPipelineFactory(new HttpServerPipelineFactory());
         bootstrap.setOption("child.tcpNoDelay", true);
         bootstrap.setOption("child.keepAlive", true);
@@ -86,10 +88,10 @@ public class NettyServer {
     }
 
     private Executor bossExecutor() {
-        return new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+        return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
     }
 
     private Executor workerExecutor() {
-        return new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+        return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
     }
 }
