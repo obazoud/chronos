@@ -263,7 +263,7 @@ emitter.once('warmupEnd',function(timerId){
                             emitter.emit("sendQuestions",qTimer);
                             if( n < numberOfQuestions ) {
 				    redis.hincrby("context","questionEncours",1);
-            logger.log("hincrby 1 questionEncours);
+            logger.log("hincrby 1 questionEncours");
 			    }
                     }
                 });
