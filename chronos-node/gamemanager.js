@@ -12,21 +12,14 @@ var logger = require('util');
 // --> Ce paramètre est considéré comme inutile. Nous jouerons toujours 20 questions.
 var numberOfQuestions = 20;
 
-// TODO integrer le mecanisme de fail-over
-var redis = require("redis").createClient();
+var os = require('os');
+//var balancerToken = parseInt(os.hostname().match(/\d/)[0]); // TODO considerer les hostnames sans chiffre
+var balancerToken  = 1;
+var redisBalancer = require('./redis-balancer.js');
+
 var subscriber = require("redis").createClient();
 var publisher = require("redis").createClient();
 
-// TODO a virer lors de l integration du mecanisme de fail over
-redis.on("error", function (err) {
-    logger.log("Error " + err);
-});
-subscriber.on("error", function (err) {
-    logger.log("Error " + err);
-});
-publisher.on("error", function (err) {
-    logger.log("Error " + err);
-});
 
 // state 0: RAS
 // state 1: game starts
@@ -52,7 +45,7 @@ function GameState() {
     // reload data after crash
     logger.log('State changed state: ' + this.state + ' -> ' + 1);
     this.state = 1;
-    redis.hset("context", "state", this.state);
+    redisBalancer.getMaster().hset("context", "state", this.state);
     this.game = newGame;
     this.nbusersthreshold = parseInt(this.game.gamesession.parameters.nbusersthreshold);
     this.logintimeout = parseInt(this.game.gamesession.parameters.logintimeout) * 1000;
@@ -74,7 +67,7 @@ function GameState() {
     if (this.state == 1) {
       logger.log('State changed state: ' + this.state + ' -> ' + 2);
       this.state = 2;
-      redis.hset("context", "state", this.state);
+      redisBalancer.getMaster().hset("context", "state", this.state);
       this.warmupStartDate = now;
       this.warmupEndDate = now + parseInt(this.logintimeout);
       this.sessions[0] = this.warmupStartDate;
@@ -89,7 +82,7 @@ function GameState() {
     if (this.state == 2) {
       logger.log('State changed state: ' + this.state + ' -> ' + 3);
       this.state = 3;
-      redis.hset("context", "state", this.state);
+      redisBalancer.getMaster().hset("context", "state", this.state);
       this.sessions[1] = now;
       // TODO really need ?
       for (i = 2; i <= numberOfQuestions + 1; i++) {
@@ -104,7 +97,7 @@ function GameState() {
     if (this.state == 3) {
       logger.log('State changed state: ' + this.state + ' -> ' + 4);
       this.state = 5;
-      redis.hset("context", "state", this.state);
+      redisBalancer.getMaster().hset("context", "state", this.state);
     } else {
       // logger.log('Already in state 4');
     }
@@ -119,7 +112,7 @@ function GameState() {
     logger.log("****** Game manager loads data from database ******");
     this.state == 0;
     that = this;
-    redis.get("game", function(err, rgame) {
+    redisBalancer.getMaster().get("game", function(err, rgame) {
       try {
         // reinit game
         that.initGame(JSON.parse(rgame));
@@ -172,10 +165,10 @@ subscriber.on('message', function(channel, message) {
 /** Initialize game **/
 // TODO callback ?
 exports.initGame = function(game) {
-  redis.del("context");
-  redis.del("players");
-  redis.hset("context", "numberOfPlayers", 0);
-  redis.set("game", JSON.stringify(game));
+  redisBalancer.getMaster().del("context");
+  redisBalancer.getMaster().del("players");
+  redisBalancer.getMaster().hset("context", "numberOfPlayers", 0);
+  redisBalancer.getMaster().set("game", JSON.stringify(game));
   // TODO to save or to save ?
   // redis.save();
 
@@ -190,7 +183,7 @@ exports.initGame = function(game) {
 
 /** Warmup quizz **/
 exports.warmup = function() {
-  redis.hincrby("context", "numberOfPlayers", 1);
+  redisBalancer.getMaster().hincrby("context", "numberOfPlayers", 1);
   emitter.emit('warmupStarted');
 };
 
@@ -201,14 +194,14 @@ emitter.once("warmupStarted", function() {
   gameState.warmupStarts(now);
   // logger.log(sys.inspect(gameState,false));
 
-  redis.hsetnx("context", "warmupStartDate", gameState.warmupStartDate);
-  redis.hsetnx("context", "warmupEndDate", gameState.warmupEndDate);
+  redisBalancer.getMaster().hsetnx("context", "warmupStartDate", gameState.warmupStartDate);
+  redisBalancer.getMaster().hsetnx("context", "warmupEndDate", gameState.warmupEndDate);
   // TODO to save or to save ?
   // redis.save();
 
   var message = {
     'event': 'warmupStarts',
-    'warmupStartDate': gameState.warmupStartDate,
+    'warmupStartDate': gameState.warmupStartDate
   };
   publisher.publish(channel, JSON.stringify(message));
 
@@ -216,7 +209,7 @@ emitter.once("warmupStarted", function() {
 });
 
 function warmupLoop () {
-  redis.hmget("context", "numberOfPlayers", function(err, numberOfPlayers) {
+  redisBalancer.getSlave(balancerToken).hmget("context", "numberOfPlayers", function(err, numberOfPlayers) {
     var now = new Date().getTime();
     if (parseInt(numberOfPlayers) >= parseInt(gameState.nbusersthreshold) || now >= gameState.warmupEndDate) {
       emitter.emit("warmupEnd");
@@ -234,11 +227,13 @@ emitter.on('warmupEnd', function(success) {
     logger.log("warmup timer stopped");
     gameState.warmupEnds(now);
 
-    success();
+    if (success) {
+      success();
+    }
 
     var message = {
       'event': 'warmupEnds',
-      'warmupEnd': now,
+      'warmupEnd': now
     };
 
     publisher.publish(channel, JSON.stringify(message));
@@ -252,6 +247,7 @@ emitter.on('warmupEnd', function(success) {
 /** Callback getQuestion **/
 function setTimeoutForTimeFrame(timeout, login, n, success) {
   setTimeout(setTimeoutForTimeFrameCB, timeout, login, n, success);
+  // logger.log(Date.now() + " login " + login + " waiting for " + timeout + "ms.");
 };
 
 function setTimeoutForTimeFrameCB(login, n, success) {
@@ -271,10 +267,9 @@ function setTimeoutForTimeFrameCB(login, n, success) {
 exports.getQuestion = function(n, login, success, fail) {
   var now = new Date().getTime();
 
-  // TODO check questEncours value ?
+  // TODO check questionEncours value ?
   var sessionNMoins1 = gameState.sessions[n - 1];
   var sessionN = gameState.sessions[n];
-
 
   if (n <= numberOfQuestions && now >= sessionNMoins1 && now <= sessionN) {
     setTimeoutForTimeFrame(sessionN - now, login, n, success);
@@ -306,7 +301,7 @@ exports.answerQuestion = function(n, login, success, fail) {
 
 /** Get Score **/
 exports.getScore = function(login, options) {
-  redis.hget("players", login + ":score", function(err, reply) {
+  redisBalancer.getSlave(balancerToken).hget("players", login + ":score", function(err, reply) {
     if (err) {
       if (options && options.error) {
         options.error(err);
@@ -326,7 +321,7 @@ exports.getScore = function(login, options) {
 
 /** Updationg Score with good/bad answer question and bonus **/
 exports.updatingScore = function(lastname, firstname, login, question, reponse, correct, questionValue, options) {
-  redis.hmget("players", login + ":score", login + ':lastbonus', function(err, replies) {
+  redisBalancer.getSlave(balancerToken).hmget("players", login + ":score", login + ':lastbonus', function(err, replies) {
     if (err) {
       if (options && options.error) {
         options.error(err);
@@ -353,8 +348,8 @@ exports.updatingScore = function(lastname, firstname, login, question, reponse, 
 
       var token = JSON.stringify({"lastname":lastname, "firstname":firstname, "mail":login});
       // logger.log("Score " + login + ": " + token + ", " + score);
-      redis.hmset("players", login + ":score", score, login + ':lastbonus', lastbonus, login + ':q:' + question, reponse);
-      redis.zadd("scores", -score, token);
+      redisBalancer.getMaster().hmset("players", login + ":score", score, login + ':lastbonus', lastbonus, login + ':q:' + question, reponse);
+      redisBalancer.getMaster().zadd("scores", -score, token);
       options.success(score);
     }
   });
@@ -369,7 +364,7 @@ exports.getGameFragment = function(q) {
 };
 
 exports.getAnswer = function(login, n, options) {
-  redis.hmget("players", login + ':q:' + n, function(err, reply) {
+  redisBalancer.getSlave(balancerToken).hmget("players", login + ':q:' + n, function(err, reply) {
     if (err) {
       if (options && options.error) {
         options.error(err);
@@ -389,14 +384,14 @@ exports.getAnswer = function(login, n, options) {
 
 /** Register users **/
 exports.login = function(mail, options) {
-  redis.hsetnx('players', mail + ':login', "1", function(err, reply) {
+  redisBalancer.getMaster().hsetnx('players', mail + ':login', "1", function(err, reply) {
     if (err) {
       if (options && options.error) {
         options.error(err);
       }
     } else {
       if (parseInt(reply) == 1) {
-        redis.hincrby('players', 'logged', 1);
+        redisBalancer.getMaster().hincrby('players', 'logged', 1);
         options.success(true);
       } else {
         options.success(false);
@@ -407,7 +402,7 @@ exports.login = function(mail, options) {
 
 /** Unregister users **/
 exports.logged = function(mail, options) {
-  redis.hincrby('players', mail + ':login', -1, function(err, reply) {
+  redisBalancer.getMaster().hincrby('players', mail + ':login', -1, function(err, reply) {
     if (err) {
       if (options && options.error) {
         options.error(err);
@@ -415,7 +410,7 @@ exports.logged = function(mail, options) {
     } else {
       var value = parseInt(reply);
       if (value >= 0) {
-        redis.hincrby('players', 'logged', -1, function(err, reply2) {
+        redisBalancer.getMaster().hincrby('players', 'logged', -1, function(err, reply2) {
           if (err) {
             if (options && options.error) {
               options.error(err);
@@ -427,7 +422,7 @@ exports.logged = function(mail, options) {
           }
         });
       } else {
-        redis.hget('players', 'logged', function(err, reply2) {
+        redisBalancer.getSlave(balancerToken).hget('players', 'logged', function(err, reply2) {
           if (err) {
             if (options && options.error) {
               options.error(err);
@@ -444,7 +439,7 @@ exports.logged = function(mail, options) {
 };
 
 exports.getNumberOfPlayers = function(options) {
-  redis.hmget("context", "numberOfPlayers", function(err, reply) {
+  redisBalancer.getSlave(balancerToken).hmget("context", "numberOfPlayers", function(err, reply) {
     if (err) {
       if (options && options.error) {
         options.error(err);
@@ -459,7 +454,7 @@ exports.getNumberOfPlayers = function(options) {
 
 /** Get all answers **/
 exports.getAnswers = function(login, options) {
-  redis.hmget("players",
+  redisBalancer.getSlave(balancerToken).hmget("players",
     login + ':q:1',
     login + ':q:2',
     login + ':q:3',

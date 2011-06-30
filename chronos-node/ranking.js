@@ -1,7 +1,12 @@
 var os = require('os');
-//var redisBalancerToken = parseInt(os.hostname().match(/\d/)[0]); // TODO considerer les hostnames sans chiffre
-var redisBalancer = require('./redis-balancer.js').createBalancer(1);
+//var balancerToken = parseInt(os.hostname().match(/\d/)[0]); // TODO considerer les hostnames sans chiffre
+var balancerToken  = 1;
+var redisBalancer = require('./redis-balancer.js');
 
+function initRanking(callback) {
+    redisBalancer.getMaster().del("scores");
+};
+exports.initRanking = initRanking;
 
 function addUser(lastname,firstname,mail,callback){
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
@@ -9,7 +14,9 @@ function addUser(lastname,firstname,mail,callback){
     redisBalancer.getMaster().zadd("scores",0,token,function(err,added){
         // added == 1 if the element was added.
         // added == 0 if the element was already a member of the sorted set and the score was updated.
-        callback(err,added);
+        if (callback) {
+          callback(err,added);
+        }
     });
 };
 exports.addUser = addUser;
@@ -23,12 +30,12 @@ function ranking(lastname,firstname,mail,topN,range,callback){
         ,"before":{"mail":[],"scores":[],"firstname":[],"lastname":[]}
         ,"after":{"mail":[],"scores":[],"firstname":[],"lastname":[]}
     };
-    redisBalancer.getSlave().zcard("scores",function(err,totalNumberOfUsers){
+    redisBalancer.getSlave(balancerToken).zcard("scores",function(err,totalNumberOfUsers){
         totalNumberOfUsers = totalNumberOfUsers - 1;
         if (topN > totalNumberOfUsers) { topN = totalNumberOfUsers; }
-        redisBalancer.getSlave().zscore("scores",token,function(err,userScore){
+        redisBalancer.getSlave(balancerToken).zscore("scores",token,function(err,userScore){
             ranking.score = -parseInt(userScore) + "";
-            redisBalancer.getSlave().zrank("scores",token,function(err,userRank){
+            redisBalancer.getSlave(balancerToken).zrank("scores",token,function(err,userRank){
                 zrange(ranking,ranking.top_scores,0,topN,function(err,ranking){
                     if (totalNumberOfUsers == 0) { callback(err,ranking); }
                     else {
@@ -72,7 +79,7 @@ function ranking(lastname,firstname,mail,topN,range,callback){
 exports.ranking = ranking;
 
 function zrange(ranking,rankingField,min,max,callback) {
-    redisBalancer.getSlave().zrange("scores",min,max,"withscores",function(err,zrange) {
+    redisBalancer.getSlave(balancerToken).zrange("scores",min,max,"withscores",function(err,zrange) {
         if (err) {
             callback(err,ranking);
         }
@@ -94,7 +101,7 @@ function zrange(ranking,rankingField,min,max,callback) {
 }
 
 function reset(callback) {
-    redisBalancer.getSlave().zrangebyscore("scores",1,'+inf',function(err,users) {
+    redisBalancer.getSlave(balancerToken).zrangebyscore("scores",1,'+inf',function(err,users) {
         if (users.length == 0) {
             callback();
         } else {
