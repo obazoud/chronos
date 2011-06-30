@@ -44,7 +44,7 @@ public class QuestionAction implements Action {
 
                 latch.countDown();
 //                TODO: Business stuff!
-                logger.info("Hit: " + hit.incrementAndGet() + "Count: " + latch.getCount());
+                logger.info("Hit: " + hit.incrementAndGet() + ", Count: " + latch.getCount());
                 latch.await();
 
                 final ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer(128);
