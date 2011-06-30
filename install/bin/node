@@ -4,7 +4,8 @@ LOCAL_VAR_LOGS_DIR=/usr/local/var/log
 LOCAL_VAR_LOGS=$LOCAL_VAR_LOGS_DIR/nodejs.log
 
 NAME=node
-DAEMON=/home/user/node-v0.4.5/bin/$NAME
+DAEMON="/home/user/node-v0.4.5/bin/$NAME"
+DAEMON_ARGS="/home/user/deploiement/chronos-node/chronos.js"
 
-nohup $DAEMON "$@" 2>> $LOCAL_VAR_LOGS 1>> $LOCAL_VAR_LOGS &
+nohup $DAEMON $DAEMON_ARGS 2>> $LOCAL_VAR_LOGS 1>> $LOCAL_VAR_LOGS &
 
