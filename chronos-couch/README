@@ -12,16 +12,20 @@ il s agit d une fonctionnalité qui permet de gerer le nombre de joueurs partici
 
 3- curl -X PUT 'http://localhost:5984/thechallenge/_design/warmup/_update/warmup/game1
 
-  * annonce des joueurs
+  * ajout des joueurs
 
-les soumetteurs de joueurs recoivent :
-    * start : pour le premier joueur pris en compte
-    * continue : pour signaler que le nombre de joueurs n'est pas encore atteint et que le timeout de la phse de warmup
-    n'as pas encore etait dépassé.
+4 - verification de la fin de phase de warmup :
 
+curl -X GET http://localhost:5984/thechallenge/_design/warmup/_view/result?reduce=true
+
+ on recoit :
+	- {"rows":[ {"key":null,"value":"continuez"}]}
+	- {"rows":[ {"key":null,"value":"temps ecoule"}]}
+	- {"rows":[ {"key":null,"value":"max gamers atteint"}]}
 
 TIPS
 
 http://wiki.apache.org/couchdb/Performance
+
 
 Configuration: /etc/couchdb/local.ini
