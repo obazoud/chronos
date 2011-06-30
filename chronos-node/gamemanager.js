@@ -265,7 +265,7 @@ function questionTimeFrame(timeout, login, n, success, fail) {
         setTimeout(questionTimeFrame, 20, timeout, login, n, success, fail);
       } else {
         logger.log('[' + login + ']' + ' failed for bad state ' + gameState.state + ' and question is ' + n);
-        fail();        
+        fail();
       }
       break;
     case 3:
@@ -293,7 +293,7 @@ exports.getQuestion = function(n, login, success, fail) {
   if (n <= numberOfQuestions && now >= sessionNMoins1 && now <= sessionN) {
     questionTimeFrame(sessionN - now, login, n, success, fail);
   } else {
-    logger.log('getQuestion ' + n + ', missing time frame for: ' + (now - sessionNMoins1) + ' ms.' + '[' + login + ']');
+    logger.log('getQuestion ' + n + ', missing time frame for: ' + (now - sessionNMoins1) + ' ms. ' + '[' + login + ']');
     fail();
   }
 };
@@ -308,7 +308,7 @@ exports.answerQuestion = function(n, login, success, fail) {
     // logger.log(login + " answers question : " + n)
     success();
   } else {
-    logger.log('answerQuestion ' + n + ' missing for ' + (now - (sessionNplus1 - gameState.synchrotime)) + ' ms.' + '[' + login + ']');
+    logger.log('answerQuestion ' + n + ' missing for ' + (now - (sessionNplus1 - gameState.synchrotime)) + ' ms. ' + '[' + login + ']');
     fail();
   }
 };
