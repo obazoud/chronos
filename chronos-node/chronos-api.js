@@ -10,6 +10,7 @@ exports.ping = function(req, res) {
   res.send(201, {}, 'pong');
 };
 
+// TODO appeler rancking#addUser(params.mail);
 exports.createUser = function(req, res, params) {
   chronosCouch.putDoc(params.mail, {type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:[ ], reponses:[ ], score:0, lastbonus:0}, {
     error: function(data) {
@@ -102,6 +103,7 @@ exports.getQuestion = function(req, res, n) {
   });
 };
 
+// appeler rancking#updateScore(user,increment) a chaque reponse
 exports.answerQuestion = function(req, res, n, params) {
   chronosCouch.getDoc('game', {
     error: function(data) {

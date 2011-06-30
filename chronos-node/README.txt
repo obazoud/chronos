@@ -22,9 +22,14 @@ sudo npm install restler
 # node_hash
 npm install node_hash
 
+npm install journey
+
+npm install cluster
+
 2. Installation de journey https://github.com/cloudhead/journey
-$ npm install journey
+npm install journey
 NB : vérifier que le fichier journey.js est bien dans sa dernière version https://github.com/cloudhead/journey/blob/master/lib/journey.js
+
 
 3. Lancer node
 dans le répertoire chronos-node :
