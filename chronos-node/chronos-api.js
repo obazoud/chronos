@@ -4,7 +4,8 @@ var xml2json = require('./xml2json.js');
 
 var host = '127.0.0.1';
 var port = 5984;
-var couchdburl = 'http://' + host + ':' + port + '/thechallenge';
+var couchdbaseburl = 'http://' + host + ':' + port;
+var couchdburl = couchdbaseburl + '/thechallenge';
 var couchdAdminburl = 'http://' + host + ':' + port + '/_config/admins/';
 var username = 'superadmin';
 var password = 'supersecret';
@@ -70,13 +71,25 @@ exports.newGame = function(req, res, params) {
 
 
 exports.login = function(req, res, params) {
-  // Si l'utilisateur n'existe pas ou si l'utilisateur est déjà loggé : 400
-  if (params.mail == 'deja.logge@test.com') {
-    res.send(400);
-  }
-  // Lorsque le code de retour est OK, un cookie de session non persistant, nommé 'session_key' est placé dans l'entête HTTP. 
-  // La valeur de ce cookie est une clé générée pour authentifier l'utilisateur lors des différents appels faits pendant la suite du jeu.
-  res.send(201, {}, {mail:params.mail, password:params.password});
+  var url = couchdbaseburl + '/_session';
+  restler.post(url, {
+    data: 'name=' + params.mail + '&password=' + params.password,
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencodeddata',
+      'Host': 'localhost:8080',
+      'Referer': 'http://localhost:8080/_api'
+    }
+  })
+  .on('error', function(data) {
+    if (data.error == 'unauthorized') {
+      res.send(401, {}, data);
+    }
+    res.send(400, {}, data);
+  })
+  .on('complete', function (data) {
+    console.log('data: ' + data);
+    res.send(201);
+  });
 }
 
 exports.getQuestion = function(req, res, n) {
