@@ -1,10 +1,10 @@
-var twitterapi = require('./twitter-api');
-var xml2json = require('./xml2json.js');
 var sys = require('sys');
+var uuid = require('node-uuid');
+var twitterapi = require('./twitter-api');
+var xml2json = require('./externals/xml2json.js');
 var chronosCouch = require('./chronos-couchdb-api.js');
 var security = require('./security.js');
 var ranking = require("./ranking.js");
-var uuid = require('node-uuid');
 
 exports.ping = function(req, res) {
   res.send(201, {}, 'pong');

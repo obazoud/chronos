@@ -1,4 +1,4 @@
-var nibbler = require('./nibbler');
+var nibbler = require('./externals/nibbler');
 
 Unauthorized = function (msg) {
     this.status = 401;
