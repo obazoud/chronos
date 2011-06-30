@@ -33,13 +33,6 @@ exports.create = function() {
     cluster:  {
       activate : false,
       workers: 2
-    },
-    proxy: {
-      port: 8080,
-      router: {
-        '/api/question' : '127.0.0.1:8081',
-        '/.*': '127.0.0.1:8082'
-      }
     }
   };
 
