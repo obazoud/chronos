@@ -12,7 +12,7 @@ exports.ping = function(req, res) {
 };
 
 exports.createUser = function(req, res, params) {
-  chronosCouch.putDoc(params.mail, {type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }}, {
+  chronosCouch.putDoc(params.mail, {type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }, cookies: {}}, {
     error: function(data) {
       res.send(400, {}, data);
     },
@@ -96,7 +96,6 @@ function processGameXML(authentication_key, parameters) {
 };
 
 exports.login = function(req, res, params) {
-  // already login ?
   chronosCouch.getDoc(params.mail, {
     error: function(data) {
       if (data.error == 'unauthorized') {
@@ -116,8 +115,20 @@ exports.login = function(req, res, params) {
       if (userDocjson.password != params.password) {
         res.send(401);
       } else {
-        var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
-        res.send(201, {"session_key":sessionkey}, '');
+        chronosCouch.getDoc('game', {
+          error: function(data) {
+            res.send(401, {}, data);
+          },
+          success: function(game) {
+            var gamejson = JSON.parse(game);
+            if (userDocjson.cookies[gamejson.game_id] != null) {
+              res.send(400);
+            } else {
+              var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
+              res.send(201, {"session_key":sessionkey}, '');
+            
+          }
+        });
       }
     }
   });
@@ -186,8 +197,7 @@ exports.answerQuestion = function(req, res, n, params) {
 
 exports.tweetHttp = function(req, res, params) {
   sys.puts('Tweet: ' + params.tweet);
-  twitterapi.tweet(params.tweet + ' (' + tools.  paramsJSON.game_id = uuid().toLowerCase();
-toISO8601(new Date()) + ')');
+  twitterapi.tweet(params.tweet + ' (' + tools.toISO8601(new Date()) + ')');
   res.send(200);
 };
 
