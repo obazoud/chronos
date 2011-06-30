@@ -13,11 +13,10 @@ var password = 'supersecret';
 var saltvalue = '1';
 
 exports.createUser = function(req, res, params) {
-  var url = couchdbaseburl + '/_users';
   var password_sha = hash.sha1(params.password + saltvalue);
   // sys.puts("password_sha: " + password_sha);
   
-  restler.post(url, {
+  restler.post(couchdbaseburl + '/_users', {
     data: JSON.stringify({'_id':'org.couchdb.user:' + params.mail, 'type':'user', 'name':params.mail, 'roles':[], 'password_sha':password_sha, 'salt':saltvalue}),
     headers: { 'Content-Type': 'application/json' }
   })  
@@ -25,9 +24,7 @@ exports.createUser = function(req, res, params) {
     res.send(400, {}, data);
   })
   .on('complete', function (data) {
-    var url = couchdburl + '/' + params.mail;
-    
-    restler.put(url, {
+    restler.put(couchdburl + '/' + params.mail, {
       data: JSON.stringify({type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:[ ], reponses:[ ], score:0, lastbonus:0}),
       headers: { 'Content-Type': 'application/json' }
     })
@@ -45,9 +42,7 @@ exports.createUser = function(req, res, params) {
 }
 
 exports.newGame = function(req, res, params) {
-  var url = couchdburl + '/game';
   var gameXML = params.parameters.replace(/ xmlns:usi/g, " usi").replace(/ xmlns:xsi/g, " xsi").replace(/ xsi:schemaLocation/g, " schemaLocation").replace(/usi:/g, "");
-  // console.log("XML: " + gameXML);
   gameXML = gameXML.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"");
   // sys.puts("XMLSys: " + gameXML);
 
@@ -56,7 +51,7 @@ exports.newGame = function(req, res, params) {
   paramsJSON['authentication_key'] = params.authentication_key || '';
   delete paramsJSON['value'];
   // console.log('paramsJSON: ' + paramsJSON);
-  restler.put(url, {
+  restler.put(couchdburl + '/game', {
     data: JSON.stringify(paramsJSON),
     headers: { 'Content-Type': 'application/json' }
   })
@@ -75,8 +70,7 @@ exports.newGame = function(req, res, params) {
 
 // TODO: cookie persistence ?
 exports.login = function(req, res, params) {
-  var url = couchdbaseburl + '/_session';
-  restler.post(url, {
+  restler.post(couchdbaseburl + '/_session', {
     data: 'name=' + params.mail + '&password=' + params.password,
     headers: {
       'Content-Type': 'application/x-www-form-urlencodeddata',
@@ -104,9 +98,8 @@ exports.login = function(req, res, params) {
 }
 
 exports.getQuestion = function(req, res, n) {
-  var url = couchdbaseburl + '/_session';
   // sys.puts(req.headers.cookie);
-  restler.get(url, {
+  restler.get(couchdbaseburl + '/_session', {
     data: '',
     headers: {
       'Domain': '.chronos.fr',
@@ -122,8 +115,7 @@ exports.getQuestion = function(req, res, n) {
       sys.puts(data);
       res.send(401, {}, data);
     } else {
-      var url = couchdburl + '/game';
-      restler.get(url, {
+      restler.get(couchdburl + '/game', {
         data: '',
         headers: {
           'Domain': '.chronos.fr',
