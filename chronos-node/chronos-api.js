@@ -1,4 +1,4 @@
-var twitter = require('twitter');
+var twitterapi = require('./twitter-api');
 var xml2json = require('./xml2json.js');
 var sys = require('sys');
 var chronosCouch = require('./chronos-couchdb-api.js');
@@ -141,43 +141,9 @@ exports.answerQuestion = function(req, res, n, params) {
 };
 
 exports.tweetHttp = function(req, res) {
-  tweet('Hello world2', {
-    error: function(data) {
-      res.send(401, {}, 'updateStatus fails:' + data.statusCode + ', ' + data.message + ', ' + data.data);
-    },
-    success: function(data) {
-      res.send(200, {}, 'updateStatus ok:' + data.id);
-    }
-  });
-};
-
-tweet = function(message, options) {
-  var twit = new twitter({
-    consumer_key: 'HxIDFfy6inw58Yk3phxCDQ',
-    consumer_secret: 'uyilyhnaoa5CYKgp8GigXNUTwkvFvZplKA3PVzKs24',
-    access_token_key: '274449131-IrvRyqqID58xvkWtmHRn7JvqKwBn3VdK7zmnYoCX',
-    access_token_secret: '908pZpyKAa36C3sgd8Y9f2IRTjG0VSKlUXwhhMV7E'
-  });
-
-  twit.verifyCredentials(function (data) {
-    if (!(data && data.screen_name == 'usi2011_chronos')) {
-      if (options.error) {
-        options.error(data);
-      }
-    }
-  })
-  .updateStatus(message, function (data) {
-    if (!(data && data.screen_name == 'usi2011_chronos')) {
-      if (options.error) {
-        options.error(data);
-        return;
-      }
-    }
-    if (options.success) {
-      options.success(data);
-      return;
-    }
-  });
+  sys.puts('Tweet: ' + params.tweet);
+  tweet(params.tweet + ' (' + toISO8601(new Date()) + ')');
+  res.send(200);
 };
 
 exports.getRanking = function(req, res) {
