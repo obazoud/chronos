@@ -29,12 +29,12 @@ function ranking(lastname,firstname,mail,topN,range,callback){
         ,"before":{"mail":[],"scores":[],"firstname":[],"lastname":[]}
         ,"after":{"mail":[],"scores":[],"firstname":[],"lastname":[]}
     };
-    client.getSlave().zcard("scores",function(err,totalNumberOfUsers){
+    client.zcard("scores",function(err,totalNumberOfUsers){
         totalNumberOfUsers = totalNumberOfUsers - 1;
         if (topN > totalNumberOfUsers) { topN = totalNumberOfUsers; }
-        client.getSlave().zscore("scores",token,function(err,userScore){
+        client.zscore("scores",token,function(err,userScore){
             ranking.score = -parseInt(userScore) + "";
-            client.getSlave().zrank("scores",token,function(err,userRank){
+            client.zrank("scores",token,function(err,userRank){
                 zrange(ranking,ranking.top_scores,0,topN,function(err,ranking){
                     if (totalNumberOfUsers == 0) { callback(err,ranking); }
                     else {
@@ -70,7 +70,7 @@ function ranking(lastname,firstname,mail,topN,range,callback){
 exports.ranking = ranking;
 
 function zrange(ranking,rankingField,min,max,callback) {
-    client.getSlave().zrange("scores",min,max,"withscores",function(err,zrange) {
+    client.zrange("scores",min,max,"withscores",function(err,zrange) {
         if (err) {
             callback(err,ranking);
         }
@@ -92,7 +92,7 @@ function zrange(ranking,rankingField,min,max,callback) {
 }
 
 function reset(callback) {
-    client.getSlave().zrangebyscore("scores",1,'+inf',function(err,users) {
+    client.zrangebyscore("scores",1,'+inf',function(err,users) {
         if (users.length == 0) {
             callback();
         } else {
