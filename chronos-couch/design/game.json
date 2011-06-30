@@ -1,0 +1,21 @@
+{
+  "_id": "_design/game",
+  "updates": {
+    "xml2json": "
+      function (doc, req) {
+        if(req.query.doc == null) {
+          return [null, \"doc is null!\\n\"];
+        }
+        var xmlDoc = req.query.doc.replace(/^<\?xml\s+version\s*=\s*([\"'])[^\1]+\1[^?]*\?>/, \"\");
+        var html = new XML(xmlDoc);
+        if (doc == null) {
+          doc = {};
+          
+        }
+        doc._id= 'gamejson';
+        doc.title = html.parameters.trackeduseridmail.text();
+        return [doc, \"ok!\\n\"];
+      }
+    "
+  }
+}

@@ -35,7 +35,8 @@ exports.createUser = function(req, res, params) {
         res.send(400, {}, data);
       })
       .on('complete', function (data) {
-        res.send(201);
+        console.log('data: ' + data);
+        res.send(201, {}, data);
       });
     });
 }
@@ -54,6 +55,7 @@ exports.newGame = function(req, res, params) {
     }
   })
   .on('complete', function (data) {
+    console.log('data: ' + data);
     res.send(201);
   });
 }
