@@ -1,5 +1,5 @@
 var journey = require('journey');
-var api = require('./chronos-api.js');
+var api = require('./twitter-api.js');
 
 // Create a router
 var router = new(journey.Router)();
