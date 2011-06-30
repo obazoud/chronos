@@ -139,7 +139,7 @@ function GameState() {
       logger.log('sessions1: ' + this.sessions[1] + ' / ' + new Date(this.sessions[1]));
       for (var i = 2; i <= numberOfQuestions + 1; i++) {
         this.sessions[i] = this.sessions[i - 1] + this.questiontimeframe + this.synchrotime;
-        // logger.log('sessions' + i + ': ' + this.sessions[i] + ' / ' + new Date(this.sessions[i]));
+        logger.log('sessions' + i + ': ' + this.sessions[i] + ' / ' + new Date(this.sessions[i]));
       }
       // Creating timers question N > 1
       for (var k = 2; k <= numberOfQuestions; k++) {
@@ -276,7 +276,7 @@ function questionTimer(k) {
     ctx.fired = true;
   }
 
-  // logger.log('Fire question: ' + k + ' (' + count + ' / ' + gameState.pendings[k].length + ') in ' + (Date.now() - start) + ' ms.');
+  logger.log('Fire question: ' + k + ' (' + count + ' / ' + gameState.pendings[k].length + ') in ' + (Date.now() - start) + ' ms.');
 }
 
 /** get question N **/
