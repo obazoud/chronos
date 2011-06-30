@@ -259,7 +259,7 @@ emitter.once('warmupEnd',function(timerId){
                 var now = new Date().getTime();
                 redis.hget("context","session_"+n,function(err,sessionN){    // FIXME une charge en plus pour redis
                     if(now >= sessionN){
-                            logger.log("emitting event for sending question : " + n + ' / ' + numberOfQuestions);
+                            logger.log("emitting event for sending question : " + n + ' / ' + questionEncours);
                             emitter.emit("sendQuestions",qTimer);
                             if( n < numberOfQuestions ) {
 				    redis.hincrby("context","questionEncours",1);
