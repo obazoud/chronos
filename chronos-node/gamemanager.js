@@ -147,19 +147,12 @@ subscriber.on('message', function(channel, message) {
 /** Initialize game **/
 exports.initGame = function(game) {
   redis.del("context");
-  // TODO really ?
-//  redis.hmset("context",
-//    "nbusersthreshold", parseInt(game.gamesession.parameters.nbusersthreshold),
-//    "numberOfPlayers", 0,
-//    "logintimeout", (parseInt(game.gamesession.parameters.logintimeout) * 1000),
-//    "questiontimeframe", (parseInt(game.gamesession.parameters.questiontimeframe) * 1000),
-//    "synchrotime", (parseInt(game.gamesession.parameters.synchrotime) * 1000)
-//  );
   redis.del("players");
   redis.hset("context", "numberOfPlayers", 0);
   redis.set("game", JSON.stringify(game));
+  // TODO to save or to save ?
   // redis.save();
-  // TODO: callback save ?
+
   // Init locally first !
   gameState.initGame(game);
   var message = {
@@ -184,9 +177,6 @@ emitter.once("warmupStarted", function() {
 
   redis.hsetnx("context", "warmupStartDate", gameState.warmupStartDate);
   redis.hsetnx("context", "warmupEndDate", gameState.warmupEndDate);
-  // redis.hsetnx("context", "session_0" , gameState.session_0);
-  // redis.hsetnx("context", "session_1" , gameState.session_1);
-  // redis.hsetnx("context", "questionEncours", 1);
   // TODO to save or to save ?
   // redis.save();
 
