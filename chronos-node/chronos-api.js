@@ -50,6 +50,13 @@ exports.newGame = function(req, res, params) {
   paramsJSON['type'] = 'game';
   paramsJSON['authentication_key'] = params.authentication_key || '';
   delete paramsJSON['value'];
+  for(i=0;i<paramsJSON.gamesession.questions.question.length;i++) {
+    if (i<5) {
+      paramsJSON.gamesession.questions.question[i].qvalue=1;
+    } else {
+      paramsJSON.gamesession.questions.question[i].qvalue=parseInt(i/5)*5;
+    }
+  }
   // console.log('paramsJSON: ' + paramsJSON);
   restler.put(couchdburl + '/game', {
     data: JSON.stringify(paramsJSON),
@@ -174,7 +181,7 @@ exports.answerQuestion = function(req, res, n, params) {
       .on('complete', function (data, response) {
         var q = JSON.parse(data).gamesession.questions.question[n-1];
 
-        var url = couchdburl + '/_design/answer/_update/accumulate/' + json.userCtx.name + '?question=' + n + '&reponse=' + params.answer + '&correct=' + q.goodchoice + '&valeur=' + n;
+        var url = couchdburl + '/_design/answer/_update/accumulate/' + json.userCtx.name + '?question=' + n + '&reponse=' + params.answer + '&correct=' + q.goodchoice + '&valeur=' + q.qvalue;
         sys.puts('url:' + url);
         restler.put(url, {
           data: '',
