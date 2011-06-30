@@ -18,7 +18,8 @@
 PATH=/opt/redis:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=`which redis-server`
 REDIS_CLI=`which redis-cli`
-CONFIG_FILE=/opt/redis/redis.conf
+#CONFIG_FILE=/opt/redis/redis-`hostname`.conf
+CONFIG_FILE=/home/user/deploiement/install/redis-`hostname`.conf
 DAEMON_ARGS="$CONFIG_FILE"
 NAME=redis-server
 DESC=redis-server

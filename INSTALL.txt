@@ -1,6 +1,12 @@
 # sudo vi /etc/profile
 #export http_proxy=http://10.200.1.44:8080
 
+# vi ~/.bashrc
+# USI
+# http_proxy
+alias proxyon='export http_proxy=http://10.200.1.44:8080;echo $http_proxy'
+alias proxyoff='export http_proxy=;echo $http_proxy'
+
 # sudo vi /etc/apt/apt.conf.d/proxy
 Acquire::http::Proxy "http://10.200.1.44:8080";
 
@@ -31,8 +37,11 @@ su -
 cd /opt
 wget http://c3145442.r42.cf0.rackcdn.com/couchbase-server-enterprise_x86_64_1.1.deb
 dpkg -i couchbase-server-enterprise_x86_64_1.1.deb
-cd couchbase-server
-ln -s /etc/init.d/couchdb etc/init.d/couchdb
+rm /etc/init.d/couchbase-server
+cd /etc/init.d
+ln -s /opt/couchbase-server/etc/init.d/couchdb couchdb
+update-rc.d -f couchdb defaults
+cd /opt
 
 # sur usi1
 cd /usr/local
@@ -49,12 +58,12 @@ adduser --system --no-create-home --disabled-login --disabled-password --group r
 sudo chmod 755 /var/lib/redis
 sudo chmod 755 /var/lib/redis/dump.rdb
 # faire tous les fichiers
+ln -s /home/user/deploiement/install/etc/init.d/redis /etc/init.d/redis
 update-rc.d -f redis defaults
-ln -s /home/user/deploiement/install/etc/init.d/redis redis
 
 # node.js
-# NO USING=> adduser --system --no-create-home --disabled-login --disabled-password --group nodejs
-ln -s /home/user/deploiement/install/etc/init.d/nodejs nodejs
+ln -s /home/user/deploiement/install/etc/init.d/nodejs /etc/init.d/nodejs
+update-rc.d -f nodejs defaults
 
 # Optim systeme
 http://www.ubuntu-unleashed.com/2008/04/howto-harden-ubuntu-linux-kernel-with.html
