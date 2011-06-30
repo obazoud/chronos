@@ -11,6 +11,7 @@ var gamemanager = require('./gamemanager.js');
 
 var authentication_key = '12IndR6r5V5618';
 
+// HAProxy
 exports.ping = function(req, res) {
   res.send(200, {}, 'pong');
 };
@@ -91,6 +92,7 @@ setInterval(function() {
   }
 }, 5000);
 
+// internal API
 exports.mail = function(req, res, mail) {
   chronosCouch.getDoc(mail, {
     error: function(data) {
