@@ -7,20 +7,55 @@ var security = require('./security.js');
 var ranking = require("./ranking.js");
 var tools = require("./tools.js");
 
+var authentication_key = '12IndR6r5V5618';
+
 exports.ping = function(req, res) {
   res.send(201, {}, 'pong');
 };
 
+function validateField(field, mandatory, minlength, maxlength, value) {
+  message = "Problems field " + field;
+  if (mandatory && !field) {
+      return message + ' (mandatory)';
+  }
+  var data = field || '';
+
+  if (minlength && data.length < minlength) {
+    return message + ' (minlength)';
+  }
+  if (maxlength && data.length > maxlength) {
+    return message + ' (maxlength)';
+  }
+  if (value && data != value) {
+    return message + ' (value)';
+  }
+};
+
 exports.createUser = function(req, res, params) {
-  chronosCouch.putDoc(params.mail, true, {type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }, cookies: {}}, {
-    error: function(data) {
-      res.send(400, {}, data);
-    },
-    success: function(data) {
-      ranking.addUser(params.lastname,params.firstname,params.mail);
-      res.send(201);
-    }
-  });
+  if (validateField(params.firstname, true, 2, 50) || validateField(params.lastname, true, 2, 50) || validateField(params.mail, true, 2, 50) || validateField(params.password, true, 2, 50)) {
+    res.send(401, {}, message);
+  } else {
+    chronosCouch.head(params.mail, {
+      error: function(data) {
+        res.send(400, {}, data);
+      },
+      success: function(data, id) {
+        if (id != null) {
+          res.send(400, {}, data);
+        } else {
+          chronosCouch.putDoc(params.mail, true, {type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:{ }, reponses:{ }, score: { }, lastbonus: { }, cookies: {}}, {
+            error: function(data) {
+              res.send(400, {}, data);
+            },
+            success: function(data) {
+              ranking.addUser(params.lastname,params.firstname,params.mail);
+              res.send(201);
+            }
+          });
+        }
+      }
+    });
+  }
 };
 
 exports.newGame = function(req, res, params) {
@@ -49,26 +84,25 @@ exports.newGame = function(req, res, params) {
 };
 
 function putGame(req, res, params, paramsJSON) {
-  console.log(tools.toISO8601(new Date()) + ": put a new game.");
-  chronosCouch.putDoc('game', false, paramsJSON, {
-    error: function(data) {
-      var error = JSON.parse(data);
-      if (error.reason == 'Authentication key is not recognized.') {
-        console.log(data);
-        res.send(401);
-      } else {
-        console.log(data);
+  // check authentication_key
+  var message = validateField(paramsJSON.authentication_key, true, 2, 50, authentication_key);
+  if (message) {
+    res.send(401, {}, message);
+  } else {
+    console.log(tools.toISO8601(new Date()) + ": put a new game.");
+    chronosCouch.putDoc('game', false, paramsJSON, {
+      error: function(data) {
         res.send(400);
+      },
+      success: function(data) {
+        console.log(tools.toISO8601(new Date()) + ": game successfully added.");
+        ranking.reset(function(err, incrementedScore) {
+          console.log(tools.toISO8601(new Date()) + ": Redis: score to 0: OK " + incrementedScore);
+          res.send(201);
+        });
       }
-    },
-    success: function(data) {
-      console.log(tools.toISO8601(new Date()) + ": game successfully added.");
-      ranking.reset(function(err, incrementedScore) {
-        console.log(tools.toISO8601(new Date()) + ": Redis: score to 0: OK " + incrementedScore);
-        res.send(201);
-      });
-    }
-  });
+    });
+  }
 };
 
 function processGameXML(authentication_key, parameters) {
