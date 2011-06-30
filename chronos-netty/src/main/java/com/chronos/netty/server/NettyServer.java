@@ -28,9 +28,9 @@ public class NettyServer {
     final Logger logger = LoggerFactory.getLogger(NettyServer.class);
     ServerBootstrap bootstrap;
     ChannelGroup channels;
-    public final static int port = 8080;
-    public final static int workerCount = 1510;
-    public final static int countDown = 1500;
+    public final static int port = Integer.valueOf(System.getProperty("netty.port"));
+    public final static int workerCount = Integer.valueOf(System.getProperty("netty.workerCount"));
+    public final static int countDown = Integer.valueOf(System.getProperty("chronos.countDown"));
     
     public void start() {
         logger.info("HTTP-Netty-Server: starting on port {}.", port);
