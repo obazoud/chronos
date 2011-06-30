@@ -21,6 +21,18 @@ var logger = require('util');
 
 function GameState() {
   this.game = {};
+  this.nbusersthreshold = 0;
+  this.dureeWarmup = 0;
+  this.questionTimeFrame = 0;
+  this.synchroTimeDuration = 0;
+  
+  this.initGame = function(newGame) {
+    this.game = newGame;
+    this.nbusersthreshold = parseInt(this.game.gamesession.parameters.nbusersthreshold);
+    this.dureeWarmup = parseInt(this.game.gamesession.parameters.logintimeout) * 1000;
+    this.questionTimeFrame = parseInt(this.game.gamesession.parameters.questiontimeframe) * 1000;
+    this.synchroTimeDuration = parseInt(this.game.gamesession.parameters.synchrotime) * 1000;
+  };
 }
 
 var gameState = new GameState();
@@ -43,9 +55,10 @@ subscriber.on('message', function(channel, message) {
   switch (json.event) {
     case 'initGame':
       logger.log('initGame event');
-      gameState.game = json.message;
+      gameState.initGame(json.message);
+      logger.log(sys.inspect(gameState,false));
+      logger.log(gameState.nbusersthreshold);
       logger.log(gameState.game.gamesession.parameters.questiontimeframe);
-
       break;
   }
 });
