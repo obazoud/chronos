@@ -7,8 +7,6 @@ var events = require('events');
 var emitter = new events.EventEmitter();
 var logger = require('util');
 
-var couchdbAccessFailed = false;
-
 var host = '?.?.?.?';
 var port = 5984;
 var hostname = os.hostname();
