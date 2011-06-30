@@ -42,7 +42,7 @@ public class QuestionAction implements Action {
 
                 latch.countDown();
 //                TODO: Business stuff!
-                logger.info("COunt: " + latch.getCount());
+                logger.info("Count: " + latch.getCount());
                 latch.await();
 
                 final ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer(128);
