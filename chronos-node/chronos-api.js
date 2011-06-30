@@ -194,7 +194,7 @@ exports.audit = function(req, res, params) {
       res.send(400, {}, data);
     },
     success: function(player, response) {
-      chronosCouc.getDoc('game', {
+      chronosCouch.getDoc('game', {
         error: function(data, response) { res.send(400, {}, data); },
         success: function(game, response) {
           var audit = {};
@@ -210,7 +210,7 @@ exports.audit = function(req, res, params) {
           }
           res.send(200, {}, audit);
         }
-      }
+      })
     }
   });
 };
