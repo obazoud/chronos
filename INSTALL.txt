@@ -39,6 +39,9 @@ http://redmine.lighttpd.net/wiki/1/Docs:Performance
 http://www.metabrew.com/article/a-million-user-comet-application-with-mochiweb-part-1
 http://www.acc.umu.se/~maswan/linux-netperf.txt
 
+http://www.tigase.org/content/tigase-load-tests-again-500k-user-connections
+http://www.java.net/external?url=http://andrigoss.blogspot.com/2008/02/jvm-performance-tuning.html
+
 #tsung
 sudo apt-get install gnuplot-nox libtemplate-perl libhtml-template-perl libhtml-template-expr-perl
  http://tsung.erlang-projects.org/dist/tsung-1.3.3.tar.gz ~$ tar -zxvf tsung-1.3.0.tar.gz ~$ cd tsung-1.3.0 ~/tsung-1.3.0$ ./configure && make && sudo make instal
@@ -51,8 +54,29 @@ ulimit -n 999999
 
 cat /proc/sys/fs/file-max
 sudo vi /etc/sysctl.conf
-fs.file-max=583570
+# Increase size of file handles and inode cache
+fs.file-max = 209708
+# Increase number of incoming connections backlog
+net.core.somaxconn = 512
 
+# General gigabit tuning:
+net.core.rmem_max = 16777216
+net.core.wmem_max = 16777216
+net.ipv4.tcp_rmem = 4096 87380 16777216
+net.ipv4.tcp_wmem = 4096 65536 16777216
+net.ipv4.tcp_syncookies = 1
+# this gives the kernel more memory for tcp
+# which you need with many (100k+) open socket connections
+net.ipv4.tcp_mem = 50576   64768   98152
+net.core.netdev_max_backlog = 2500
+# I was also masquerading the port comet was on, you might not need this
+net.ipv4.netfilter.ip_conntrack_max = 1048576
+net.ipv4.tcp_fin_timeout=1
+
+# system
+#kernel.shmmax = 4294967296
+#vm.nr_hugepages = 2048
+vm.swappiness = 0
 
 sudo vi /etc/security/limits.conf
 user      hard    nofile             65535
