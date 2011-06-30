@@ -5,6 +5,7 @@ var logger = require('util');
 
 // TODO Think about multiples nodes instances
 // TODO Think about multiples servers
+// TODO pas assez de temps pour questionEncours
 
 // nbquestions : le nombre de questions à jouer. 
 // Doit être inférieur ou égal au nombre de questions présentes dans le fichier (élement <usi:questions>). 
@@ -50,6 +51,7 @@ function GameState() {
     if (this.state == 0) {
       logger.log('State changed state: ' + this.state + ' -> ' + 1);
       this.state = 1;
+      redis.hset("context", "state", this.state);
       this.game = newGame;
       this.nbusersthreshold = parseInt(this.game.gamesession.parameters.nbusersthreshold);
       this.logintimeout = parseInt(this.game.gamesession.parameters.logintimeout) * 1000;
@@ -103,9 +105,20 @@ function GameState() {
 //  };
 
   this.retrieve = function() {
-    // TODO : at node startup get state from redis
+    // TODO at node startup get state from redis
+    // TODO block everything during loading...
+    this.state == 0;
+    redis.get("game", function(err, rgame) {
+      try {
+        initGame(JSON.parse(rgame));
+        // TODO: ...
+      } catch (err2) {
+         logger.log("Something wrong here");
+         return;
+      }
+    });
+  
   };
-
 }
 
 var gameState = new GameState();
