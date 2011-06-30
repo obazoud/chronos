@@ -49,7 +49,7 @@ public class NettyServer {
                 channel.unbind();
             }
             final ChannelGroupFuture future = channels.close();
-            future.awaitUninterruptibly(120 * 1000);
+            future.awaitUninterruptibly(10 * 1000);
             bootstrap.releaseExternalResources();
         } finally {
             logger.info("HTTP-Netty-Server: stopped.");
