@@ -272,6 +272,7 @@ function questionTimer(k) {
   for (var i = 0; i < count; i++) {
     var ctx = gameState.pendings[k][i];
     // ctx.req.resume();
+
     ctx.res.send(200, {}, ctx.question);
     ctx.fired = true;
   }
@@ -301,6 +302,7 @@ exports.getQuestion = function(req, res, n) {
         question: question
     };
     gameState.pushQuestion(ctx);
+    req.connection.setTimeout(120000);
     // TODO
     //req.connection.on('timeout', function() {
     //    ctx = {};
