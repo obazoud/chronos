@@ -99,18 +99,6 @@ setInterval(function() {
   }
 }, 5000);
 
-// internal API
-exports.mail = function(req, res, mail) {
-  chronosCouch.getDoc(mail, {
-    error: function(data) {
-      res.send(400, {}, data);
-    },
-    success: function(data) {
-      res.send(201, {}, data);
-    }
-  });
-};
-
 exports.newGame = function(req, res, params) {
   var paramsJSON = processGameXML(params.authentication_key, params.parameters);
   putGame(req, res, params, paramsJSON);

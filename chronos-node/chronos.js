@@ -31,8 +31,11 @@ var router = new(journey.Router)();
 
 // Create the routes
 logger.log('Creating Routes');
+// admin
 router.get('/api/ping').bind(api.ping);
-//router.get('/api/drop').bind(api.dropDatabase);
+router.get('/api/frontal').bind(api.frontal);
+router.get('/api/couchdb').bind(api.couchdb);
+// app
 router.post('/api/user').bind(api.createUser); 
 router.post('/api/game').bind(api.newGame);
 router.post('/api/login').bind(api.login);
@@ -42,10 +45,6 @@ router.get('/api/ranking').filter(security.authorize).bind(api.getRanking);
 router.get('/api/score').bind(api.getScore);
 router.get('/api/audit').bind(api.audit);
 router.get(/^api\/audit\/(\d+)$/).bind(api.auditN);
-router.post('/api/tweet').bind(api.tweetHttp);
-router.get(/^api\/mail\/([\w|@|\.]+)$/).bind(api.mail);
-router.get('/api/frontal').bind(api.frontal);
-router.get('/api/couchdb').bind(api.couchdb);
 
 // Create the http server
 logger.log('Creating Http server');
