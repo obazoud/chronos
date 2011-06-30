@@ -79,7 +79,7 @@ exports.createUser = function(req, res, params) {
 };
 
 setInterval(function() {
-  //logger.log("Bulk players ?");
+  //logger.log("Bulk players");
   if (players.length > 0) {
     //logger.log("Read to bulk players");
     var playerIndex = Math.max(0, players.length - playerBatch);
@@ -123,7 +123,6 @@ function putGame(req, res, params, paramsJSON) {
   } else {
     logger.log("A new game is coming.");
     logger.log("Game successfully added.");
-    // TODO callback ?
     gamemanager.initGame(paramsJSON);
     ranking.initRanking();
     res.send(201);
@@ -189,7 +188,6 @@ exports.login = function(req, res, params) {
               var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
               res.send(201, {'Set-Cookie': 'session_key=' + sessionkey}, '');
               gamemanager.warmup(res);
-              // TODO callback ?
               ranking.addUser(userDocjson.lastname, userDocjson.firstname, params.mail);
               // logger.log(Date.now() + " < Http /api/login/" + params.mail);
             }
@@ -204,7 +202,6 @@ exports.getQuestion = function(req, res, n) {
   var gamejson = gamemanager.getGame();
   // logger.log(Date.now() + "> Http /api/question/" + n + " / " + numberOfQuestions + ", login:" + req.jsonUser.login);
   // preparing response
-  // First score is too slow, do not know why !?
   if (n > numberOfQuestions) {
     // logger.log(n + "< Http /api/question/" + n + ", login:" + req.jsonUser.login);
     // logger.log("FAILED(400)");

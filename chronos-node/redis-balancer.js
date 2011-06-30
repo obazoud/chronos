@@ -5,13 +5,10 @@ var util = require('util');
 
 var redis = require("redis");
 
-
 function RedisBalancer(){
-
     this.redisClients =  [];
     this.redisPubSub = [];
     this.redisClientsDown = [];
-
 };
 
 var balancer = new RedisBalancer();

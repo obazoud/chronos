@@ -3,24 +3,16 @@ var events = require('events');
 var emitter = new events.EventEmitter();
 var logger = require('util');
 
-// TODO Think about multiples nodes instances
-// TODO Think about multiples servers
-// TODO pas assez de temps pour questionEncours avec redis compliqué
-
 // nbquestions : le nombre de questions à jouer. 
-// Doit être inférieur ou égal au nombre de questions présentes dans le fichier (élement <usi:questions>). 
-// --> Ce paramètre est considéré comme inutile. Nous jouerons toujours 20 questions.
 var numberOfQuestions = 20;
 
 var os = require('os');
-// TODO integrer le mecanisme de fail-over
 var redis = require("redis").createClient(6379, "192.168.1.1");
 var subscriber = require("redis").createClient(6379, "192.168.1.1");
 var publisher = require("redis").createClient(6379, "192.168.1.1");
 
 var channel = '#chronos';
 
-// TODO a virer lors de l integration du mecanisme de fail over
 redis.on("error", function (err) {
     logger.log("Error " + err);
 });
@@ -37,7 +29,6 @@ subscriber.on("subscribe", function (channel, count) {
   logger.log('Client subscribed to channel ' + channel + ', ' + count + ' total subscriptions.');
 });
 
-// TODO: unsubcribe on exit ?
 subscriber.on("unsubscribe", function (channel, count) {
     console.log('Client unsubscribed from ' + channel + ', ' + count + ' total subscriptions.');
 });
@@ -130,7 +121,6 @@ function GameState() {
       this.state = 3;
       redis.hset("context", "state", this.state);
       this.sessions[1] = now;
-      // TODO really need ?
       for (i = 2; i <= numberOfQuestions + 1; i++) {
         this.sessions[i] = this.sessions[i - 1] + this.questiontimeframe + this.synchrotime;
         logger.log('sessions' + i + ': ' + this.sessions[i] + ' / ' + new Date(this.sessions[i]));
@@ -154,8 +144,6 @@ function GameState() {
 //  };
 
   this.retrieve = function() {
-    // TODO at node startup get state from redis
-    // TODO block everything during loading...
     logger.log("****** Game manager loads data from database ******");
     this.state == 0;
     that = this;
@@ -175,18 +163,14 @@ function GameState() {
 }
 
 var gameState = new GameState();
-// TODO reload stuff when node up
-// TODO or after a reboot
 gameState.retrieve();
 
 /** Initialize game **/
-// TODO callback ?
 exports.initGame = function(game) {
   redis.del("context");
   redis.del("players");
   redis.hset("context", "numberOfPlayers", 0);
   redis.set("game", JSON.stringify(game));
-  // TODO to save or to save ?
   // redis.save();
 
   // Init locally first !
@@ -204,7 +188,6 @@ exports.warmup = function() {
   emitter.emit('warmupStarted');
 };
 
-// TODO : 'once' works with a 2nd game ?
 emitter.once("warmupStarted", function() {
   var now = new Date().getTime();
   logger.log("Warmup started... ");
@@ -213,7 +196,6 @@ emitter.once("warmupStarted", function() {
 
   redis.hsetnx("context", "warmupStartDate", gameState.warmupStartDate);
   redis.hsetnx("context", "warmupEndDate", gameState.warmupEndDate);
-  // TODO to save or to save ?
   // redis.save();
 
   var message = {
@@ -235,7 +217,6 @@ function warmupLoop () {
       logger.log("gameState.warmupEndDate: " + gameState.warmupEndDate);
       emitter.emit("warmupEnd");
     } else {
-      // TODO : timeout ?
       setTimeout(warmupLoop, 1000);
     }
   });
@@ -276,7 +257,6 @@ function setTimeoutForTimeFrameCB(login, n, success) {
   if (n == 1) {
     emitter.emit("warmupEnd", success);
   } else {
-    // TODO ?
     // if (gameState.questionEncours >= numberOfQuestions) {
     //  gameState.questionsEnds();
     //}
@@ -288,7 +268,6 @@ function setTimeoutForTimeFrameCB(login, n, success) {
 exports.getQuestion = function(n, login, success, fail) {
   var now = new Date().getTime();
 
-  // TODO check questionEncours value ?
   var sessionNMoins1 = gameState.sessions[n - 1];
   var sessionN = gameState.sessions[n];
 
@@ -308,7 +287,6 @@ exports.answerQuestion = function(n, login, success, fail) {
   var sessionN = gameState.sessions[n];
   var sessionNplus1 = gameState.sessions[n + 1];
 
-  // TODO questionEncours ?
   if (now >= sessionN && now <= (sessionNplus1 - gameState.synchrotime)) {
     // logger.log(login + " answers question : " + n)
     success();
