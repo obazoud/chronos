@@ -17,7 +17,8 @@ emitter.on("masterDown",function(){
 	redisClients[0].end();
 	// TODO valider l incrementation par rapport au max de serveurs dipo
 	redisClientsDown.push(redisClients.shift());
-		
+
+	redisClients[0].slaveof('no','one');
 	redisClients[0].on("error", function (err) {
    		console.log("Redis instance" + redisClients[0].host + ":" + redisClients[0].port + " Error " + err);
 		if(err.message.indexOf("ECONNREFUSED") != -1){
@@ -26,9 +27,11 @@ emitter.on("masterDown",function(){
 	});
 	
 	console.log("redis instance "+ redisClients[0].host + ":" + redisClients[0].port+" will be Master");
-	
-	redisClients[1].slaveof(redisClients[0].host,redisClients[0].port);
-	console.log("redis instance "+redisClients[1].host + ":" + redisClients[1].port+" will be slaveof " + redisClients[0].host + ":" + redisClients[0].port);
+
+	for(var i=1;i < redisClients.length;i++){
+	    redisClients[i].slaveof(redisClients[0].host,redisClients[0].port);
+	    console.log("redis instance "+redisClients[i].host + ":" + redisClients[i].port+" will be slaveof " + redisClients[0].host + ":" + redisClients[0].port);
+	}
 });
 
 emitter.on("slaveDown", function(slave){					
@@ -52,6 +55,7 @@ function createRedisClients(servers){
 	
 	// creation du master initial
 	redisClients[0] = redis.createClient(servers[0].p,servers[0].h);
+	redisClients[0].slaveof('no','one');
 	redisClients[0].on("error", function (err) {
    		console.log("Redis instance" + redisClients[0].host + ":" + redisClients[0].port + " Error " + err);
 		if(err.message.indexOf("ECONNREFUSED") != -1){
@@ -74,7 +78,7 @@ function createRedisClients(servers){
 		
 	}
 
-
+    return redisClients;
 }
 
 function loadConfig(confFile){
@@ -91,7 +95,24 @@ function removeServerFromArray(array,server){
 	return array;
 }
 
-createRedisClients(serversConf);
+function RedisBalancer(token){
+    this.token = token;
+    this.redisClients = createRedisClients(serversConf);
+};
 
+RedisBalancer.prototype.getMaster = function(){
+    return this.redisClients[0];
+};
 
+RedisBalancer.prototype.getSlave = function(){
+    if (redisClients.length == 1) {
+        return this.getMaster();
+    }
+    else {
+        return this.redisClients[this.token % (redisClients.length - 1) + 1];
+    }
+};
 
+exports.createBalancer = function(token){
+    return new RedisBalancer(token);
+};
