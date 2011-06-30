@@ -263,8 +263,8 @@ exports.answerQuestion = function(req, res, n, params) {
               success: function(scoreDoc) {
                 var answer = {};
                 answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
-                answer.good_answer=q.goodchoice;
-                answer.score=scoreDoc;
+                answer.good_answer = q.choice[q.goodchoice];
+                answer.score = scoreDoc;
                 ranking.updateScore(req.jsonUser.lastname,req.jsonUser.fistname,req.jsonUser.login,scoreDoc,function(err,updated){
                   if (err) {
                     res.send(400, {}, err);
