@@ -72,7 +72,7 @@ exports.mail = function(req, res, mail) {
 
 exports.newGame = function(req, res, params) {
   var paramsJSON = processGameXML(params.authentication_key, params.parameters);
-  paramsJSON.game_id = uuid().toLowerCase();
+  paramsJSON.game_id = uuid().toLowerCase().substring(0, 8);
 
   chronosCouch.head('game', {
     error: function(data) {
