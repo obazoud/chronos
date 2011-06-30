@@ -88,76 +88,6 @@ function gameState(beforeStartCallback,afterStartCallback,params){
 }
 
 /**
-Enregistre les users logues
-*/
-exports.login = function(mail, options) {
-  redis.hset('players', mail + ':login', "1", function(err, reply) {
-    if (err) {
-      if (options && options.error) {
-        options.error(err);
-      }
-    } else {
-      redis.hincrby('players', 'logged', 1);
-      if (options && options.success) {
-        options.success();
-      }
-    }
-  });
-}
-
-exports.isLogin = function(mail, options) {
-  return redis.hexists('players', mail + ':login', function(err, reply) {
-    if (err) {
-      if (options && options.error) {
-        options.error(err);
-      }
-    } else {
-      var exist = (reply == 1);
-      if (options && options.success) {
-        options.success(exist);
-      }
-    }
-  });
-}
-
-exports.logged = function(mail, options) {
-  redis.hincrby('players', mail + ':login', -1, function(err, reply) {
-    if (err) {
-      if (options && options.error) {
-        options.error(err);
-      }
-    } else {
-      var value = parseInt(reply);
-      if (value >= 0) {
-        redis.hincrby('players', 'logged', -1, function(err, reply2) {
-          if (err) {
-            if (options && options.error) {
-              options.error(err);
-            }
-          } else {
-            if (options && options.success) {
-              options.success(reply2);
-            }
-          }
-        });
-      } else {
-        redis.hget('players', 'logged', function(err, reply2) {
-          if (err) {
-            if (options && options.error) {
-              options.error(err);
-            }
-          } else {
-            if (options && options.success) {
-              options.success(reply2);
-            }
-          }
-        });
-      }
-    }
-  });
-}
-
-/**
 gere les demandes d inscription au quiz
 */
 exports.warmup = function() {
@@ -232,12 +162,8 @@ emitter.once('warmupEnd',function(timerId){
         quizSessions[1] = now;
         for(i=2; i<=(numberOfQuestions+1) ; i++){
              quizSessions[i] = quizSessions[i-1] + questionTimeFrame + synchroTimeDuration;
-              
         }
 
-        for (k=0;k<quizSessions;k++) {
-          logger.log('Dump quizSessions[k] ' + ' -> ' + new Date(quizSessions[k]));
-        }
         for(j=2; j<=(numberOfQuestions+1) ; j++){
 		    redis.hset("context",
                         "session_" + j  , quizSessions[j]);
@@ -259,16 +185,14 @@ emitter.once('warmupEnd',function(timerId){
                 var n = parseInt(params[0]);
                 var numberOfQuestions = parseInt(params[1]);
 
-                // logger.log("checking end of time for question : " + n);
+                //logger.log("checking end of time for question : " + n);
                 var now = new Date().getTime();
                 redis.hget("context","session_"+n,function(err,sessionN){    // FIXME une charge en plus pour redis
-                    logger.log('now: ' + new Date(now) + ' -> sessionN: ' + new Date(parseInt(sessionN)));
-                    if(now >= parseInt(sessionN)){
+                    if(now >= sessionN){
                             logger.log("emitting event for sending question : " + n);
                             emitter.emit("sendQuestions",qTimer);
                             if( n < numberOfQuestions ) {
 				    redis.hincrby("context","questionEncours",1);
-            logger.log("hincrby 1 questionEncours");
 			    }
                     }
                 });
@@ -474,6 +398,78 @@ exports.getAnswer = function(login, n, options) {
     }
   );
 };
+
+
+/**
+Enregistre les users logues
+*/
+exports.login = function(mail, options) {
+  redis.hset('players', mail + ':login', "1", function(err, reply) {
+    if (err) {
+      if (options && options.error) {
+        options.error(err);
+      }
+    } else {
+      redis.hincrby('players', 'logged', 1);
+      if (options && options.success) {
+        options.success();
+      }
+    }
+  });
+}
+
+exports.isLogin = function(mail, options) {
+  return redis.hexists('players', mail + ':login', function(err, reply) {
+    if (err) {
+      if (options && options.error) {
+        options.error(err);
+      }
+    } else {
+      var exist = (reply == 1);
+      if (options && options.success) {
+        options.success(exist);
+      }
+    }
+  });
+}
+
+exports.logged = function(mail, options) {
+  redis.hincrby('players', mail + ':login', -1, function(err, reply) {
+    if (err) {
+      if (options && options.error) {
+        options.error(err);
+      }
+    } else {
+      var value = parseInt(reply);
+      if (value >= 0) {
+        redis.hincrby('players', 'logged', -1, function(err, reply2) {
+          if (err) {
+            if (options && options.error) {
+              options.error(err);
+            }
+          } else {
+            if (options && options.success) {
+              options.success(reply2);
+            }
+          }
+        });
+      } else {
+        redis.hget('players', 'logged', function(err, reply2) {
+          if (err) {
+            if (options && options.error) {
+              options.error(err);
+            }
+          } else {
+            if (options && options.success) {
+              options.success(reply2);
+            }
+          }
+        });
+      }
+    }
+  });
+}
+
 
 exports.getAnswers = function(login, options) {
   redis.hmget("players",
