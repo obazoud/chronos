@@ -25,7 +25,6 @@ process.on('exit', function () {
   logger.log('Bye bye Chronos server.');
 });
 
-
 // Create a router
 logger.log('Creating Router');
 var router = new(journey.Router)();
