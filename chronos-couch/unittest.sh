@@ -1,6 +1,6 @@
 #!/bin/bash 
 set -e
-#set -x
+set -x
 # https://github.com/zpoley/json-command
 # npm install json
 
@@ -26,10 +26,10 @@ assertNotNull() {
   fi
 }
 
-USER_REV=`curl --silent -X GET http://superadmin:supersecret@localhost:5984/_users/org.couchdb.user:null@gmail.com | json -C _rev`
-if [ "$USER_REV" != "" ]; then
-  curl --silent -X DELETE http://superadmin:supersecret@localhost:5984/_users/org.couchdb.user:null@gmail.com?rev=$USER_REV
-fi
+#USER_REV=`curl --silent -X GET http://superadmin:supersecret@localhost:5984/_users/org.couchdb.user:null@gmail.com | json -C _rev`
+#if [ "$USER_REV" != "" ]; then
+#  curl --silent -X DELETE http://superadmin:supersecret@localhost:5984/_users/org.couchdb.user:null@gmail.com?rev=$USER_REV
+#fi
 
 GAME_JSON="`cat ./sample/gamesession-sample-encode.json`"
 curl -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d "${GAME_JSON}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/game 2>&1 | awk '{ if ($1 == "HTTP/1.1") { httpcode=$2 } } END { print httpcode}' | while read httpcode; do 
