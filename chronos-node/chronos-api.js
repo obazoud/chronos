@@ -254,7 +254,7 @@ exports.answerQuestion = function(req, res, n, params) {
                 var answer = {};
                 answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
                 answer.good_answer = q.choice[q.goodchoice - 1];
-                answer.score = score;
+                answer.score = "" + score + "";
                 res.send(201, {}, answer);
               }
             });
