@@ -11,7 +11,7 @@ exports.ping = function(req, res) {
 };
 
 exports.createUser = function(req, res, params) {
-  chronosCouch.createChronosUser(params.firstname, params.lastname, params.mail, params.password, {
+  chronosCouch.putDoc(params.mail, {type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:[ ], reponses:[ ], score:0, lastbonus:0}, {
     error: function(data) {
       res.send(400, {}, data);
     },
