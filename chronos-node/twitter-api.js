@@ -9,7 +9,7 @@ exports.tweetHttp = function(req, res, params) {
   res.send(200);
 };
 
-tweet = function(message, options) {
+exports.tweet = function(message, options) {
   var cmd = path.dirname(process.argv[1]) + "/twitter.sh -keyf=./ttytterkey -status=\"" + message + "\"";
   sys.puts('cms tweet: ' + cmd);
   exec(cmd, function (error, stdout, stderr) {
