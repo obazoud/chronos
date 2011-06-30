@@ -33,9 +33,12 @@ function Route(method, pattern, callback) {
       if (parts = path.match(pattern)) {
         var result = callback.call(null, req, res, body, query, parts[1]);
         return (result === undefined ? true : result);
+      } else {
+        return false;
       }
+    } else {
+      return false;
     }
-    return false;
   };
 };
 

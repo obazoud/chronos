@@ -7,7 +7,7 @@ verifier que les couchdb soit up / vor pq plusieurs instances ?
 npm install http-proxy
 changer chronos.js en server.js dans /etc/init.d/nodejs ?
 Remove journey, implementation of my own router
-
+npm install optimist
 ---------------------------------------------
 1.0
 
