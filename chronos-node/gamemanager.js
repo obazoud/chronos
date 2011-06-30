@@ -109,7 +109,7 @@ function GameState() {
   this.warmupStarts = function(now1) {
     // Force to use local time
     // ntp sucks
-    var now = new Date().getTime();
+    var now = Date.now();
     if (this.state == 1) {
       logger.log('State changed state: ' + this.state + ' -> ' + 2);
       this.state = 2;
@@ -207,7 +207,7 @@ exports.warmup = function() {
 
 // TODO : 'once' works with a 2nd game ?
 emitter.once("warmupStarted", function() {
-  var now = new Date().getTime();
+  var now = Date.now();
   logger.log("Warmup started... ");
   gameState.warmupStarts(now);
   // logger.log(sys.inspect(gameState,false));
@@ -228,14 +228,14 @@ emitter.once("warmupStarted", function() {
 
 function warmupLoop () {
   redis.hmget("context", "numberOfPlayers", function(err, numberOfPlayers) {
-    var now = new Date().getTime();
+    var now = Date.now();
     if (parseInt(numberOfPlayers) >= parseInt(gameState.nbusersthreshold) || now >= gameState.warmupEndDate) {
       logger.log("numberOfPlayers: " + numberOfPlayers);
       logger.log("gameState.nbusersthreshold: " + gameState.nbusersthreshold);
       logger.log("now: " + now);
       logger.log("gameState.warmupEndDate: " + gameState.warmupEndDate);
       if (gameState.state == 2) {
-        var now = new Date().getTime();
+        var now = Date.now();
         logger.log("warmup timer stopped");
         gameState.warmupEnds(now);
 
@@ -285,8 +285,7 @@ function questionTimeFrame(timeout, login, n, success, fail) {
 
 /** Get question N **/
 exports.getQuestion = function(n, login, success, fail) {
-  var now = new Date().getTime();
-
+  var now = Date.now();
   var sessionNMoins1 = gameState.sessions[n - 1];
   var sessionN = gameState.sessions[n];
 
@@ -300,7 +299,7 @@ exports.getQuestion = function(n, login, success, fail) {
 
 /** Answer Question N **/
 exports.answerQuestion = function(n, login, success, fail) {
-  var now = new Date().getTime();
+  var now = Date.now();
   var sessionN = gameState.sessions[n];
   var sessionNplus1 = gameState.sessions[n + 1];
 
