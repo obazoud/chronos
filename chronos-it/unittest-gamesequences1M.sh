@@ -1,6 +1,6 @@
 #!/bin/bash 
 set -e
-set -x
+#set -x
 
 CHRONOS_HOST=localhost
 CHRONOS_PORT=8080
