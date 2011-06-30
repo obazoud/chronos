@@ -1,4 +1,4 @@
-package com.chronos.front.netty;
+package com.chronos.netty;
 
 import static org.jboss.netty.channel.Channels.pipeline;
 

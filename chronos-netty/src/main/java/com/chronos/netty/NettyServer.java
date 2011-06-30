@@ -1,4 +1,4 @@
-package com.chronos.front.netty;
+package com.chronos.netty;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;

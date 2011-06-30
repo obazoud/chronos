@@ -1,4 +1,4 @@
-package com.chronos.front.netty;
+package com.chronos.netty;
 
 import static org.jboss.netty.handler.codec.http.HttpHeaders.isKeepAlive;
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_LENGTH;

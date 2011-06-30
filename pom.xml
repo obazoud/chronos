@@ -8,7 +8,7 @@
   <name>Chronos</name>
   <modules>
     <module>chronos-biz</module>
-    <module>chronos-front</module>
+    <module>chronos-netty</module>
   </modules>
   <repositories>
     <repository>

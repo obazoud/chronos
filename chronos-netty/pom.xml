@@ -7,8 +7,8 @@
     <artifactId>chronos</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
-  <artifactId>chronos-front</artifactId>
-  <name>Chronos Front</name>
+  <artifactId>chronos-netty</artifactId>
+  <name>Chronos Netty</name>
   <dependencies>
     <dependency>
       <groupId>com.chronos</groupId>
@@ -38,7 +38,7 @@
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <configuration>
-          <mainClass>com.chronos.front.netty.NettyServer</mainClass>
+          <mainClass>com.chronos.netty.NettyServer</mainClass>
         </configuration>
       </plugin>
     </plugins>
