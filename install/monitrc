@@ -1,13 +1,35 @@
-# déposer ce fichier dans /etc/monit
-#
-# monit -d 10 -c /etc/monit/monitrc
+###############################################################################
+## Monit control file
+###############################################################################
+
+set daemon  2             # check services at 2-minute intervals
+    with start delay 30   # optional: delay the first check by 4-minutes
+                          # (by default check immediately after monit start)
 
 set logfile /var/log/monit.log
 
-check host chronosjs with address 127.0.0.1
-    start program = "/usr/bin/sudo /sbin/start chronos"
-    stop program = "/usr/bin/sudo /sbin/stop chronos"
+# node.js
+check host nodejs with address 127.0.0.1
+    start program = "/usr/bin/sudo /etc/init.d/nodejs start"
+    stop program = "/usr/bin/sudo /etc/init.d/nodejs stop"
     if failed port 8080 protocol HTTP
         request /api/ping
         with timeout 1 seconds
         then restart
+
+# couchdb
+check host couchdb with address 127.0.0.1
+    start program = "/usr/bin/sudo /etc/init.d/couchdb start"
+    stop program = "/usr/bin/sudo /etc/init.d/couchdb stop"
+    if failed port 5984 protocol HTTP
+        request /
+        with timeout 1 seconds
+        then restart
+
+# redis
+check host redis with pidfile /var/run/redis.pid
+    start program = "/usr/bin/sudo /etc/init.d/redis start"
+    stop program = "/usr/bin/sudo /etc/init.d/redis stop"
+    if failed host 127.0.0.1 port 6379 then restart
+    if 5 restarts within 5 cycles then timeout
+

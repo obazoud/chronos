@@ -115,6 +115,12 @@ sudo chown -R user:user /usr/local/var/log
 ln -s /home/user/deploiement/install/etc/init.d/nodejs /etc/init.d/nodejs
 update-rc.d -f nodejs defaults
 
+# monit
+sudo apt-get install monit
+sudo vi /etc/default/monit
+startup=1
+
+
 # Optim systeme
 http://www.ubuntu-unleashed.com/2008/04/howto-harden-ubuntu-linux-kernel-with.html
 
