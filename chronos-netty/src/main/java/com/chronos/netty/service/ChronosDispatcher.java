@@ -87,7 +87,7 @@ public class ChronosDispatcher {
                 serviceResponse.httpResponseStatus = CREATED;
                 CookieEncoder encoder = new CookieEncoder(true);
                 encoder.addCookie("session_key", "1234");
-                serviceResponse.cookie = new Cookie();
+                // serviceResponse.cookie = encoder.new DefaultCookie();
                 return serviceResponse;
             } else {
                 ServiceResponse serviceResponse = new ServiceResponse();
