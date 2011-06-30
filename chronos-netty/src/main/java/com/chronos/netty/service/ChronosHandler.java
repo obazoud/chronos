@@ -5,6 +5,7 @@ import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_LENGT
 import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -48,6 +49,9 @@ public class ChronosHandler extends SimpleChannelUpstreamHandler {
 
     private void writeResponse(MessageEvent e, ServiceResquest serviceRequest, ServiceResponse serviceResponse) {
         HttpResponse response = new DefaultHttpResponse(HTTP_1_1, serviceResponse.httpResponseStatus);
+        if (serviceResponse.channelBuffer != null) {
+            response.setContent(ChannelBuffers.wrappedBuffer(serviceResponse.channelBuffer));
+        }
         response.setHeader(CONTENT_TYPE, "text/plain; charset=UTF-8");
         boolean keepAlive = isKeepAlive(serviceRequest.httpRequest);
         if (keepAlive) {

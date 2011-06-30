@@ -1,7 +1,6 @@
 package com.chronos.netty.service;
 
-import java.util.Map;
-
+import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 /**
@@ -10,5 +9,5 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
  */
 public class ServiceResponse {
     HttpResponseStatus httpResponseStatus;
-    Map<String, String> data;
+    ChannelBuffer channelBuffer;
 }
