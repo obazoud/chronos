@@ -294,10 +294,10 @@ exports.getRanking = function(req, res) {
           success: function(numberOfPlayers) {
             var message = 'Notre application supporte ' + numberOfPlayers + ' joueurs #challengeUSI2011';
             logger.log('Tweet: ' + message);
-            if (chronosSettings.tweeet) {
+            if (chronosSettings.tweet) {
               twitterapi.tweet(message);
             } else {
-              logger.log('Tweet settings is: ' + chronosSettings.tweeet);
+              logger.log('Tweet settings is: ' + chronosSettings.tweet);
             }
           }
         });
