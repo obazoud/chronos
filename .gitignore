@@ -2,5 +2,6 @@
 .settings
 .classpath
 target
-jmeter/jmeter.log
+jmeter.log
 jmeter/result.csv
+.settings.xml
