@@ -124,6 +124,7 @@ function GameState() {
         // reinit game
         that.initGame(JSON.parse(rgame));
         // TODO: ...
+      logger.log("****** Game manager loads data from database: DONE ******");
       } catch (err2) {
          logger.log("Something wrong here -> " + err2);
          return;
