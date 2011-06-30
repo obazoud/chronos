@@ -12,7 +12,7 @@ var password = 'supersecret';
 exports.createUser = function(req, res, params) {
   var url = couchdAdminburl + params.mail;
   // console.log('url: ' + url);
-
+  // org.couchdb.user ?
   restler.put(url, {
         username: username,
         password: password,
