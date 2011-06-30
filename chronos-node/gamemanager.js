@@ -234,52 +234,54 @@ function warmupLoop () {
       logger.log("gameState.nbusersthreshold: " + gameState.nbusersthreshold);
       logger.log("now: " + now);
       logger.log("gameState.warmupEndDate: " + gameState.warmupEndDate);
-      emitter.emit("warmupEnd");
+      if (gameState.state == 2) {
+        var now = new Date().getTime();
+        logger.log("warmup timer stopped");
+        gameState.warmupEnds(now);
+
+        var message = {
+          'event': 'warmupEnds',
+          'warmupEnd': now
+        };
+        publisher.publish(channel, JSON.stringify(message));
+      }
     } else {
       // TODO : timeout ?
-      setTimeout(warmupLoop, 1000);
+      setTimeout(warmupLoop, 20);
     }
   });
 };
 
-/** warmupEnd **/
-emitter.on('warmupEnd', function(success) {
-  if (gameState.state == 2) {
-    var now = new Date().getTime();
-    logger.log("warmup timer stopped");
-    gameState.warmupEnds(now);
-
-    if (success) {
-      success();
-    }
-
-    var message = {
-      'event': 'warmupEnds',
-      'warmupEnd': now
-    };
-
-    publisher.publish(channel, JSON.stringify(message));
-  } else {
-    if (success) {
-      success();
-    }
-  }
-});
-
 /** Callback getQuestion **/
-function setTimeoutForTimeFrame(timeout, login, n, success) {
-  setTimeout(setTimeoutForTimeFrameCB, timeout, login, n, success);
-  // logger.log(Date.now() + " login " + login + " waiting for " + timeout + "ms.");
-};
-
-function setTimeoutForTimeFrameCB(login, n, success) {
-  logger.log(Date.now() + " login " + login + " fired.");
-  if (n == 1) {
-    emitter.emit("warmupEnd", success);
-  } else {
-    success();
+function questionTimeFrame(timeout, login, n, success, fail) {
+  switch (gameState.state) {
+    case 1:
+      logger.log('[' + login + ']' + ' failed for bad state ' + gameState.state);
+      fail();
+      break;
+    case 2:
+      // warmup
+      if (n == 1) {
+        setTimeout(questionTimeFrame, 20, timeout, login, n, success, fail);
+      } else {
+        logger.log('[' + login + ']' + ' failed for bad state ' + gameState.state + ' and question is ' + n);
+        fail();        
+      }
+      break;
+    case 3:
+      // questions
+      if (n == 1) {
+        success();
+      } else {
+        // TODO latence: timeout - xx ms ?
+        setTimeout(success, timeout);
+      }
+      break;
+    default:
+      logger.log('[' + login + ']' + ' failed for bad state ' + gameState.state);
+      fail();
   }
-};
+}
 
 /** Get question N **/
 exports.getQuestion = function(n, login, success, fail) {
@@ -289,10 +291,9 @@ exports.getQuestion = function(n, login, success, fail) {
   var sessionN = gameState.sessions[n];
 
   if (n <= numberOfQuestions && now >= sessionNMoins1 && now <= sessionN) {
-    setTimeoutForTimeFrame(sessionN - now, login, n, success);
+    questionTimeFrame(sessionN - now, login, n, success, fail);
   } else {
-    logger.log("failed for question : " + n + ', login:' + login);
-    logger.log("  Missing for " + (now - sessionNMoins1) + ' ms.');
+    logger.log('getQuestion ' + n + ', missing time frame for: ' + (now - sessionNMoins1) + ' ms.' + '[' + login + ']');
     fail();
   }
 };
@@ -307,9 +308,7 @@ exports.answerQuestion = function(n, login, success, fail) {
     // logger.log(login + " answers question : " + n)
     success();
   } else {
-    logger.log("n = " + n + ', login:' + login);
-    logger.log("  Missing for " + (now - (sessionNplus1 - gameState.synchrotime)) + ' ms.');
-
+    logger.log('answerQuestion ' + n + ' missing for ' + (now - (sessionNplus1 - gameState.synchrotime)) + ' ms.' + '[' + login + ']');
     fail();
   }
 };

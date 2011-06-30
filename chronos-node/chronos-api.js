@@ -155,7 +155,7 @@ function processGameXML(authentication_key, parameters) {
 };
 
 exports.login = function(req, res, params) {
-  logger.log(Date.now() + " > Http /api/login/" + params.mail);
+  // logger.log(Date.now() + " > Http /api/login/" + params.mail);
   chronosCouch.getDoc(params.mail, {
     error: function(data) {
       try {
@@ -202,11 +202,10 @@ exports.login = function(req, res, params) {
 };
 
 exports.getQuestion = function(req, res, n) {
-  var gamejson = gamemanager.getGame();
-  logger.log(Date.now() + "> Http /api/question/" + n + " / " + numberOfQuestions + ", login:" + req.jsonUser.login);
+  // logger.log(Date.now() + " > Http /api/question/" + n + " / " + numberOfQuestions + ", login:" + req.jsonUser.login);
   // preparing response
-  // First score is too slow, do not know why !?
-  if (n > numberOfQuestions) {
+  // TODO: First score is too slow, do not know why !?
+  if (n < 0 && n > numberOfQuestions) {
     // logger.log(n + "< Http /api/question/" + n + ", login:" + req.jsonUser.login);
     // logger.log("FAILED(400)");
     res.send(400);
@@ -230,7 +229,7 @@ exports.getQuestion = function(req, res, n) {
             success: function(score) {
               // logger.log("< Calling score q " + n + ", login:" + req.jsonUser.login);
               question.score = "" + score + "";
-              // logger.log("< Http /api/question/" + n + ", login:" + req.jsonUser.login);
+              // logger.log(Date.now() + " < Http /api/question/" + n + ", login:" + req.jsonUser.login);
               res.send(200, {}, question);
             }
           });
@@ -245,7 +244,7 @@ exports.getQuestion = function(req, res, n) {
 };
 
 exports.answerQuestion = function(req, res, n, params) {
-  // logger.log("> Http /api/anwser/" + n + ", login:" + req.jsonUser.login);
+  // logger.log(Date.now() + " > Http /api/anwser/" + n + ", login:" + req.jsonUser.login);
   gamemanager.answerQuestion(n, req.jsonUser.login,
     function() {
       var gamejson = gamemanager.getGame();
@@ -260,13 +259,13 @@ exports.answerQuestion = function(req, res, n, params) {
           answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
           answer.good_answer = q.choice[q.goodchoice - 1];
           answer.score = "" + score + "";
-          // logger.log("< Http /api/anwser/" + n + ", login:" + req.jsonUser.login);
+          // logger.log(Date.now() + " < Http /api/anwser/" + n + ", login:" + req.jsonUser.login);
           res.send(201, {}, answer);
         }
       });
     },
     function() {
-      logger.log("FAILED(400) /api/anwser/" + n + ", login:" + req.jsonUser.login);
+      // logger.log("FAILED(400) /api/anwser/" + n + ", login:" + req.jsonUser.login);
       res.send(400);
     }
   );
