@@ -12,8 +12,6 @@ var host = '127.0.0.1';
 var port = 5984;
 var couchdbaseburl = 'http://' + host + ':' + port;
 var couchdburl = couchdbaseburl + '/thechallenge';
-var username = 'superadmin';
-var password = 'supersecret';
 var saltvalue = '1';
 
 
