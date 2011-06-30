@@ -1,0 +1,32 @@
+# sudo vi /etc/profile
+export http_proxy=http://10.200.1.44:8080
+
+# sudo vi /etc/apt/apt.conf.d/proxy
+Acquire::http::Proxy "http://10.200.1.44:8080";
+
+# vi ~/.vimrc
+syntax enable
+:set background=dark
+:set expandtab
+:set tabstop=4
+
+# Unistall startup services
+services="ers-apache gemfire-gf01 gemfire-jmx gemfire-locator hyperic-agent hyperic-server rabbitmq-server tcserver-tc01"
+for service in $services; do 
+echo "Stopping $service"
+update-rc.d -f "$service" remove
+done
+
+# updating ubuntu
+sudo apt-get update && sudo apt-get upgrade --yes --fix-broken
+
+
+# sur usi1
+cd /usr/local
+wget http://mirrors.ukfast.co.uk/sites/ftp.apache.org//maven/binaries/apache-maven-3.0.3-bin.tar.gz 
+tar xzf apache-maven-3.0.3-bin.tar.gz
+ln -s apache-maven-3.0.3 apache-maven
+
+deb http://ppa.launchpad.net/git-core/ppa/ubuntu lucid main 
+deb-src http://ppa.launchpad.net/git-core/ppa/ubuntu lucid main 
+
