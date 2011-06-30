@@ -32,6 +32,7 @@ public class NettyServer {
     ChannelGroup channels;
     public final static int port = Integer.valueOf(System.getProperty("netty.port"));
     public final static int workerCount = Integer.valueOf(System.getProperty("netty.workerCount"));
+    public final static int executionHandlerCount = Integer.valueOf(System.getProperty("netty.executionHandlerCount"));
     public final static int countDown = Integer.valueOf(System.getProperty("chronos.countDown"));
 
     public void start() {
