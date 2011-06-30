@@ -25,7 +25,7 @@ if (chronosSettings.cluster.activate) {
     .use(cluster.cli())
     .use(cluster.repl(chronosSettings.cluster.repl))    
     .listen(chronosSettings.port, chronosSettings.hostname);
-  logger.log('Server running at http://' + chronosSettings.hostname + ':' + chronosSettings.port);
+    logger.log('Server running at http://' + chronosSettings.hostname + ':' + chronosSettings.port);
 } else {
   var chronos = require('./chronos');
   logger.log('Configure Node.js with *no* workers.');
