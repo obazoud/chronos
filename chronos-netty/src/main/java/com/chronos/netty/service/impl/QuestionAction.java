@@ -13,6 +13,8 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.chronos.netty.server.NettyServer;
 import com.chronos.netty.service.Action;
@@ -27,6 +29,7 @@ import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
  * @version $Id$
  */
 public class QuestionAction implements Action {
+    final Logger logger = LoggerFactory.getLogger(QuestionAction.class);
     JsonFactory jsonFactory = new JsonFactory();
     CountDownLatch latch = new CountDownLatch(NettyServer.countDown);
 
@@ -39,6 +42,7 @@ public class QuestionAction implements Action {
 
                 latch.countDown();
 //                TODO: Business stuff!
+                logger.info("COunt: " + latch.getCount());
                 latch.await();
 
                 final ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer(128);
