@@ -23,7 +23,7 @@ exports.createUser = function(req, res, params) {
           res.send(400, {}, data);
         },
         success: function(data, response) {
-          res.send(201, {}, data);
+          res.send(201);
         }
       });
     }
@@ -49,9 +49,9 @@ exports.newGame = function(req, res, params) {
   chronosCouch.putDoc('game', paramsJSON, {
     error: function(data, response) {
       if (JSON.parse(data).reason == 'Authentication key is not recognized.') {
-        res.send(401, {}, data);
+        res.send(401);
       } else {
-        res.send(400, {}, data);
+        res.send(400);
       }
     },
     success: function(data, response) {
@@ -65,13 +65,13 @@ exports.login = function(req, res, params) {
   chronosCouch.login(params.mail, params.password, {
     error: function(data, response) {
       if (data.error == 'unauthorized') {
-        res.send(401, {}, data);
+        res.send(401);
       }
-      res.send(400, {}, data);
+      res.send(400);
     },
     success: function(data, response) {
       var cookie = response.headers['set-cookie'][0].split(';')[0];
-      res.send(201, {"session_key":cookie}, data);
+      res.send(201, {"session_key":cookie}, '');
     }
   });
 };
@@ -84,7 +84,7 @@ exports.getQuestion = function(req, res, n) {
     success: function(data, response) {
       var json = JSON.parse(data);
       if (!json.userCtx.name) {
-        sys.puts(data);
+        // sys.puts(data);
         res.send(401, {}, data);
       } else {
         chronosCouch.getDoc('game', req.headers.session_key, {
