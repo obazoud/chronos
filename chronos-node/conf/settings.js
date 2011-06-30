@@ -12,7 +12,8 @@ exports.create = function() {
     tweet: true,
     cluster:  {
       activate : true,
-      workers: 2
+      workers: 2,
+      repl: 8888
     },
     couchdb: {
       host: '127.0.0.1',
