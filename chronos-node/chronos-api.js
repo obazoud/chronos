@@ -168,6 +168,7 @@ function processGameXML(authentication_key, parameters) {
 };
 
 exports.login = function(req, res, params) {
+  logger.log("> Http /api/login/" + params.mail);
   chronosCouch.getDoc(params.mail, {
     error: function(data) {
       if (JSON.parse(data).error == 'not_found') {
@@ -201,6 +202,7 @@ exports.login = function(req, res, params) {
                 },
                 success: function(exist) {
                   gamemanager.warmup(res);
+                  logger.log("< Http /api/login/" + params.mail);
                   res.send(201, {'Set-Cookie': 'session_key=' + sessionkey}, '');
                 }
               });
@@ -213,15 +215,18 @@ exports.login = function(req, res, params) {
 };
 
 exports.getQuestion = function(req, res, n) {
+  logger.log("> Http /api/question/" + n + ", login:" + req.jsonUser.login);
   gamemanager.getQuestion(n, req.jsonUser.login,
     function () {
       gamemanager.getGame({
         error: function(data) {
+          logger.log("FAILED(400)");
           res.send(400, {}, data);
         },
         success: function(gamejson) {
           gamemanager.getScore(req.jsonUser.login, {
             error: function(err) {
+              logger.log("FAILED(400)");
               res.send(400, {}, err);
             },
             success: function(score) {
@@ -232,6 +237,7 @@ exports.getQuestion = function(req, res, n) {
                 question['answer_' + (i+1)] = q.choice[i];
               }
               question.score = "" + score + "";
+              logger.log("< Http /api/question/" + n + ", login:" + req.jsonUser.login);
               res.send(200, {}, question);
             }
           });
@@ -239,22 +245,26 @@ exports.getQuestion = function(req, res, n) {
       });
     },
     function () {
+      logger.log("FAILED(400): /api/question/" + n + ", login:" + req.jsonUser.login);
       res.send(400);
     }
   );
 };
 
 exports.answerQuestion = function(req, res, n, params) {
+  logger.log("> Http /api/anwser/" + n + ", login:" + req.jsonUser.login);
   gamemanager.answerQuestion(n, req.jsonUser.login,
     function() {
         gamemanager.getGame({
           error: function(data) {
+            logger.log("FAILED(400)");
             res.send(400, {}, data);
           },
           success: function(gamejson) {
             var q = gamejson.gamesession.questions.question[n-1];
             gamemanager.updatingScore(req.jsonUser.lastname, req.jsonUser.fistname, req.jsonUser.login, n, params.answer, q.goodchoice, q.qvalue, {
               error: function(data) {
+                logger.log("FAILED(400)");
                 res.send(400, {}, data);
               },
               success: function(score) {
@@ -262,6 +272,7 @@ exports.answerQuestion = function(req, res, n, params) {
                 answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
                 answer.good_answer = q.choice[q.goodchoice - 1];
                 answer.score = "" + score + "";
+                logger.log("< Http /api/anwser/" + n + ", login:" + req.jsonUser.login);
                 res.send(201, {}, answer);
               }
             });
@@ -269,7 +280,8 @@ exports.answerQuestion = function(req, res, n, params) {
         });
     },
     function() {
-        res.send(400);
+      logger.log("FAILED(400) /api/anwser/" + n + ", login:" + req.jsonUser.login);
+      res.send(400);
     }
   );
 };
