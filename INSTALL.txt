@@ -39,14 +39,17 @@ cd /opt
 wget http://c3145442.r42.cf0.rackcdn.com/couchbase-server-enterprise_x86_64_1.1.deb
 dpkg -i couchbase-server-enterprise_x86_64_1.1.deb
 rm /etc/init.d/couchbase-server
+rm /etc/init.d/couchdb
 cd /etc/init.d
 ln -s /opt/couchbase-server/etc/init.d/couchdb /etc/init.d/couchdb
 vi /opt/couchbase-server/etc/default/couchdb
 Et mettre: COUCHDB_OPTIONS="-a /home/user/deploiement/install/couchdb/couchdb-`hostname`.ini"
-
+update-rc.d -f couchdb remove
 update-rc.d -f couchdb defaults
 cd /opt
-curl -x http://localhost:5984
+curl -iX GET http://localhost:5984
+curl -iX PUT -d "{}" http://localhost:5984/thechallenge/test
+curl -iX GET http://localhost:5984/thechallenge/test
 
 # sur usi1
 cd /usr/local
@@ -60,11 +63,17 @@ deb-src http://ppa.launchpad.net/git-core/ppa/ubuntu lucid main
 # redis
 http://library.linode.com/databases/redis/ubuntu-10.04-lucid
 adduser --system --no-create-home --disabled-login --disabled-password --group redis
+mkdir /var/lib/redis
 sudo chmod 755 /var/lib/redis
 sudo chmod 755 /var/lib/redis/dump.rdb
 # faire tous les fichiers
 ln -s /home/user/deploiement/install/etc/init.d/redis /etc/init.d/redis
 update-rc.d -f redis defaults
+chown -R redis:redis /var/lib/redis/
+redis-cli hset "test" toto 1
+redis-cli save
+OK
+redis-cli hget "test" toto
 
 # node.js
 ln -s /home/user/deploiement/install/etc/init.d/nodejs /etc/init.d/nodejs
