@@ -7,7 +7,7 @@ var security = require('./security.js');
 var ranking = require("./ranking.js");
 var tools = require("./tools.js");
 var gamemanager = require('./gamemanager.js');
-
+var logger = require('util');
 var authentication_key = '12IndR6r5V5618';
 
 // HAProxy
@@ -194,7 +194,7 @@ exports.login = function(req, res, params) {
               res.send(400);
             } else {
               var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
-              console.log("Login: " + params.mail);
+              logger.log("Login: " + params.mail);
               gamemanager.login(params.mail);
               gamemanager.warmup(res);
               res.send(201, {'Set-Cookie': 'session_key=' + sessionkey}, '');

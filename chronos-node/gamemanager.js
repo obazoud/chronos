@@ -154,8 +154,8 @@ emitter.on("sendQuestions",function(){
     sert la question n
 */
 exports.getQuestion = function(n, login, success, fail ) {
-   logger.log("getQuestion " + n + " -> " + login);
    var now = new Date().getTime();
+   logger.log("getQuestion " + n + " -> " + login);
 
     redis.hmget("context"
             ,"questionEncours"
@@ -172,7 +172,7 @@ exports.getQuestion = function(n, login, success, fail ) {
         if((questionEncours==1 && n==1)&& (now >= sessionNMoins1 && now <= sessionN)){
             logger.log("a user waiting for question : " + 1)
             responses[1].push(success);
-        }else if((n<=numberOfQuestions) && (now >= sessionNMoins1 && now <= sessionN)){
+        }else if((n<=numberOfQuestions) && (now >= sessionNMoins1 && now < sessionN)){
             logger.log("a user waiting for question : " + n)
             responses[n].push(success);
         }else{
@@ -196,7 +196,7 @@ exports.answerQuestion = function(n, login, success, fail) {
 		    var sessionN = parseInt(params[2]);
 		    var sessionNplus1 = parseInt(params[3]);
 
-            if(now >= sessionN && now <= (sessionNplus1- synchroTimeDuration)){
+            if(now >= sessionN && now < (sessionNplus1- synchroTimeDuration)){
 		    	logger.log("a user answers question : " + n)
 	                success();
 		    }else{
