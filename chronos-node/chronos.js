@@ -72,3 +72,8 @@ module.exports = http.createServer(function(req, res) {
   });
 });
 
+if (!chronosSettings.cluster.activate) {
+  logger.log('Configure Node.js with *no* workers.');
+  module.exports.listen(chronosSettings.port, chronosSettings.hostname);
+  logger.log('Server running at http://' + chronosSettings.hostname + ':' + chronosSettings.port);
+}
