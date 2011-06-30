@@ -4,5 +4,5 @@ set -e
 export MY_CONFIG_FILE=/home/user/deploiement/install/couchdb/couchdb-`hostname`.conf
 export COUCHDB_OPTIONS="-a $MY_CONFIG_FILE"
 
-/opt/couchbase-server/etc/init.d/couchdb
+/opt/couchbase-server/etc/init.d/couchdb "$@"
 
