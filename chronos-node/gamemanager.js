@@ -68,6 +68,7 @@ function GameState() {
       logger.log('State changed state: ' + this.state + ' -> ' + 3);
       this.state = 3;
       this.sessions[1] = now;
+      // TODO really need ?
       for (i = 2; i <= numberOfQuestions + 1; i++) {
         this.sessions[i] = this.sessions[i - 1] + this.questiontimeframe + this.synchrotime;
       }
@@ -203,32 +204,33 @@ emitter.on('warmupEnd', function(success) {
 
     // logger.log("timeFrames:" + gameState.sessions);
     // TODO : hsetnx ? exception is for index 1
-    redis.hmset("context",
-      "session_1", gameState.sessions[1],
-      "session_2", gameState.sessions[2],
-      "session_3", gameState.sessions[3],
-      "session_4", gameState.sessions[4],
-      "session_5", gameState.sessions[5],
-      "session_6", gameState.sessions[6],
-      "session_7", gameState.sessions[7],
-      "session_8", gameState.sessions[8],
-      "session_9", gameState.sessions[9],
-      "session_10", gameState.sessions[10],
-      "session_11", gameState.sessions[11],
-      "session_12", gameState.sessions[12],
-      "session_13", gameState.sessions[13],
-      "session_14", gameState.sessions[14],
-      "session_15", gameState.sessions[15],
-      "session_16", gameState.sessions[16],
-      "session_17", gameState.sessions[17],
-      "session_18", gameState.sessions[18],
-      "session_19", gameState.sessions[19],
-      "session_20", gameState.sessions[20],
-      "session_21", gameState.sessions[21],
-      function() {
-        logger.log("Initialize timeFrames done.");
-        // redis.save();
-    });
+    // Really need in redis ? -> recompute locally !
+    //redis.hmset("context",
+    //  "session_1", gameState.sessions[1],
+    //  "session_2", gameState.sessions[2],
+    //  "session_3", gameState.sessions[3],
+    //  "session_4", gameState.sessions[4],
+    //  "session_5", gameState.sessions[5],
+    //  "session_6", gameState.sessions[6],
+    //  "session_7", gameState.sessions[7],
+    //  "session_8", gameState.sessions[8],
+    //  "session_9", gameState.sessions[9],
+    //  "session_10", gameState.sessions[10],
+    //  "session_11", gameState.sessions[11],
+    //  "session_12", gameState.sessions[12],
+    //  "session_13", gameState.sessions[13],
+    //  "session_14", gameState.sessions[14],
+    //  "session_15", gameState.sessions[15],
+    //  "session_16", gameState.sessions[16],
+    //  "session_17", gameState.sessions[17],
+    //  "session_18", gameState.sessions[18],
+    //  "session_19", gameState.sessions[19],
+    //  "session_20", gameState.sessions[20],
+    //  "session_21", gameState.sessions[21],
+    //  function() {
+    //    logger.log("Initialize timeFrames done.");
+    //    redis.save();
+    //});
 
     logger.log("warmupEnd: First success.");
     success();
@@ -242,7 +244,6 @@ emitter.on('warmupEnd', function(success) {
   } else {
     // logger.log("warmupEnd: success.");
     if (success) {
-      // logger.log(success);
       success();
     }
   }
@@ -260,7 +261,8 @@ function setTimeoutForTimeFrame1(timeout, login,  n, success, fail) {
 function setTimeoutForTimeFrameCB(login, n, success, fail) {
   // logger.log("------> time out for answering question : (" + login + ") " + n);
   emitter.emit("questionEncours" + n, n);
-  emitter.emit("sendQuestions", login, n, success, fail);
+  // emitter.emit("sendQuestions", login, n, success, fail);
+  success();
 };
 
 function setTimeoutForTimeFrameCB1(login, n, success, fail) {
@@ -278,7 +280,7 @@ for (var k = 1; k <= 20; k++) {
   });
 }
 
-emitter.on("sendQuestions", function(login, n, success, fail) {
+//emitter.on("sendQuestions", function(login, n, success, fail) {
   // logger.log(login + ": sending question (" + n + ") : " + gameState.questionEncours + "/" + numberOfQuestions);
 
   // TODO still need ?
@@ -287,10 +289,10 @@ emitter.on("sendQuestions", function(login, n, success, fail) {
 //    emitter.emit("endOfGame");
 //    fail();
 //  } else {
-    success();
+//    success();
 //  }
-
-});
+//
+//});
 
 /** Get question N **/
 exports.getQuestion = function(n, login, success, fail) {
@@ -303,12 +305,11 @@ exports.getQuestion = function(n, login, success, fail) {
   // logger.log(login + ": sessionNMoins1: " + new Date(sessionNMoins1));
   // logger.log(login + ": sessionN: " + new Date(sessionN));
   if (n <= numberOfQuestions && now >= sessionNMoins1 && now <= sessionN) {
-    timeout = sessionN - now;
     // logger.log(login + ": is waiting for question : " + n + ', timeout ' + timeout + ' ms.');
     if (n == 1) {
-      setTimeoutForTimeFrame1(timeout, login, n, success, fail);
+      setTimeoutForTimeFrame1(sessionN - now, login, n, success, fail);
     } else {
-      setTimeoutForTimeFrame(timeout, login, n, success, fail);
+      setTimeoutForTimeFrame(sessionN - now, login, n, success, fail);
     }
   } else {
     logger.log("failed for question : " + n);
@@ -331,9 +332,9 @@ exports.answerQuestion = function(n, login, success, fail) {
       logger.log("n = " + n + ', login:' + login);
       logger.log("questionEncours = " + questionEncours);
       logger.log("  now = " + new Date(now) );
-      logger.log("  quizSessions[n] = " + new Date(sessionN));
-      logger.log("  quizSessions[n+1] = " + new Date(sessionNplus1));
-      logger.log("  quizSessions[n+1] - synchro  = " + new Date(sessionNplus1 - gameState.synchrotime));
+      logger.log("  sessions[n] = " + new Date(sessionN));
+      logger.log("  sessions[n+1] = " + new Date(sessionNplus1));
+      logger.log("  sessions[n+1] - synchro  = " + new Date(sessionNplus1 - gameState.synchrotime));
 
       fail();
       if (n =! questionEncours) {
