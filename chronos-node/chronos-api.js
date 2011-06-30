@@ -134,7 +134,14 @@ exports.getQuestion = function(req, res, n) {
         res.send(400, {}, data);
       })
       .on('complete', function (data, response) {
-        res.send(200, {}, data);
+        var q = JSON.parse(data).gamesession.questions.question[n-1];
+        var question = {};
+        question.question = q.label;
+        for (i=0; i<q.choice.length;i++) {
+          question['answer_' + (i+1)] = q.choice[i];
+        }
+        question.score = 12345;
+        res.send(200, {}, question);
       });
     }
   });
