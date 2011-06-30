@@ -290,7 +290,7 @@ exports.getQuestion = function(n, login, success, fail) {
   var sessionNMoins1 = gameState.sessions[n - 1];
   var sessionN = gameState.sessions[n];
 
-  if (n <= numberOfQuestions && now >= sessionNMoins1 && now <= sessionN) {
+  if (now >= sessionNMoins1 && now <= sessionN) {
     questionTimeFrame(sessionN - now, login, n, success, fail);
   } else {
     logger.log('getQuestion ' + n + ', missing time frame for: ' + (now - sessionNMoins1) + ' ms. ' + '[' + login + ']');
