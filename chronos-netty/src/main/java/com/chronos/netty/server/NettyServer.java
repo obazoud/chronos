@@ -15,6 +15,8 @@ import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.ChannelGroupFuture;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.jboss.netty.logging.InternalLoggerFactory;
+import org.jboss.netty.logging.Slf4JLoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +33,7 @@ public class NettyServer {
     public final static int port = Integer.valueOf(System.getProperty("netty.port"));
     public final static int workerCount = Integer.valueOf(System.getProperty("netty.workerCount"));
     public final static int countDown = Integer.valueOf(System.getProperty("chronos.countDown"));
-    
+
     public void start() {
         logger.info("HTTP-Netty-Server: starting on port {}.", port);
 
@@ -74,6 +76,9 @@ public class NettyServer {
     }
 
     public void initialize() throws Exception {
+        // logger
+        InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
+
         // parse json sample
         // to force classloading
         JsonFactory jsonFactory = new JsonFactory();
