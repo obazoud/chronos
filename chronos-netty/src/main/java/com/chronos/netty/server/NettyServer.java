@@ -3,6 +3,9 @@ package com.chronos.netty.server;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonParser;
+import org.codehaus.jackson.JsonToken;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.group.ChannelGroup;
@@ -53,8 +56,9 @@ public class NettyServer {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         final NettyServer netty = new NettyServer();
+        netty.initialize();
         netty.start();
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
             @Override
@@ -62,5 +66,19 @@ public class NettyServer {
                 netty.stop();
             }
         }));
+    }
+
+    public void initialize() throws Exception {
+        // parse json sample
+        // to force classloading
+        JsonFactory jsonFactory = new JsonFactory();
+        byte[] json = "{\"user_mail\" : \"string\", \"authentication_key\" : \"string\"}".getBytes();
+        JsonParser jp = jsonFactory.createJsonParser(json);
+        jp.nextToken();
+        while (jp.nextToken() != JsonToken.END_OBJECT) {
+            jp.nextToken();
+            jp.getCurrentName();
+            jp.getText();
+        }
     }
 }
