@@ -7,6 +7,8 @@ var security = require('./security.js');
 var ranking = require("./ranking.js");
 var gamemanager = require('./gamemanager.js');
 var logger = require('util');
+var chronosSettings = require('./conf/settings.js').create();
+
 var authentication_key = '12IndR6r5V5618';
 
 // nbquestions : le nombre de questions à jouer. 
@@ -292,7 +294,11 @@ exports.getRanking = function(req, res) {
           success: function(numberOfPlayers) {
             var message = 'Notre application supporte ' + numberOfPlayers + ' joueurs #challengeUSI2011';
             logger.log('Tweet: ' + message);
-            twitterapi.tweet(message);
+            if (chronosSettings.tweeet) {
+              twitterapi.tweet(message);
+            } else {
+              logger.log('Tweet settings is: ' + chronosSettings.tweeet);
+            }
           }
         });
       }

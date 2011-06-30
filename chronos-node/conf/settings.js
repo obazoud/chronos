@@ -9,6 +9,7 @@ exports.create = function() {
     hostname: '127.0.0.1',
     port: 8080,
     uncaughtException: true,
+    tweet: true,
     cluster:  {
       activate : true,
       workers: 2
@@ -21,11 +22,14 @@ exports.create = function() {
   };
 
   // pierre
-  chronosSettings.pierre = {};
+  chronosSettings.pierre = {
+    tweet: false
+  };
 
   // olivier
   chronosSettings.olivier = {
     uncaughtException: false,
+    tweet: false,
     cluster:  {
       activate : false,
       workers: 2
@@ -33,7 +37,9 @@ exports.create = function() {
   };
 
   // slim
-  chronosSettings.slim = {};
+  chronosSettings.slim = {
+      tweet: false,
+  };
 
   // vfabricXX
   for (var i = 1; i < 5; i++) {
