@@ -1,4 +1,5 @@
 var os = require('os');
+var argv = require('optimist').argv;
 
 // Settings object
 exports.create = function() {
@@ -41,6 +42,29 @@ exports.create = function() {
     }
   };
 
+  // ubuntu
+  for (var u = 1; u < 5; u++) {
+   chronosSettings.['ubuntu' + u] = {
+      hostname: '172.16.111.129',
+      port: 8080 + u,
+      uncaughtException: false,
+      tweet: false,
+      cluster:  {
+        activate : false,
+        workers: 2
+      },
+      couchdb: {
+        host: '172.16.111.129',
+        port: 5984,
+        database: 'thechallenge'
+      },
+      redis: {
+        host: '172.16.111.129',
+        port: 6379
+      }
+    };
+  }
+
   // slim
   chronosSettings.slim = {
       tweet: false,
@@ -67,7 +91,7 @@ exports.create = function() {
       }
     };
   }
-  chronosSettings['usi' + i] = {
+  chronosSettings['usi1'] = {
     hostname: '192.168.1.201',
     port: 8080,
     uncaughtException: true,
@@ -82,7 +106,13 @@ exports.create = function() {
     }
   };
 
-  return merge(defaults, chronosSettings[os.hostname()]);
+  if (argv.user) {
+    logger.log('Use settings with user: ' + argv.user);
+    return merge(defaults, chronosSettings[argv.user]);
+  } else {
+    logger.log('Use settings with host name: ' + os.hostname());
+    return merge(defaults, chronosSettings[os.hostname()]);
+  }
 };
 
 function merge(obj1, obj2) {
