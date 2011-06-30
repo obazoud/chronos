@@ -1,6 +1,5 @@
 var sys = require('sys');
 var os = require('os');
-var uuid = require('node-uuid');
 var twitterapi = require('./twitter/twitter-api.js');
 var xml2json = require('./externals/xml2json.js');
 var chronosCouch = require('./chronos-couchdb-api.js');
@@ -106,7 +105,6 @@ exports.mail = function(req, res, mail) {
 
 exports.newGame = function(req, res, params) {
   var paramsJSON = processGameXML(params.authentication_key, params.parameters);
-  paramsJSON.game_id = uuid().toLowerCase().substring(0, 8);
 
   chronosCouch.head('game', {
     error: function(data) {
