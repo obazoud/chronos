@@ -269,13 +269,13 @@ function warmupLoop () {
 /** Timer Question K **/
 function questionTimer(k) {
   var start = Date.now();
+
   var count = gameState.pendings[k].length;
   for (var i = 0; i < count; i++) {
     var ctx = gameState.pendings[k][i];
-    // TODO ctx.req.resume();
+    ctx.req.resume();
     ctx.res.send(200, {}, ctx.question);
     ctx.fired = true;
-    // TODO ctx.res.end();
   }
 
   logger.log('Fire question: ' + k + ' (' + count + ') in ' + (Date.now() - start) + ' ms.');
@@ -284,60 +284,43 @@ function questionTimer(k) {
 /** get question N **/
 exports.getQuestion = function(req, res, n) {
   var now = req.incomeDate;
+  var login = req.jsonUser.login;
   var sessionNMoins1 = gameState.sessions[n - 1];
   var sessionN = gameState.sessions[n];
 
   if (now >= sessionNMoins1 && now <= sessionN) {
-    if (n == 1) {
-      var q = gameState.game.gamesession.questions.question[n - 1];
-      var question = {};
-      question.question = q.label;
-      for (var j = 0; j < q.choice.length; j++) {
-        question['answer_' + (j+1)] = q.choice[j];
-      }
-      question.score = "" + 0 + "";
-      var ctx = {
-          n: n,
-          timestamp: now,
-          req: req,
-          res: res,
-          question: question
-      };
-      gameState.pushQuestion(ctx);
-      var t = Date.now() - now;
-      if (t > 350) {
-        logger.log('getQuestion ' + n + ' tooks ' + (Date.now() - now) + ' ms. ' + '[' + req.jsonUser.login + ']');
-      }
-    } else {
-      this.getScore(req.jsonUser.login, {
-        error: function(err) {
-          res.send(400);
-        },
-        success: function(score) {
-          var q = gameState.game.gamesession.questions.question[n - 1];
-          var question = {};
-          question.question = q.label;
-          for (var j = 0; j < q.choice.length; j++) {
-            question['answer_' + (j+1)] = q.choice[j];
-          }
-          question.score = "" + score + "";
-          var ctx = {
-              n: n,
-              timestamp: now,
-              req: req,
-              res: res,
-              question: question
-          };
-          gameState.pushQuestion(ctx);
-          // TODO
-          //req.connection.setTimeout(gameState.questiontimeframe + gameState.synchrotime);
-          //req.connection.on('timeout', function() {
-          //    ctx = {};
-          //});
-          // req.pause();
+    redis.hget("players", login + ":score", function(err, reply) {
+      if (err)  {
+        res.send(400);
+      } else {
+        var score = 0;
+        if (reply != null) {
+          score = parseInt(reply);
         }
-      });
-    }
+
+        var q = gameState.game.gamesession.questions.question[n - 1];
+        var question = {};
+        question.question = q.label;
+        for (var j = 0; j < q.choice.length; j++) {
+          question['answer_' + (j+1)] = q.choice[j];
+        }
+        question.score = "" + score + "";
+        var ctx = {
+            n: n,
+            timestamp: now,
+            req: req,
+            res: res,
+            question: question
+        };
+        gameState.pushQuestion(ctx);
+        // TODO
+        //req.connection.setTimeout(gameState.questiontimeframe + gameState.synchrotime);
+        //req.connection.on('timeout', function() {
+        //    ctx = {};
+        //});
+        req.pause();
+      }
+    });
   } else {
     logger.log('getQuestion ' + n + ', missing time frame for: ' + (now - sessionNMoins1) + ' ms. ' + '[' + req.jsonUser.login + ']');
     res.send(400);
@@ -348,86 +331,59 @@ exports.getQuestion = function(req, res, n) {
 exports.answerQuestion = function(req, res, n, params) {
   var now = req.incomeDate;
   var login = req.jsonUser.login;
+  var firstname = req.jsonUser.firstname;
+  var lastname = req.jsonUser.lastname;
+
   var sessionN = gameState.sessions[n];
   var maxTime = gameState.sessions[n + 1] - gameState.synchrotime;
 
   if (now >= sessionN && now <= maxTime) {
     var q = gameState.game.gamesession.questions.question[n-1];
-    this.updatingScore(req.jsonUser.lastname, req.jsonUser.firstname, login, n, params.answer, q.goodchoice, q.qvalue, {
-      error: function(data) {
-        res.send(400);
-      },
-      success: function(score) {
-      var answer = {};
-      answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
-      answer.good_answer = q.choice[q.goodchoice - 1];
-      answer.score = "" + score + "";
 
-      res.send(201, {}, answer);
+    redis.hmget("players", login + ":score", login + ':lastbonus', function(err, replies) {
+      if (err) {
+        res.send(400);
+      } else {
+        var score = 0;
+        var lastbonus = 0;
+
+        if (replies[0]) {
+          score = parseInt(replies[0]);
+        }
+        if (replies[1]) {
+          lastbonus = parseInt(replies[1]);
+        }
+
+        // TODO : checks if bonus is correct, answer last question ?
+
+        if (params.answer == q.goodchoice) {
+          var bonus = lastbonus;
+          lastbonus = lastbonus + 1;
+          var inc = q.qvalue + bonus;
+          score = score + inc;
+        } else {
+          lastbonus = 0;
+        }
+
+        var token = JSON.stringify({"lastname":lastname, "firstname":firstname, "mail":login});
+        // logger.log("Score " + login + ": " + token + ", " + score);
+        redis.multi()
+          .hmset("players", login + ":score", score, login + ':lastbonus', lastbonus, login + ':q:' + n, params.answer)
+          .zadd("scores", -score, token)
+          .exec();
+
+        var answer = {};
+        answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
+        answer.good_answer = q.choice[q.goodchoice - 1];
+        answer.score = "" + score + "";
+
+        res.send(201, {}, answer);
       }
     });
   } else {
     logger.log('answerQuestion ' + n + ' missing for ' + (now - maxTime) + ' ms. ' + '[' + login + ']');
     res.send(400);
   }
-};
-
-/** Get Score **/
-exports.getScore = function(login, options) {
-  redis.hget("players", login + ":score", function(err, reply) {
-    if (err) {
-      if (options && options.error) {
-        options.error(err);
-      }
-    } else {
-      // logger.log("Get score: " + reply)
-      if (options && options.success) {
-        if (reply == null) {
-          options.success(0);
-        } else {
-          options.success(parseInt(reply));
-        }
-      }
-    }
-  });
-}
-
-/** Updating Score with good/bad answer question and bonus **/
-exports.updatingScore = function(lastname, firstname, login, question, reponse, correct, questionValue, options) {
-  redis.hmget("players", login + ":score", login + ':lastbonus', function(err, replies) {
-    if (err) {
-      if (options && options.error) {
-        options.error(err);
-      }
-    } else {
-      var score = 0;
-      var lastbonus = 0;
-
-      if (replies[0]) {
-        score = parseInt(replies[0]);
-      }
-      if (replies[1]) {
-        lastbonus = parseInt(replies[1]);
-      }
-
-      // TODO : checks if bonus is correct, answer last question ?
-
-      if (reponse == correct) {
-        var bonus = lastbonus;
-        lastbonus = lastbonus + 1;
-        var inc = questionValue + bonus;
-        score = score + inc;
-      } else {
-        lastbonus = 0;
-      }
-
-      var token = JSON.stringify({"lastname":lastname, "firstname":firstname, "mail":login});
-      // logger.log("Score " + login + ": " + token + ", " + score);
-      redis.hmset("players", login + ":score", score, login + ':lastbonus', lastbonus, login + ':q:' + question, reponse);
-      redis.zadd("scores", -score, token);
-      options.success(score);
-    }
-  });
 };
 
 exports.getGame = function() {
