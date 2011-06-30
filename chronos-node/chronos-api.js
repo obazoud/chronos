@@ -279,19 +279,21 @@ exports.audit = function(req, res, params) {
       res.send(400, {}, data);
     },
     success: function(player) {
+      var playerJson = JSON.parse(player);
       chronosCouch.getDoc('game', {
         error: function(data) { res.send(400, {}, data); },
         success: function(game) {
+          var gameJson = JSON.parse(game);
           var audit = {};
           audit.user_answers = new Array();
           audit.good_answers = new Array();
-          var question = JSON.parse(game).gamesession.questions.question;
+          var question = gameJson.gamesession.questions.question;
           for (i=0; i<question.length; i++) {
             audit.good_answers.push(question[i].goodchoice);
           }
-          var user_questions = JSON.parse(player).questions[game.game_id];
-          for (i=0; i<user_questions.length; i++) {
-            audit.user_answers[user_questions[i] - 1] = JSON.parse(player).responses[game.game_id][i];
+          var user_questions = playerJson.questions[gameJson.game_id];
+          for (j=0; j<user_questions.length; j++) {
+            audit.user_answers[user_questions[j] - 1] = playerJson.reponses[gameJson.game_id][j];
           }
           res.send(200, {}, audit);
         }
@@ -300,7 +302,7 @@ exports.audit = function(req, res, params) {
   });
 };
 
-exports.audit = function(req, res, n, params) {
+exports.auditN = function(req, res, n, params) {
   // TODO
   /*
   if (params.authentication_key is invalid) {
@@ -312,18 +314,20 @@ exports.audit = function(req, res, n, params) {
       res.send(400, {}, data);
     },
     success: function(player) {
+      var playerJson = JSON.parse(player);
       chronosCouch.getDoc('game', {
         error: function(data) {
           res.send(400, {}, data);
         },
         success: function(game) {
+          var gameJson = JSON.parse(game);
           var audit = {};
-          audit.good_answer = JSON.parse(game).gamesession.questions.question[n-1].goodchoice;
-          audit.question = JSON.parse(game).gamesession.questions.question[n-1].label;
-          var user_questions = JSON.parse(player).questions[game.game_id];
+          audit.good_answer = gameJson.gamesession.questions.question[n-1].goodchoice;
+          audit.question = gameJson.gamesession.questions.question[n-1].label;
+          var user_questions = playerJson.questions[gameJson.game_id];
           for (i=0; i<user_questions.length; i++) {
             if (user_questions[i] == n) {
-              audit.user_answer = JSON.parse(player).reponses[game.game_id][i];
+              audit.user_answer = playerJson.reponses[gameJson.game_id][i];
               break;
             }
           }
