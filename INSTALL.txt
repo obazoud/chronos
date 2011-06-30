@@ -20,6 +20,7 @@ done
 # updating ubuntu
 sudo apt-get update && sudo apt-get upgrade --yes --fix-broken
 sudo apt-get install curl
+sudo apt-get install apache2-utils
 
 # sur usi1
 cd /usr/local
