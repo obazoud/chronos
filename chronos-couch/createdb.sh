@@ -11,7 +11,7 @@ DB_URL=http://$HOST/thechallenge
 curl -X DELETE $DB_URL
 curl -X PUT $DB_URL
 
-curl  -s -i -X PUT $DB_URL/_design/warmup -d @design/warmup.json
+#curl  -s -i -X PUT $DB_URL/_design/warmup -d @design/warmup.json
 
 curl -X PUT $DB_URL/game1 -d '{"gamers":0,"type":"warmup","maxGamers":0,"warmupStart":0,"warmupEnd":0}'
 
