@@ -274,21 +274,17 @@ emitter.on("sendQuestions", function(login, n, success, fail) {
   });
 });
 
-/*
-    sert la question n
-*/
+/** Get question N **/
 exports.getQuestion = function(n, login, success, fail) {
   var now = new Date().getTime();
   logger.log("getQuestion " + n + " -> " + login);
 
   redis.hmget("context",
     "questionEncours",
-    "session_" + (n-1),
-    "session_" + n,
-    function(err,params) {
+    function(err, params) {
       var questionEncours = parseInt(params[0]);
-      var sessionNMoins1 = parseInt(params[1]);
-      var sessionN = parseInt(params[2]);
+      var sessionNMoins1 = gameState.sessions[n - 1];
+      var sessionN = gameState.sessions[n - 1];
 
       logger.log(login + ": sessionNMoins1: " + new Date(sessionNMoins1));
       logger.log(login + ": sessionN: " + new Date(sessionN));
