@@ -5,7 +5,7 @@ var logger = require('util');
 
 // TODO Think about multiples nodes instances
 // TODO Think about multiples servers
-// TODO pas assez de temps pour questionEncours
+// TODO pas assez de temps pour questionEncours avec redis compliqué
 
 // nbquestions : le nombre de questions à jouer. 
 // Doit être inférieur ou égal au nombre de questions présentes dans le fichier (élement <usi:questions>). 
@@ -32,8 +32,8 @@ publisher.on("error", function (err) {
 // state 1: game starts
 // state 2: warmup starts
 // state 3: warmup ends
-// state 4: questions
-// state 5: game ends
+// state 4: questionsEnds
+// state 5: ??
 function GameState() {
   this.game = {};
   this.gameFragments = {};
@@ -77,6 +77,7 @@ function GameState() {
     if (this.state == 1) {
       logger.log('State changed state: ' + this.state + ' -> ' + 2);
       this.state = 2;
+      redis.hset("context", "state", this.state);
       this.warmupStartDate = now;
       this.warmupEndDate = now + parseInt(this.logintimeout);
       this.sessions[0] = this.warmupStartDate;
@@ -91,6 +92,7 @@ function GameState() {
     if (this.state == 2) {
       logger.log('State changed state: ' + this.state + ' -> ' + 3);
       this.state = 3;
+      redis.hset("context", "state", this.state);
       this.sessions[1] = now;
       // TODO really need ?
       for (i = 2; i <= numberOfQuestions + 1; i++) {
@@ -98,6 +100,16 @@ function GameState() {
       }
     } else {
       logger.log('Already in state 3');
+    }
+  };
+
+  this.questionsEnds = function(now) {
+    if (this.state == 3) {
+      logger.log('State changed state: ' + this.state + ' -> ' + 4);
+      this.state = 5;
+      redis.hset("context", "state", this.state);
+    } else {
+      // logger.log('Already in state 4');
     }
   };
 
@@ -242,40 +254,12 @@ function setTimeoutForTimeFrameCB(login, n, success) {
   if (n == 1) {
     emitter.emit("warmupEnd", success);
   } else {
-    // TODO questionEncours
-    // emitter.emit("questionEncours" + n, n);
-    // emitter.emit("sendQuestions", login, n, success);
+    if (gameState.questionEncours >= numberOfQuestions) {
+      gameState.questionsEnds();
+    }
     success();
   }
 };
-
-// TODO with a new game, register again ?
-// for (var k = 1; k <= 20; k++) {
-//   emitter.once("questionEncours" + k, function (n) {
-//     gameState.questionEncours = n;
-//     logger.log('Once questionEncours ' + n);
-
-    // TODO and others node do that ?
-    // redis.hincrby("context", "questionEncours", 1);
-
-//   });
-// }
-
-//emitter.on("sendQuestions", function(login, n, success, fail) {
-  // logger.log(login + ": sending question (" + n + ") : " + gameState.questionEncours + "/" + numberOfQuestions);
-
-  // TODO still need ?
-  // End of party when first ranking ?
-  // End of lastest session/frame ?
-//  if (gameState.questionEncours > numberOfQuestions) {
-//    logger.log(login + ": emitting event for end of game (no more questions)");
-//    emitter.emit("endOfGame");
-//    fail();
-//  } else {
-//    success();
-//  }
-//
-//});
 
 /** Get question N **/
 exports.getQuestion = function(n, login, success, fail) {
@@ -313,12 +297,6 @@ exports.answerQuestion = function(n, login, success, fail) {
     fail();
   }
 };
-
-/* TODO ?
-emitter.on("endOfGame",function() {
-  logger.log("event endOfGame recu.");
-});
-*/
 
 /** Get Score **/
 exports.getScore = function(login, options) {
