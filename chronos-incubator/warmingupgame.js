@@ -52,34 +52,80 @@ var synchroTimeDuration = 2000; // dans redis
 
 var counter = 1; // dans redis
 
-var dateFinWarmup = new Date().getTime() + dureeWarmup; // dans redis
+//var dateFinWarmup = new Date().getTime() + dureeWarmup; // dans redis
 var responses = [];
 responses[0] = [];
 
 var quizSessions = []; // dans redis
 var currentQuestion = 0; // dans redis
 
+// TODO a renommer
+function gameState(beforeStartCallback,afterStartCallback,params){
+    redis.hmget("config","dateFinWarmup","maxGamers","numberOfPlayers",function(err,replies){
+        var dateFinWarmup = replies[0];
+        var maxGamers = replies[1];
+        var numberOfPlayers = replies[2];
+        if(numberOfPlayers >= maxGamers || new Date().getTime() >= dateFinWarmup){
+            afterStartCallback(params);    
+        }else{
+            beforeStartCallback(params);
+        }
+    });
+}
 
-/*
+function initGame(/*config*/){
+    
+    redis.hmset("config"
+                        ,"maxGamers",15
+                        ,"dateFinWarmup", (new Date().getTime() + dureeWarmup)
+                        );    
+                        
+    redis.set("numberOfPlayers",0);
+    /**
+    Timer active une tache de fond qui s execute tous les X ms
+    pour verfier si on depasser le temps de warmup ou atteint le nombre
+    maximum de joueurs.
+    */    
+    var timerId = setInterval(function(){
+        gameState(function(){
+            console.log("warmup en cours...");
+        }
+        ,function(){
+            emitter.emit('warmupEnd',timerId);
+        }
+        ,null);
+        
+    },1000);
+    //redis.set("timerId",timerId); TODO il fo recupere l id de cet objet avant de le persister
+}
+// TODO il fo garantir que les donnees soient ds redis avant leur utilisation !
+initGame();
+
+/**
 gere les demandes d inscription au quiz
 */
 function warmup(req,resp){
      restler.get('http://127.0.0.1:8080/test')
        .on('complete', function(data) {
-            if(!gameStarted()){
-                counter++;
+            gameState(function(){
                 responses[0].push(resp);
-                if(counter==maxGamers){
-                    emitter.emit('warmupEnd',timerId);
-                }
-            }else{ // TODO a verfifier
+                redis.incr("numberOfPlayers",function(err,counter){
+                    redis.hmget("config","maxGamers",function(err,max){
+                        if(counter==max){
+                            emitter.emit('warmupEnd',timerId);
+                        }    
+                    });
+                });
+            }
+            ,function(){
                 console.log("sending immediatly");
                 resp.send(400,{},"temps de reponse depasse!");
             }
+            ,null);
         });
 }
 
-/*
+/**
 gere l evenement d arret de la phase de warmup en :
     1. arretant le timer
     2. repondant a tout les utilisateurs
@@ -91,7 +137,7 @@ emitter.once('warmupEnd',function(timerId){
     
     responses[0].forEach(function(resp){
         console.log("sending...");
-        resp.send(200,{},"question 1");    
+        resp.send(200,{},"que le jeu commence");    
     });
     responses[0] = [];// verfifier si avec le comportement asynch ca peux poser des problemes
     
@@ -103,28 +149,20 @@ emitter.once('warmupEnd',function(timerId){
     currentQuestion = 1;
 });
 
-/*
-Timer active une tache de fond qui s execute tous les X ms
-pour verfier si on depasser le temps de warmup ou atteint le nombre
-maximum de joueurs.
-*/
-var timerId = setInterval(function(){
-        if(gameStarted()){
-            emitter.emit('warmupEnd',timerId);
-        }else{
-            console.log("waiting... " + counter);
-        }    
-},1000);
-
-function gameStarted(){
-    return (counter == maxGamers || new Date().getTime() >= dateFinWarmup);
-}
 
 
 /*
 
 */
 function getQuestion(req,resp,n){
+    
+    gameState(function(){
+    
+    }
+    ,function(){
+    
+    },
+    null);
     var now = new Date().getTime();
     // voir avec pierre les cas
     if(!gameStarted()){
@@ -139,6 +177,22 @@ function getQuestion(req,resp,n){
         resp.send(400,{},"vous avez rate la question " + n);
     }
 }
+
+/**
+ exemple d utilisation de cette fonction
+ 
+  gameState(function(params){
+        console.log("before : " + params.signal);
+    }
+    ,function(params){
+        console.log("after : " + params.signal);
+    }
+    , {signal:"test"}
+);
+
+*/
+
+
 
 
 
