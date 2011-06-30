@@ -1,7 +1,10 @@
 package com.chronos.netty.server;
 
 import java.net.InetSocketAddress;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Executor;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonParser;
@@ -25,12 +28,14 @@ public class NettyServer {
     final Logger logger = LoggerFactory.getLogger(NettyServer.class);
     ServerBootstrap bootstrap;
     ChannelGroup channels;
-    int port = 8080;
-
+    public final static int port = 8080;
+    public final static int workerCount = 1510;
+    public final static int countDown = 1500;
+    
     public void start() {
         logger.info("HTTP-Netty-Server: starting on port {}.", port);
-        bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),
-                Executors.newCachedThreadPool()));
+
+        bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(bossExecutor(), workerExecutor(), workerCount));
         bootstrap.setPipelineFactory(new HttpServerPipelineFactory());
         bootstrap.setOption("child.tcpNoDelay", true);
         bootstrap.setOption("child.keepAlive", true);
@@ -49,7 +54,7 @@ public class NettyServer {
                 channel.unbind();
             }
             final ChannelGroupFuture future = channels.close();
-            future.awaitUninterruptibly(120 * 1000);
+            future.awaitUninterruptibly(10 * 1000);
             bootstrap.releaseExternalResources();
         } finally {
             logger.info("HTTP-Netty-Server: stopped.");
@@ -80,5 +85,13 @@ public class NettyServer {
             jp.getCurrentName();
             jp.getText();
         }
+    }
+
+    private Executor bossExecutor() {
+        return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+    }
+
+    private Executor workerExecutor() {
+        return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
     }
 }

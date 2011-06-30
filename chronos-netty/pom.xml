@@ -11,11 +11,6 @@
   <name>Chronos Netty</name>
   <dependencies>
     <dependency>
-      <groupId>com.chronos</groupId>
-      <artifactId>chronos-biz</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.jboss.netty</groupId>
       <artifactId>netty</artifactId>
     </dependency>

@@ -50,7 +50,7 @@
             </elementProp>
             <elementProp name="result.output" elementType="Argument">
               <stringProp name="Argument.name">result.output</stringProp>
-              <stringProp name="Argument.value">/Users/pmage/Workspace/chronos/jmeter/result.csv</stringProp>
+              <stringProp name="Argument.value">/tmp/jmeter/chronos.csv</stringProp>
               <stringProp name="Argument.metadata">=</stringProp>
             </elementProp>
           </collectionProp>
