@@ -33,9 +33,10 @@ if (process.argv.indexOf('--no-cluster') > -1) {
     applyCluster = false;
 }
 
-process.on('uncaughtException', function(err) {
-  console.log(err);
-});
+//TODO remettre ca
+//process.on('uncaughtException', function(err) {
+//  console.log(err);
+//});
 
 var server = http.createServer(function(req, res) {
 

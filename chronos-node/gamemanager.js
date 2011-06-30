@@ -18,8 +18,6 @@ var qTimer;
 
 exports.initGame = function(config){
     
-	
-    console.log(config);
     redis.hmset("context"
                         , "maxGamers",parseInt(config.nbusersthreshold)
                         , "numberOfPlayers",0
@@ -62,11 +60,7 @@ function gameState(beforeStartCallback,afterStartCallback,params){
         if (dateFinWarmup == null || numberOfPlayers ==  null) {
             console.log("date fin w et/ou num player nulls");
         } else {        
-	     //console.log("dateFinWarmup = " + dateFinWarmup);
-             //console.log("numberOfPlayers = " + numberOfPlayers);
-             //console.log("Now     = " + new Date().getTime());
-             //console.log("Jours ayant demandes la question 1     = " + responses[1].length );
-            if( ( numberOfPlayers >= maxGamers && responses[1].length >= maxGamers ) || new Date().getTime() >= dateFinWarmup) {
+          if( ( numberOfPlayers >= maxGamers && responses[1].length >= maxGamers ) || new Date().getTime() >= dateFinWarmup) {
                 afterStartCallback(params);    
             }else{
                 beforeStartCallback(params);
@@ -100,6 +94,8 @@ exports.warmup = function() {
 
 emitter.once("gameStarted",function(timerId){
 
+    console.log("Game started...");
+
     redis.hmget("context","dureeWarmup",function(err,dureeWarmup){
 	redis.hsetnx("context"
 	        ,"dateFinWarmup", (new Date().getTime() + parseInt(dureeWarmup))
@@ -109,7 +105,7 @@ emitter.once("gameStarted",function(timerId){
 
     redis.hsetnx("context" ,"questionEncours",1);    
         
-    console.log("Game started...");
+
 });
 
 /**
@@ -122,7 +118,7 @@ emitter.once('warmupEnd',function(timerId){
 
     clearTimeout(timerId);
     console.log("warmup timer stopped");
-    emitter.emit("sendQuestions",qTimer);
+    emitter.emit("sendQuestions",qTimer); // envoi de la question 1
     
     redis.hmget("context","numberOfQuestions","synchroTimeDuration","questionTimeFrame",function(err,params){
 
@@ -138,6 +134,7 @@ emitter.once('warmupEnd',function(timerId){
 	    for(i=1; i<=numberOfQuestions ; i++){
 		quizSessions[i] = quizSessions[i-1] + synchroTimeDuration + questionTimeFrame;
 	    }
+	    
     });
     /**
     Timer active une tache de fond qui s execute tous les X ms
@@ -155,9 +152,12 @@ emitter.once('warmupEnd',function(timerId){
 
                 console.log("checking end of time for question : " + n);
                 var now = new Date().getTime();
-                if(now >= quizSessions[n]){
+		                
+		if(now >= quizSessions[n]){
                     console.log("emitting event for sending question : " + n);
                     emitter.emit("sendQuestions",qTimer);
+        	    redis.hincrby("context","questionEncours",1);          
+		    
                 }else if(now > quizSessions[numberOfQuestions]){
 	            console.log("emitting event for end of game (end of time)");
                     emitter.emit("endOfGame",qTimer);
@@ -177,13 +177,12 @@ emitter.on("sendQuestions",function(){
 	
 	var n = parseInt(params[0]);
 	var numberOfQuestions = parseInt(params[1]);
-
+	
         console.log("sending question : " + n + "/" + numberOfQuestions);
-    	if (n >= numberOfQuestions){
+    	 
+	if (n >= numberOfQuestions){
             console.log("emitting event for end of game (no more questions)");
             emitter.emit("endOfGame",qTimer);
-    	} else {
-    		redis.hincrby("context","questionEncours",1);          
     	}
     	responses[n].forEach(function(callback){
             callback();
@@ -195,7 +194,7 @@ emitter.on("sendQuestions",function(){
 /*
     sert la question n
 */
-exports.getQuestion = function(n, success, error) {
+exports.getQuestion = function(n, success, fail) {
    console.log("getQuestion " + n);
 
     gameState(
@@ -208,22 +207,22 @@ exports.getQuestion = function(n, success, error) {
         }
         ,function(){
             var now = new Date().getTime();
-            redis.hmget("context","synchroTimeDuration","numberOfQuestions",function(err,params){
+            redis.hmget("context","synchroTimeDuration","numberOfQuestions","questionEncours",function(err,params){
 		    
 		    var synchroTimeDuration = parseInt(params[0]);
 		    var numberOfQuestions = parseInt(params[1]);
+		    var questionEncours = parseInt(params[2]);
 
 	    	    if(n <= 0 || n > numberOfQuestions){
-	                    error();
-		    }else if (n>c){
-	                    error();
+			console.log("--->" + fail);// TODO BUG Sur la function fail (undefined)
+	                fail();
 		    }else if(now >= quizSessions[n-1] && now <= (quizSessions[n]- synchroTimeDuration)){
 		        console.log("a user requests question : " + n)
 	                responses[n].push(success);
 		    }else if (now > (quizSessions[n]- synchroTimeDuration)){
-		        error();
+		        fail();
 		    }else{
-		    	error();
+		    	fail();
 		    }
 	    });
 	    
@@ -246,12 +245,12 @@ exports.answerQuestion = function(n, success, error) {
 	    
 		redis.hmget("context","questionEncours","numberOfQuestions","synchroTimeDuration",function(err,params){
 			    
-		    var n = parseInt(params[0]);
+		    var questionEncours = parseInt(params[0]);
 		    var numberOfQuestions = parseInt(params[1]);
 		    var synchroTimeDuration = parseInt(params[2]);
 
 		    if(n <= 0 || n > numberOfQuestions){
-			    error();
+			error(); 
 		    }else if(now >= quizSessions[n-1] && now <= (quizSessions[n]- synchroTimeDuration)){
 			console.log("a user answers question : " + n)
 			success();
