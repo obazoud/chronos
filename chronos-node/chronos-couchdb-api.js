@@ -7,7 +7,7 @@ var couchdburl = 'http://' + chronosSettings.couchdb.host + ':' + chronosSetting
 logger.log('Couchdb configuration: ' + couchdburl);
 
 exports.config = function(options) {
-  options.success({host:host, port:port});
+  options.success({host: chronosSettings.couchdb.host, port: chronosSettings.couchdb.port});
 };
 
 exports.bulk = function(data, batch, json, options) {
