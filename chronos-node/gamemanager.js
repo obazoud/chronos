@@ -19,18 +19,35 @@ var events = require('events');
 var emitter = new events.EventEmitter();
 var logger = require('util');
 
-subscriber.subscribe('#chronos');
+function GameState() {
+  this.game = {};
+}
+
+var gameState = new GameState();
+
+var channel = '#chronos';
+subscriber.subscribe(channel);
 
 subscriber.on("subscribe", function (channel, count) {
   logger.log('Client subscribed to channel ' + channel + ', ' + count + ' total subscriptions.');
 });
 
+// TODO: unsubcribe on exit ?
 subscriber.on("unsubscribe", function (channel, count) {
     console.log('Client unsubscribed from ' + channel + ', ' + count + ' total subscriptions.');
 });
 
 subscriber.on('message', function(channel, message) {
-  logger.log('Incoming message ' + channel + '): ' + message);
+  logger.log(channel + ': ' + message);
+  var json = JSON.parse(message);
+  switch (json.event) {
+    case 'initGame':
+      logger.log('initGame event');
+      gameState.game = json.message;
+      logger.log(gameState.game.gamesession.parameters.questiontimeframe);
+
+      break;
+  }
 });
 
 // nbquestions : le nombre de questions à jouer. 
@@ -51,6 +68,12 @@ exports.initGame = function(game) {
   redis.del("players");
   redis.set("game", JSON.stringify(game));
   redis.save();
+  // TODO: callback save ?
+  var message = {
+    'event': 'initGame',
+    'message': game
+  };
+  publisher.publish(channel, JSON.stringify(message));
 };
 
 /** Warmup quizz **/
