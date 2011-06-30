@@ -13,9 +13,6 @@ var responses = [];
 responses[0] = [];
 responses[1] = [];
 
-
-var timerId;
-
 exports.initGame = function(game) {
     
     redis.del("context");
@@ -34,22 +31,6 @@ exports.initGame = function(game) {
     redis.set("game", JSON.stringify(game));
 
     redis.save();
-    /**
-    Timer active une tache de fond qui s execute tous les X ms
-    pour verfier si on depasser le temps de warmup ou atteint le nombre
-    maximum de joueurs.
-    */
-    timerId = setInterval(function(){      // TODO remove interval
-        gameState(
-        	function(){
-	            	//logger.log("en attente du debut du jeu...");
-        	}
-        	,function(){
-        	    	emitter.emit('warmupEnd',timerId);
-        	}
-        	,null);
-
-    },20);// TODO redefinir cette periode en benchmarquant
 };
 
 exports.getGame = function(options) {
@@ -91,40 +72,37 @@ gere les demandes d inscription au quiz
 */
 exports.warmup = function() {
     logger.log("Warmup started... ");
-    emitter.emit('warmupStarted',timerId);
-    gameState(function(){
-        redis.hincrby("context", "numberOfPlayers",1, function(err,counter){
+    emitter.emit('warmupStarted');
+    redis.hincrby("context", "numberOfPlayers",1, function(err,counter){
             redis.hmget("context","maxGamers",function(err,max){
                 if(parseInt(counter)==parseInt(max)){
-                    emitter.emit('warmupEnd',timerId);
+                    emitter.emit('warmupEnd');
                 }   
-            });
-            });
-    }
-    ,function(){
-        // rien  
-    }
-    ,null);
+        });
+    });
+
 };
 
-emitter.once("warmupStarted",function(timerId){
-
-
+emitter.once("warmupStarted",function(){
     var now = new Date().getTime();
     redis.hmget("context","dureeWarmup",function(err,dureeWarmup){
-	redis.hsetnx("context"
+    	redis.hsetnx("context"
 	        ,"dateFinWarmup", (now + parseInt(dureeWarmup))
 	    );
 
+        setTimeout(function(){
+            emitter.emit("warmupEnd");
+        }
+        ,parseInt(dureeWarmup)
+        );
+
         redis.hmset("context",
-                        "session_" + 0 , now,
-                        "session_" + 1 ,now + parseInt(dureeWarmup));
+                "session_" + 0 , now,
+                "session_" + 1 ,now + parseInt(dureeWarmup));
+
         redis.save();
 	});
-
-    redis.hsetnx("context" ,"questionEncours",1);    
-
-            
+    redis.hsetnx("context" ,"questionEncours",1);
 });
 
 /**
@@ -133,9 +111,8 @@ gere l evenement d arret de la phase de warmup en :
     2. repondant a tout les utilisateurs
     3. definitions des fenetres de sessions de reponses
 */
-emitter.once('warmupEnd',function(timerId){
+emitter.once('warmupEnd',function(){
 
-    clearTimeout(timerId);
     logger.log("warmup timer stopped");
     emitter.emit("sendQuestions"); // envoi de la question 1
     
