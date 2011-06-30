@@ -154,8 +154,8 @@ emitter.on("sendQuestions",function(){
     sert la question n
 */
 exports.getQuestion = function(n, login, success, fail ) {
-   logger.log("getQuestion " + n + " -> " + login);
    var now = new Date().getTime();
+   logger.log("getQuestion " + n + " -> " + login);
 
     redis.hmget("context"
             ,"questionEncours"
