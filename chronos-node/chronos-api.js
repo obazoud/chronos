@@ -5,7 +5,7 @@ var chronosCouch = require('./chronos-couchdb-api.js');
 
 exports.ping = function(req, res) {
   res.send(201, {}, 'pong');
-}
+};
 
 exports.createUser = function(req, res, params) {
   chronosCouch.createCouchUser(params.mail, params.password, {
@@ -189,25 +189,25 @@ exports.getRanking = function(req, res) {
   // Clé de session non reconnue : 401
   // Autre erreur : 400
   res.send(200, {}, {});
-}
+};
 
 exports.getScore = function(req, res, params) {
   // Erreur : 400
   params.user_mail;
   params.authentication_key;
   res.send(200, {}, {score:42, ranking:42});
-}
+};
 
 exports.audit = function(req, res, params) {
   // Erreur : 400
   params.user_mail;
   params.authentication_key;
   res.send(200, {}, {user_answers:[42,42,42,42], good_answers:[42,42,42,42]});
-}
+};
 
 exports.audit = function(req, res, n, params) {
   // Erreur : 400
   params.user_mail;
   params.authentication_key;
   res.send(200, {}, {user_answer:42, good_answer:42, question:'question'});
-}
+};
