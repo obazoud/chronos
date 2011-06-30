@@ -23,6 +23,7 @@ exports.addUser = addUser;
 function ranking(lastname,firstname,mail,topN,range,callback){
     topN = topN - 1;
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
+    logger.log("Ranking " + mail + ": " + token);
     var ranking = {
          "score": "?"
         ,"top_scores":{"mail":[],"scores":[],"firstname":[],"lastname":[]}
