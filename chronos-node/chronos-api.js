@@ -3,6 +3,7 @@ var querystring = require('querystring');
 var xml2json = require('./xml2json.js');
 var sys = require('sys');
 var hash = require('node_hash');
+var chronosCouch = require('./chronos-couchdb-api.js');
 
 var host = '127.0.0.1';
 var port = 5984;
@@ -13,33 +14,28 @@ var password = 'supersecret';
 var saltvalue = '1';
 
 exports.createUser = function(req, res, params) {
-  var password_sha = hash.sha1(params.password + saltvalue);
-  // sys.puts("password_sha: " + password_sha);
-  
-  restler.post(couchdbaseburl + '/_users', {
-    data: JSON.stringify({'_id':'org.couchdb.user:' + params.mail, 'type':'user', 'name':params.mail, 'roles':[], 'password_sha':password_sha, 'salt':saltvalue}),
-    headers: { 'Content-Type': 'application/json' }
-  })  
-  .on('error', function(data) {
-    res.send(400, {}, data);
-  })
-  .on('complete', function (data) {
-    restler.put(couchdburl + '/' + params.mail, {
-      data: JSON.stringify({type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:[ ], reponses:[ ], score:0, lastbonus:0}),
-      headers: { 'Content-Type': 'application/json' }
-    })
-    .on('error', function(data) {
-      // if user already exists, couchdb sends: {"error":"conflict","reason":"Document update conflict."}
-      // so no need to test if a user exists via a HEAD request
-      // via _design/validate, errors occurs if one of the parameter is not valid
+  chronosCouch.createCouchUser(params.mail, params.password, {
+    error: function(data, response) {
       res.send(400, {}, data);
-    })
-    .on('complete', function (data) {
-       //console.log('data: ' + data);
-      res.send(201, {}, data);
-    });
+    },
+    success: function(data, response) {
+      restler.put(couchdburl + '/' + params.mail, {
+        data: JSON.stringify({type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || '', questions:[ ], reponses:[ ], score:0, lastbonus:0}),
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .on('error', function(data) {
+        // if user already exists, couchdb sends: {"error":"conflict","reason":"Document update conflict."}
+        // so no need to test if a user exists via a HEAD request
+        // via _design/validate, errors occurs if one of the parameter is not valid
+        res.send(400, {}, data);
+      })
+      .on('complete', function (data) {
+         //console.log('data: ' + data);
+        res.send(201, {}, data);
+      });
+    }
   });
-}
+};
 
 exports.newGame = function(req, res, params) {
   var gameXML = params.parameters.replace(/ xmlns:usi/g, " usi").replace(/ xmlns:xsi/g, " xsi").replace(/ xsi:schemaLocation/g, " schemaLocation").replace(/usi:/g, "");
