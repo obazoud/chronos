@@ -50,7 +50,11 @@ sudo chmod 755 /var/lib/redis
 sudo chmod 755 /var/lib/redis/dump.rdb
 # faire tous les fichiers
 update-rc.d -f redis defaults
+ln -s /home/user/deploiement/install/etc/init.d/redis redis
 
+# node.js
+adduser --system --no-create-home --disabled-login --disabled-password --group nodejs
+ln -s /home/user/deploiement/install/etc/init.d/nodejs nodejs
 
 # Optim systeme
 http://www.ubuntu-unleashed.com/2008/04/howto-harden-ubuntu-linux-kernel-with.html
