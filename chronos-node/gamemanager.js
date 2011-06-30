@@ -11,9 +11,10 @@ var events = require('events');
 var emitter = new events.EventEmitter();
 var logger = require('util');
 
-var responses = [];
-responses[0] = [];
-responses[1] = [];
+// nbquestions : le nombre de questions à jouer. 
+// Doit être inférieur ou égal au nombre de questions présentes dans le fichier (élement <usi:questions>). 
+// --> Ce paramètre est considéré comme inutile. Nous jouerons toujours 20 questions.
+var numberOfQuestions = 20;
 
 exports.initGame = function(game) {
   redis.del("context");
@@ -21,7 +22,6 @@ exports.initGame = function(game) {
     "maxGamers",parseInt(game.gamesession.parameters.nbusersthreshold),
     "numberOfPlayers",0,
     "dureeWarmup", ( parseInt(game.gamesession.parameters.logintimeout) * 1000),
-    "numberOfQuestions", parseInt(game.gamesession.parameters.nbquestions),
     "questionTimeFrame" , ( parseInt(game.gamesession.parameters.questiontimeframe) * 1000),
     "synchroTimeDuration" , ( parseInt(game.gamesession.parameters.synchrotime) * 1000)
   );
@@ -73,16 +73,11 @@ gere l evenement d arret de la phase de warmup en :
 emitter.once('warmupEnd',function(){
   logger.log("warmup timer stopped");
   var now = new Date().getTime();
-  emitter.emit("sendQuestions"); // envoi de la question 1
+  // emitter.emit("sendQuestions"); // envoi de la question 1
 
-  redis.hmget("context","numberOfQuestions","synchroTimeDuration","questionTimeFrame",function(err,params){
-    var numberOfQuestions = parseInt(params[0]);
+  redis.hmget("context", "synchroTimeDuration","questionTimeFrame", function(err, params) {
     var synchroTimeDuration = parseInt(params[1]);
     var questionTimeFrame = parseInt(params[2]);
-
-    for(q=2;q<=numberOfQuestions;q++){
-      responses[q] = [];// verfifier si avec le comportement asynch ca peux poser des problemes
-    }
 
     // initialisation des timeFrames des questions
     redis.hset("context", "session_" + 1 , now);
@@ -101,35 +96,28 @@ emitter.once('warmupEnd',function(){
   });
 });
 
-function setTimeoutForTimeFrame(n){
-  setTimeout(function() {
-    logger.log("------> time out for answering question : " + n);
-    redis.hincrby("context","questionEncours",1);
-    emitter.emit("sendQuestions",n);
-  }, 8000, n);
+function setTimeoutForTimeFrame(timeout, n, success) {
+  setTimeout(setTimeoutForTimeFrameCB, timeout, n, success);
 };
 
-emitter.on("sendQuestions",function(){
-  redis.hmget("context","questionEncours","numberOfQuestions", function(err,params) {
+function setTimeoutForTimeFrameCB(n, success) {
+  logger.log("------> time out for answering question : " + n);
+  redis.hincrby("context", "questionEncours", 1);
+  emitter.emit("sendQuestions", n, success);
+};
 
-    var n = parseInt(params[0]);
-    var numberOfQuestions = parseInt(params[1]);
+emitter.on("sendQuestions", function(n, success) {
+  redis.hmget("context","questionEncours", function(err,params) {
+    var questionEncours = parseInt(params[0]);
+    logger.log("sending question (" + n + ") : " + questionEncours + "/" + numberOfQuestions);
 
-    logger.log("sending question : " + n + "/" + numberOfQuestions);
-
-    if (n >= numberOfQuestions) {
+    if (questionEncours >= numberOfQuestions) {
       logger.log("emitting event for end of game (no more questions)");
       emitter.emit("endOfGame");
     } else {
-      setTimeoutForTimeFrame(n);
+      success();
     }
 
-    var callbacksNumber = responses[n].length - 1
-
-    for(var i=0; i<= callbacksNumber; i++) {
-      var callback = responses[n].pop();
-      callback();
-    }
   });
 });
 
@@ -142,21 +130,17 @@ exports.getQuestion = function(n, login, success, fail) {
 
   redis.hmget("context",
     "questionEncours",
-    "numberOfQuestions",
     "session_" + (n-1),
     "session_" + n,
     function(err,params) {
       var questionEncours = parseInt(params[0]);
-      var numberOfQuestions = parseInt(params[1]);
       var sessionNMoins1 = parseInt(params[2]);
       var sessionN = parseInt(params[3]);
 
-      if ((questionEncours==1 && n==1)&& (now >= sessionNMoins1 && now <= sessionN)) {
-        logger.log("a user waiting for question : " + 1)
-        responses[1].push(success);
-      } else if ((n<=numberOfQuestions) && (now >= sessionNMoins1 && now < sessionN)) {
-        logger.log("a user waiting for question : " + n)
-        responses[n].push(success);
+      if ((n <= numberOfQuestions) && (now >= sessionNMoins1 && now < sessionN)) {
+        timeout = sessionN - now;
+        logger.log(login + " is waiting for question : " + n + ', timeout ' + timeout + ' ms.');
+        setTimeoutForTimeFrame(timeout, n, success);
       } else {
         logger.log("failed for question : " + n);
         fail();
@@ -177,7 +161,7 @@ exports.answerQuestion = function(n, login, success, fail) {
     var sessionNplus1 = parseInt(params[3]);
 
     if(now >= sessionN && now < (sessionNplus1- synchroTimeDuration)){
-      logger.log("a user answers question : " + n)
+      logger.log(login + " answers question : " + n)
       success();
     } else {
       logger.log("n = " + n + ', login:' + login);
