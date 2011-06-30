@@ -285,12 +285,10 @@ exports.getQuestion = function(req, res, n) {
   var login = req.jsonUser.login;
   var sessionNMoins1 = gameState.sessions[n - 1];
   var sessionN = gameState.sessions[n];
-  req.connection.setTimeout(60000);
 
   if (now >= sessionNMoins1 && now <= sessionN) {
     redis.hget("players", login + ":score", function(err, reply) {
       if (err)  {
-        // logger.log('getQuestion ' + n + '[' + req.jsonUser.login + '] : ' + err);
         res.send(400);
       } else {
         var score = 0;
