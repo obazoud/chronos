@@ -1,5 +1,7 @@
 {"redisServers":
 	[
 	{"hostname":"localhost","ip":"127.0.0.1","port":6379}
+       ,{"hostname":"localhost","ip":"127.0.0.1","port":6380}
+       ,{"hostname":"localhost","ip":"127.0.0.1","port":6381}
 	]
 }
