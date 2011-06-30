@@ -45,7 +45,6 @@ exports.warmup = function() {
                 }   
         });
     });
-
 };
 
 emitter.once("warmupStarted",function(){
@@ -126,24 +125,28 @@ function setTimeoutForTimeFrame(n){
 
 
 emitter.on("sendQuestions",function(){
-     redis.hmget("context","questionEncours","numberOfQuestions",function(err,params){
-	
-	var n = parseInt(params[0]);
-	var numberOfQuestions = parseInt(params[1]);
+    redis.hmget("context","questionEncours","numberOfQuestions",function(err,params){
 
-    logger.log("sending question : " + n + "/" + numberOfQuestions);
-    	 
-	if (n >= numberOfQuestions){
+        var n = parseInt(params[0]);
+        var numberOfQuestions = parseInt(params[1]);
+
+        logger.log("sending question : " + n + "/" + numberOfQuestions);
+
+        if (n >= numberOfQuestions){
             logger.log("emitting event for end of game (no more questions)");
             emitter.emit("endOfGame");
-    }else{
-        setTimeoutForTimeFrame(n);
-    }
-	// TODO make this asynch
-    	responses[n].forEach(function(callback){
+        }else{
+            setTimeoutForTimeFrame(n);
+        }
+
+        var callbacksNumber = responses[n].length - 1
+
+        for(var i=0; i<= callbacksNumber;i++){
+            var callback = responses[n].pop();
             callback();
-    	}); 
-     });
+        }
+
+    });
         
 });
 

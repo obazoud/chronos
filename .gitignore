@@ -6,3 +6,14 @@ jmeter.log
 jmeter/result.csv
 .settings.xml
 dump.rdb
+.idea/
+chronos-incubator/asynchrone.js
+chronos-incubator/chronos-incubator.iml
+chronos-it/chronos-it.iml
+.dropbox
+chronos-node.iml
+chronos-replicator/couch-replicator.iml
+chronos-replicator/couch-replicator.ipr
+chronos-replicator/couch-replicator.iws
+chronos.iml
+
