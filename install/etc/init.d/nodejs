@@ -76,7 +76,8 @@ LOCAL_VAR_RUN=/usr/local/var/run            # in case the init script is run by 
                                             #      2) node, npm,... are best NOT installed/run as ROOT.
                                             #         (see here: https://github.com/isaacs/npm/blob/master/README.md)
 NAME=node                                 # name of the node.js executable
-DAEMON="exec /home/user/node-v0.4.5/bin/$NAME >>$LOCAL_VAR_LOGS 2>&1 "    # this SHOULD POINT TO where your node executable is
+DAEMON=/home/user/node-v0.4.5/bin/$NAME     # this SHOULD POINT TO where your node executable is
+NODECMD="exec $DAEMON $DAEMON_ARGS >>$LOCAL_VAR_LOGS 2>&1"
 #
 #                                                                              #
 #                   END </MODIFY TO REFLECT YOUR SETTINGS>                     #
@@ -128,8 +129,7 @@ do_start()
 	#   2 if daemon could not be started
 	start-stop-daemon --start --quiet --pidfile $PIDFILE --chuid $NODEUSER --background --exec $DAEMON --test > /dev/null \
 		|| { [ "$VERBOSE" != no ] && log_daemon_msg  "  --->  Daemon already running $DESC" "$INIT_SCRIPT_NAME_NOEXT"; return 1; }
-	start-stop-daemon --start --quiet --chuid $NODEUSER --make-pidfile --pidfile $PIDFILE --background --exec $DAEMON -- \
-		$DAEMON_ARGS \
+	start-stop-daemon --start --quiet --chuid $NODEUSER --make-pidfile --pidfile $PIDFILE --background --exec $DAEMON --startas /bin/sh -- -c "$NODECMD" \
 		|| { [ "$VERBOSE" != no ] && log_daemon_msg  "  --->  could not be start $DESC" "$INIT_SCRIPT_NAME_NOEXT"; return 2; }
 	# Add code here, if necessary, that waits for the process to be ready
 	# to handle requests from services started subsequently which depend
