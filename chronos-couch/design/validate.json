@@ -1,0 +1,36 @@
+{
+  "_id": "_design/validate",
+  "validate_doc_update": "function(newDoc, oldDoc, userCtx) {
+    
+    function validateField(field, mandatory, minlength, maxlength, message) {
+      message = message || \"Document has problems with the field \" + field + \" -> \" + newDoc[field];
+      if (mandatory && !newDoc[field]) {
+          throw({forbidden : message});
+      }
+      var data = newDoc[field] || '';
+      if (data.length < minlength || data.length > maxlength) {
+        throw({forbidden : message});
+      }
+    };
+
+    if (newDoc._deleted === true) {
+      if (userCtx.name == oldDoc.name) {
+        return;
+      } else {
+        return;
+      }
+    }
+
+    validateField('type', true, 2, 10);
+
+    if ((oldDoc && oldDoc.type == 'player') || newDoc.type == 'player') {
+      validateField('firstname', true, 2, 50);
+      validateField('lastname', true, 2, 50);
+      validateField('mail', true, 2, 50);
+      validateField('password', true, 2, 50);
+      return;
+    }
+
+    throw({forbidden: 'doc.type is required or unknown'});
+  }"
+}

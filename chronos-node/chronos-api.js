@@ -23,25 +23,21 @@ exports.createUser = function(req, res, params) {
     })
     .on('complete', function (data) {
       var url = couchdburl + '/' + params.mail;
+      
       restler.put(url, {
-        data: JSON.stringify({firstname:params.firstname, lastname:params.lastname, mail:params.mail, password:params.password}),
+        data: JSON.stringify({type:'player', firstname:params.firstname || '', lastname:params.lastname || '', mail:params.mail || '', password:params.password || ''}),
         headers: { 'Content-Type': 'application/json' }
       })
       .on('error', function(data) {
         // if user already exists, couchdb sends: {"error":"conflict","reason":"Document update conflict."}
         // so no need to test if a user exists via a HEAD request
+        // via _design/validate, errors occurs if one of the parameter is not valid
         res.send(400, {}, data);
       })
       .on('complete', function (data) {
         res.send(201);
       });
     });
-
-  // Si un utilisateur ayant la même adresse mail existe déjà, une erreur est retournée
-  // if (params.mail == 'mail.existant@test.com') {
-  //  res.send(400);
-  // }
-  // res.send(201, {}, {firstname:params.firstname, lastname:params.lastname, mail:params.mail, password:params.password});
 }
 
 exports.newGame = function(req, res, params) {
