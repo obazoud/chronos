@@ -335,10 +335,6 @@ exports.getQuestion = function(req, res, n) {
           //    ctx = {};
           //});
           // req.pause();
-          var t = Date.now() - now;
-          if (t > 100) {
-            logger.log('getQuestion ' + n + ' tooks ' + (Date.now() - now) + ' ms. ' + '[' + req.jsonUser.login + ']');
-          }
         }
       });
     }
@@ -353,28 +349,26 @@ exports.answerQuestion = function(req, res, n, params) {
   var now = Date.now();
   var login = req.jsonUser.login;
   var sessionN = gameState.sessions[n];
-  var sessionNplus1 = gameState.sessions[n + 1];
+  var maxTime = gameState.sessions[n + 1] - gameState.synchrotime;
 
-  if (now >= sessionN && now <= (sessionNplus1 - gameState.synchrotime)) {
+  if (now >= sessionN && now <= maxTime) {
     var q = gameState.game.gamesession.questions.question[n-1];
     this.updatingScore(req.jsonUser.lastname, req.jsonUser.firstname, login, n, params.answer, q.goodchoice, q.qvalue, {
       error: function(data) {
         res.send(400);
       },
       success: function(score) {
-        var answer = {};
-        answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
-        answer.good_answer = q.choice[q.goodchoice - 1];
-        answer.score = "" + score + "";
-          var t = Date.now() - now;
-          if (t > 100) {
-            logger.log('answerQuestion ' + n + ' tooks ' + (Date.now() - now) + ' ms. ' + '[' + login + ']');
-          }
-        res.send(201, {}, answer);
+      var score = 11;
+      var answer = {};
+      answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
+      answer.good_answer = q.choice[q.goodchoice - 1];
+      answer.score = "" + score + "";
+
+      res.send(201, {}, answer);
       }
     });
   } else {
-    logger.log('answerQuestion ' + n + ' missing for ' + (now - (sessionNplus1 - gameState.synchrotime)) + ' ms. ' + '[' + login + ']');
+    logger.log('answerQuestion ' + n + ' missing for ' + (now - maxTime) + ' ms. ' + '[' + login + ']');
     res.send(400);
   }
 };
