@@ -39,7 +39,7 @@ if (process.argv.indexOf('--no-cluster') > -1) {
 if (process.argv.indexOf('--no-uncaught') <= -1) {
   console.log(tools.toISO8601(new Date()) + 'Add process.on uncaughtException');
   process.on('uncaughtException', function(err) {
-    console.log(tools.toISO8601(new Date()) + err);
+    console.log(tools.toISO8601(new Date()) + ':' + err);
   });
 } else {
   console.log(tools.toISO8601(new Date()) + 'Skip process.on uncaughtException');
@@ -47,9 +47,9 @@ if (process.argv.indexOf('--no-uncaught') <= -1) {
 
 process.on('exit', function () {
   process.nextTick(function () {
-   console.log(tools.toISO8601(new Date()) + 'This will not run');
+   console.log(tools.toISO8601(new Date()) + ': This will not run');
   });
-  console.log(tools.toISO8601(new Date()) + 'About to exit.');
+  console.log(tools.toISO8601(new Date()) + ': About to exit.');
 });
 
 var server = http.createServer(function(req, res) {
@@ -74,15 +74,15 @@ var server = http.createServer(function(req, res) {
 });
 
 if (applyCluster == true) {
-  console.log(tools.toISO8601(new Date()) + 'Configure Node.js with cluster module (' + applyCluster + ')');
+  console.log(tools.toISO8601(new Date()) + ': Configure Node.js with cluster module (' + applyCluster + ')');
   var cluster = require('cluster');
   cluster(server).listen(8080);
 } else {
-  console.log(tools.toISO8601(new Date()) + 'Configure classic Node.js');
+  console.log(tools.toISO8601(new Date()) + ': Configure classic Node.js');
   server.listen(8080);
 }
 
-console.log(tools.toISO8601(new Date()) + 'Server running at http://127.0.0.1:8080/');
+console.log(tools.toISO8601(new Date()) + ': Server running at http://127.0.0.1:8080');
 
 // New game every 120 seconds
 /*
