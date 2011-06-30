@@ -86,9 +86,11 @@ exports.login = function(req, res, params) {
     }
     res.send(400, {}, data);
   })
-  .on('complete', function (data) {
-    console.log('data: ' + data);
-    res.send(201);
+  .on('complete', function (data, response) {
+    // console.log('data: ' + data);
+    // console.log('response: ' + response.headers['set-cookie']);
+    var cookie = response.headers['set-cookie'][0].split('=')[1].split(';')[0];
+    res.send(201, {"session_key":cookie}, data);
   });
 }
 
