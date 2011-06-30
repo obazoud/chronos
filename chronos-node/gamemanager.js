@@ -230,10 +230,9 @@ emitter.on('warmupEnd', function(success) {
         // redis.save();
     });
 
-    if (success) {
-      logger.log("warmupEnd: First success.");
-      success();
-    }
+    logger.log("warmupEnd: First success.");
+    success();
+
     var message = {
       'event': 'warmupEnds',
       'warmupEnd': now,
