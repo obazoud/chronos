@@ -11,7 +11,6 @@ import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
-import org.jboss.netty.util.CharsetUtil;
 
 /**
  * @author bazoud
@@ -38,12 +37,10 @@ public class ServiceRequestDecoder extends OneToOneDecoder {
     public Map<String, String> getArgs(HttpRequest request) throws Exception {
         Map<String, String> map = new HashMap<String, String>();
 
-        String json = request.getContent().toString(CharsetUtil.UTF_8);
-
         // using "raw" Jackson Streaming API
         // basic implementation
         // only key/value input here
-        JsonParser jp = f.createJsonParser(json);
+        JsonParser jp = f.createJsonParser(request.getContent().array());
         jp.nextToken();
         while (jp.nextToken() != JsonToken.END_OBJECT) {
             jp.nextToken();
