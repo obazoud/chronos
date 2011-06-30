@@ -17,10 +17,10 @@ var keys = {
 };
 
 exports.createChronosUser = function(firstname, lastname, mail, password, options) {
-    restler.put(couchdburl + '/' + mail, {
-      data: JSON.stringify({type:'player', firstname:firstname || '', lastname:lastname || '', mail:mail || '', password:password || '', questions:[ ], reponses:[ ], score:0, lastbonus:0}),
-      headers: { 'Content-Type': 'application/json' }
-    })
+  restler.put(couchdburl + '/' + mail, {
+    data: JSON.stringify({type:'player', firstname:firstname || '', lastname:lastname || '', mail:mail || '', password:password || '', questions:[ ], reponses:[ ], score:0, lastbonus:0}),
+    headers: { 'Content-Type': 'application/json' }
+  })
   .addListener('error', function(data) {
     if (options.error) {
       options.error(data);
