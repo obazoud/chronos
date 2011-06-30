@@ -233,12 +233,12 @@ exports.getQuestion = function(req, res, n) {
             }
           });
         }
+      });
     },
     function () {
       res.send(400);
     }
   );
-  });
 };
 
 exports.answerQuestion = function(req, res, n, params) {
