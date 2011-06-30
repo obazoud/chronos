@@ -14,10 +14,6 @@ import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.chronos.netty.service.ChronosDispatcher;
-import com.chronos.netty.service.ServiceResponse;
-import com.chronos.netty.service.ServiceResquest;
-
 /**
  * @author bazoud
  * @version $Id$
@@ -37,7 +33,7 @@ public class ChronosHandler extends SimpleChannelUpstreamHandler {
             writeResponse(e, serviceResquest, serviceResponse);
         } else {
             ctx.sendUpstream(e);
-            logger.warn("message is not an instance of ServiceResquest: %s", message.getClass());
+            logger.warn("message is not an instance of ServiceResquest: {}", message.getClass());
         }
         logger.info("<< exit");
     }

@@ -22,15 +22,16 @@ public class NettyServer {
     final Logger logger = LoggerFactory.getLogger(NettyServer.class);
     ServerBootstrap bootstrap;
     ChannelGroup channels;
+    int port = 8080;
 
     public void start() {
-        logger.info("HTTP-Netty-Server: starting.");
+        logger.info("HTTP-Netty-Server: starting on port {}.", port);
         ServerBootstrap bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),
                 Executors.newCachedThreadPool()));
         bootstrap.setPipelineFactory(new HttpServerPipelineFactory());
         bootstrap.setOption("child.tcpNoDelay", true);
         bootstrap.setOption("child.keepAlive", true);
-        Channel channel = bootstrap.bind(new InetSocketAddress(8080));
+        Channel channel = bootstrap.bind(new InetSocketAddress(port));
         channels = new DefaultChannelGroup("HTTP-Netty-Server");
         channels.add(channel);
 
