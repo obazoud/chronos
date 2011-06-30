@@ -234,6 +234,8 @@ couchdbChangesStream = function(filter, docname, callback, endCallback) {
     },
     success: function(data) {
       couchdbAccessFailed = false;
+      clearTimeout(timerId);
+      timerId = null;
       var db = JSON.parse(data);
       console.log('Couchdb update_seq: ' + db.update_seq);
       console.log('Couchdb instance_start_time: ' + db.instance_start_time);
@@ -258,7 +260,9 @@ couchdbChangesStream = function(filter, docname, callback, endCallback) {
 couchdbChangesStreamCallback = function(change) {
   // console.log('couchdbChangesStream: ' + sys.inspect(change));
   console.log('Purging cache... ' + change.id);
-  exports.purge(change.id);
+  if (change.id) {
+    exports.purge(change.id);
+  }
 };
 
 couchdbChangesStreamCallbackError = function(change) {
@@ -272,11 +276,14 @@ couchdbChangesStream('gameonly/game', 'game', couchdbChangesStreamCallback, couc
 
 emitter.on("couchdbAccessFailed",function() {
   couchdbAccessFailed = true;
-  timerId = setInterval(function() {
-    if (couchdbAccessFailed == true) {
-      console.log('Try again to access to couchdbChangesStream.');
-      couchdbChangesStream('gameonly/game', 'game', couchdbChangesStreamCallback, couchdbChangesStreamCallbackError);
-    }
-    }, 10000);
+  if (timerId == null) {
+    console.log('Creating an setInterval.');
+    timerId = setInterval(function() {
+      if (couchdbAccessFailed == true) {
+        console.log('Try again via couchdbChangesStream.');
+        couchdbChangesStream('gameonly/game', 'game', couchdbChangesStreamCallback, couchdbChangesStreamCallbackError);
+      }
+      }, 10000);
+  }
 });
 
