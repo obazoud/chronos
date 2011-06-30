@@ -1,10 +1,41 @@
+var Db = require('./lib/mongodb').Db,
+    Connection = require('./lib/mongodb').Connection
+    Server = require('./lib/mongodb').Server,
+    BSON = require('./lib/mongodb').BSONNative;
+
+var host = 'localhost';
+var port = Connection.DEFAULT_PORT;
+
+console.log('Connecting to ' + host + ':' + port);
+
+var db = new Db('chronos-mongodb', new Server(host, port, {}), {native_parser:true});  
+db.open(function(err, db) {
+  db.dropDatabase(function(err, result) {
+    console.log('Dropping database: ' + result);
+    db.close();
+  });
+});
+
 exports.createUser = function(req, res, params) {
-  // Si un utilisateur ayant la même adresse mail existe déjà, une erreur est retournée
-  if (params.mail == 'mail.existant@test.com') {
-    res.send(400);
-  }
-  console.log(params);
-  res.send(201, {}, {firstname:params.firstname, lastname:params.lastname, mail:params.mail, password:params.password});
+  console.log('Creating user: ' + params);
+  // de 2 à 50 caractères
+  // TODO
+  db.open(function(err, db) {
+    db.collection('user', function(err, collection) {
+      collection.count({'mail':params.mail}, function(err, count) {
+        // Si un utilisateur ayant la même adresse mail existe déjà, une erreur est retournée
+        if (count > 0) {
+          db.close();
+          res.send(400, {}, {error:'Ce mail est déjà enregistré.'});
+        }
+        else {
+          collection.insert({'firstname':params.firstname,'lastname':params.lastname,'mail':params.mail,'password':params.password});
+          db.close();
+          res.send(201);
+        }
+      });
+    });
+  });
 }
 
 exports.newGame = function(req, res, params) {

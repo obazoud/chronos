@@ -1,5 +1,5 @@
 var journey = require('journey');
-var api = require('./chronos-api.js');
+var api = require('./chronos-api-mongodb.js');
 
 // Create a router
 var router = new(journey.Router);
@@ -13,17 +13,18 @@ router.post(/^api\/answer\/(\d+)$/).bind(api.answerQuestion);
 router.get('/api/ranking').bind(api.getRanking);
 router.get('/api/score').bind(api.getScore);
 router.get('/api/audit').bind(api.audit);
-router.get(/^api\/audit\/(\d+)"/).bind(api.audit);
+router.get(/^api\/audit\/(\d+)$/).bind(api.audit);
 
+// Create the htt server
 var http = require('http');
-http.createServer(function (req, res) {
-  var body = "";
+http.createServer(function(req, res) {
+  var body = '';
 
-  req.on('data', function (chunk) { 
+  req.on('data', function(chunk) { 
     body += chunk; 
   });
 
-  req.on('end', function () {
+  req.on('end', function() {
     // Dispatch the request to router
     router.handle(req, body, function(result) {
       res.writeHead(result.status, result.headers);
