@@ -30,7 +30,6 @@ exports.initGame = function(config){
     redis.hdel("context", "questionEncours");
     redis.hdel("context", "dateFinWarmup");
 
-    redis.del("login");
     redis.del("players");
 
     redis.save();
@@ -77,7 +76,7 @@ function gameState(beforeStartCallback,afterStartCallback,params){
 Enregistre les users logues
 */
 exports.login = function(mail, options) {
-  redis.hset("login", mail, "1", function(err, reply) {
+  redis.hset('players', mail + ':login', "1", function(err, reply) {
     if (err) {
       if (options && options.error) {
         options.error(data);
@@ -91,7 +90,7 @@ exports.login = function(mail, options) {
 }
 
 exports.isLogin = function(mail, options) {
-  return redis.hexists("login", mail, function(err, reply) {
+  return redis.hexists('players', mail + ':login', function(err, reply) {
     if (err) {
       if (options && options.error) {
         options.error(err);
