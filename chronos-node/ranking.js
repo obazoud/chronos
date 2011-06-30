@@ -12,7 +12,7 @@ redisBalancer.getSlave().on("error", function (err) {
 function addUser(lastname,firstname,mail,callback){
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
     //console.log("---->>>>" + token);
-    redisBalancer.getMaster().zadd("scores","0",token,function(err,added){
+    redisBalancer.getMaster().zadd("scores",0,token,function(err,added){
         // added == 1 if the element was added.
         // added == 0 if the element was already a member of the sorted set and the score was updated.
         callback(err,added);
@@ -33,7 +33,7 @@ function ranking(lastname,firstname,mail,topN,range,callback){
         totalNumberOfUsers = totalNumberOfUsers - 1;
         if (topN > totalNumberOfUsers) { topN = totalNumberOfUsers; }
         redisBalancer.getSlave().zscore("scores",token,function(err,userScore){
-            ranking.score = -parseInt(userScore);
+            ranking.score = -parseInt(userScore) + "";
             redisBalancer.getSlave().zrank("scores",token,function(err,userRank){
                 zrange(ranking,ranking.top_scores,0,topN,function(err,ranking){
                     if (totalNumberOfUsers == 0) { callback(err,ranking); }
@@ -81,7 +81,7 @@ function zrange(ranking,rankingField,min,max,callback) {
                     rankingField.mail.push(userObject.mail);
                     rankingField.firstname.push(userObject.firstname);
                     rankingField.lastname.push(userObject.lastname);
-                    rankingField.scores.push(-parseInt(zrange[i+1]));
+                    rankingField.scores.push(-parseInt(zrange[i+1]) + "");
                 }
                 if (i == zrange.length - 1) {
                     callback(err,ranking);
@@ -97,7 +97,7 @@ function reset(callback) {
             callback();
         } else {
             users.forEach(function(user) {
-                redisBalancer.getMaster().zadd("scores","0",user,function(err,updated) {
+                redisBalancer.getMaster().zadd("scores",0,user,function(err,updated) {
                     callback(err,updated);
                 });
             });
