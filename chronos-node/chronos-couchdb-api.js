@@ -21,22 +21,22 @@ exports.putDoc = function(name, json, options) {
     data: JSON.stringify(json),
     headers: { 'Content-Type': 'application/json' }
   })
-  .on('error', function(data) {
+  .on('error', function(data, response) {
     if (options.error) {
       options.error(data);
     }
   })
-  .on('complete', function(data) {
+  .on('complete', function(data, response) {
     if (keys[name]) {
       restler.get(couchdburl + '/' + name, {
         data: ''
       })
-      .on('error', function(alldata) {
+      .on('error', function(alldata, response2) {
         if (options.error) {
           options.error(data);
         }
       })
-      .on('complete', function(alldata) {
+      .on('complete', function(alldata, response2) {
         store[name] = alldata;
         if (options.success) {
           options.success(data);
@@ -54,12 +54,12 @@ exports.putDesign = function(name, options) {
   restler.put(couchdburl + '/' + name, {
     data: ''
   })
-  .on('error', function(data) {
+  .on('error', function(data, response) {
     if (options.error) {
       options.error(data);
     }
   })
-  .on('complete', function(data) {
+  .on('complete', function(data, response) {
     if (options.success) {
       options.success(data);
     }
@@ -76,12 +76,12 @@ exports.getDoc = function(name, options) {
   restler.get(couchdburl + '/' + name, {
     data: ''
   })
-  .on('error', function(data) {
+  .on('error', function(data, response) {
     if (options.error) {
       options.error(data);
     }
   })
-  .on('complete', function(data) {
+  .on('complete', function(data, response) {
     if (keys[name]) {
       store[name] = data;
     }
@@ -91,4 +91,45 @@ exports.getDoc = function(name, options) {
   });
 
 };
+
+exports.head = function(name, options) {
+  restler.request(couchdburl + '/' + name, {
+    data: '',
+    method: 'HEAD'
+  })
+  .on('error', function(data, response) {
+    if (response.statusCode != 404) {
+      if (options.error) {
+        options.error(data);
+      }
+    }
+  })
+  .on('complete', function(data, response) {
+    if (options.success) {
+      if (response.statusCode == 200) {
+        options.success(data, response.headers.etag.replace(/\"/g, ""));
+      } else {
+        options.success(data, null);
+      }
+    }
+  });
+};
+
+exports.delete = function(name, id, options) {
+  restler.del(couchdburl + '/' + name + '?rev=' + id, {
+    data: ''
+  })
+  .on('error', function(data, response) {
+    if (options.error) {
+      options.error(data);
+    }
+  })
+  .on('complete', function(data, response) {
+    if (options.success) {
+        options.success(data);
+    }
+  });
+
+};
+
 

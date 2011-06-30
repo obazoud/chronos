@@ -25,10 +25,35 @@ exports.createUser = function(req, res, params) {
 exports.newGame = function(req, res, params) {
   var paramsJSON = processGameXML(params.authentication_key, params.parameters);
 
+  chronosCouch.head('game', {
+    error: function(data) {
+      console.log("error1: " + data);
+      res.send(400);
+    },
+    success: function(data, id) {
+      if (id != null) {
+        chronosCouch.delete('game', id, {
+          error: function(data) {
+            console.log("error2: " + data);
+            res.send(400);
+          },
+          success: function(data, id) {
+            putGame(req, res, params, paramsJSON);
+          }
+        });
+      } else {
+        putGame(req, res, params, paramsJSON);
+      }
+    }
+  });
+};
+
+function putGame(req, res, params, paramsJSON) {
   chronosCouch.putDoc('game', paramsJSON, {
     error: function(data) {
       var error = JSON.parse(data);
       if (error.reason == 'Authentication key is not recognized.') {
+        console.log(data);
         res.send(401);
       } else {
         console.log(data);
@@ -36,6 +61,7 @@ exports.newGame = function(req, res, params) {
       }
     },
     success: function(data) {
+      console.log("Put game successfully.");
       ranking.reset(function(err, incrementedScore) {
         console.log("incrementedScore=" + incrementedScore);
         res.send(201);
@@ -51,7 +77,13 @@ function processGameXML(authentication_key, parameters) {
   var paramsJSON = xml2json.parse(gameXML);
   paramsJSON.type = 'game';
   paramsJSON.authentication_key = authentication_key || '';
+
+  // clean
   delete paramsJSON.value;
+  delete paramsJSON.gamesession.usi;
+  delete paramsJSON.gamesession.xsi;
+  delete paramsJSON.gamesession.schemalocation;
+
   for(i = 0;i < paramsJSON.gamesession.questions.question.length; i++) {
     if (i < 5) {
       paramsJSON.gamesession.questions.question[i].qvalue = 1;
@@ -61,7 +93,7 @@ function processGameXML(authentication_key, parameters) {
   }
   paramsJSON.game_id = uuid().toLowerCase();
   return paramsJSON;
-}
+};
 
 exports.login = function(req, res, params) {
   // already login ?
