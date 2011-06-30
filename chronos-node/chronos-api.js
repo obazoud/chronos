@@ -160,10 +160,10 @@ exports.login = function(req, res, params) {
     error: function(data) {
       try {
         if (JSON.parse(data).error == 'not_found') {
-          logger.log('user not found, ' + params.mail);
+          // logger.log('user not found, ' + params.mail);
           res.send(401);
         } else {
-          logger.log(params.mail + ":" + err);
+          // logger.log(params.mail + ":" + err);
           res.send(400);
         }
       } catch(err) {
@@ -174,17 +174,17 @@ exports.login = function(req, res, params) {
     success: function(data) {
       var userDocjson = JSON.parse(data);
       if (userDocjson.password != params.password) {
-        logger.log(params.mail + ": password does not match");
+        // logger.log(params.mail + ": password does not match");
         res.send(401);
       } else {
         gamemanager.login(params.mail, {
           error: function(err) {
-            logger.log(params.mail + ": failed: " + err);
+            // logger.log(params.mail + ": failed: " + err);
             res.send(400);
           },
           success: function(successful) {
             if (!successful) {
-              logger.log(params.mail + ": exists.");
+              // logger.log(params.mail + ": exists.");
               res.send(400);
             } else {
               var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
@@ -203,77 +203,26 @@ exports.login = function(req, res, params) {
 
 exports.getQuestion = function(req, res, n) {
   // logger.log(Date.now() + " > Http /api/question/" + n + " / " + numberOfQuestions + ", login:" + req.jsonUser.login);
-  // preparing response
-  // TODO: First score is too slow, do not know why !?
-  if (n < 0 && n > numberOfQuestions) {
-    // logger.log(n + "< Http /api/question/" + n + ", login:" + req.jsonUser.login);
-    // logger.log("FAILED(400)");
+  if (n <= 0 || n > numberOfQuestions) {
+    // logger.log("FAILED(400) " + n + "< Http /api/question/" + n + ", login:" + req.jsonUser.login);
     res.send(400);
   } else {
-    var question = gamemanager.getGameFragment(n);
-    gamemanager.getQuestion(n, req.jsonUser.login,
-      function () {
-        // var start = Date.now();
-        // logger.log("> Calling score q " + n + ", login:" + req.jsonUser.login);
-        if (n == 1) {
-            // logger.log("< Calling score q " + n + ", login:" + req.jsonUser.login);
-            question.score = "0";
-            // logger.log("< Http /api/question/" + n + ", login:" + req.jsonUser.login + ", " + JSON.stringify(question));
-            // logger.log("< Http /api/question/" + n + ", login:" + req.jsonUser.login);
-            //logger.log('getQuestion took:' + (Date.now() - start) + 'ms.');
-            res.send(200, {}, question);
-        } else {
-          gamemanager.getScore(req.jsonUser.login, {
-            error: function(err) {
-              // logger.log("FAILED(400)");
-              res.send(400, {}, err);
-            },
-            success: function(score) {
-              // logger.log("< Calling score q " + n + ", login:" + req.jsonUser.login);
-              question.score = "" + score + "";
-              // logger.log(Date.now() + " < Http /api/question/" + n + ", login:" + req.jsonUser.login);
-              logger.log('getQuestion took:' + (Date.now() - start) + ' ms ' + start);
-              res.send(200, {}, question);
-            }
-          });
-        }
-      },
-      function () {
-        logger.log("< FAILED(400): /api/question/" + n + ", login:" + req.jsonUser.login);
-        res.send(400);
-      }
-    );
+    gamemanager.getQuestion(req, res, n);
   }
 };
 
 exports.answerQuestion = function(req, res, n, params) {
-  // logger.log(Date.now() + " > Http /api/anwser/" + n + ", login:" + req.jsonUser.login);
-  // var start = Date.now();
-  gamemanager.answerQuestion(n, req.jsonUser.login,
-    function() {
-      var gamejson = gamemanager.getGame();
-      var q = gamejson.gamesession.questions.question[n-1];
-      gamemanager.updatingScore(req.jsonUser.lastname, req.jsonUser.firstname, req.jsonUser.login, n, params.answer, q.goodchoice, q.qvalue, {
-        error: function(data) {
-          logger.log("FAILED(400)");
-          res.send(400, {}, data);
-        },
-        success: function(score) {
-          var answer = {};
-          answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
-          answer.good_answer = q.choice[q.goodchoice - 1];
-          answer.score = "" + score + "";
-          // logger.log(Date.now() + " < Http /api/anwser/" + n + ", login:" + req.jsonUser.login);
-          // logger.log('answerQuestion took:' + (Date.now() - start) + ' ms. ' + start);
-          res.send(201, {}, answer);
-        }
-      });
-    },
-    function() {
-      // logger.log("FAILED(400) /api/anwser/" + n + ", login:" + req.jsonUser.login);
-      res.send(400);
-    }
-  );
+  // TODO 350 ms
+  //req.connection.setTimeout(350);
+  //req.connection.on('timeout', function() {
+  //  logger.log('connection timeout answerQuestion ' + n + '[' + req.jsonUser.login + ']');
+  //});
+
+  if (n <= 0 || n > numberOfQuestions) {
+    res.send(400);
+  } else {
+    gamemanager.answerQuestion(req, res, n, params);
+  }
 };
 
 exports.tweetHttp = function(req, res, params) {
@@ -283,17 +232,18 @@ exports.tweetHttp = function(req, res, params) {
 };
 
 exports.getRanking = function(req, res) {
+  // TODO 350 ms
   // logger.log("> Http /api/ranking, login:" + req.jsonUser.login);
   gamemanager.logged(req.jsonUser.login, {
     error: function(data) {
-      res.send(400, {}, data);
+      res.send(400);
     },
     success: function(logged) {
       // logger.log("> Http /api/ranking, logged:" + logged);
       if (logged == 0) {
         gamemanager.getNumberOfPlayers({
           error: function(data) {
-            res.send(400, {}, data);
+            res.send(400);
           },
           success: function(numberOfPlayers) {
             var message = 'Notre application supporte ' + numberOfPlayers + ' joueurs #challengeUSI2011';
@@ -310,7 +260,7 @@ exports.getRanking = function(req, res) {
   });
   ranking.ranking(req.jsonUser.lastname, req.jsonUser.firstname, req.jsonUser.login, 100, 5, function(err, ranking) {
     if (err) {
-      res.send(400, {}, err);
+      res.send(400);
     }
     else {
       // logger.log("< Http /api/ranking, login:" + req.jsonUser.login + ", " + JSON.stringify(ranking));
@@ -320,19 +270,20 @@ exports.getRanking = function(req, res) {
 };
 
 exports.getScore = function(req, res, params) {
+  // TODO 350 ms
   // logger.log("> Http /api/score , login:" + params.user_mail);
   if (params.authentication_key != authentication_key) {
     res.send(401);
   }
   chronosCouch.getDoc(params.user_mail, {
     error: function(data) {
-      res.send(400, {}, data);
+      res.send(400);
     },
     success: function(userDoc) {
       var userDocJson = JSON.parse(userDoc);
       ranking.ranking(userDocJson.lastname, userDocJson.firstname,userDocJson._id,100,5,function(err,ranking) {
         if (err) {
-          res.send(400, {}, err);
+          res.send(400);
         }
         else {
           // logger.log("< Http /api/score , login:" + params.user_mail +  JSON.stringify(ranking));
@@ -344,6 +295,7 @@ exports.getScore = function(req, res, params) {
 };
 
 exports.audit = function(req, res, params) {
+  // TODO 350 ms
   // logger.log(Date.now() + "> Http /api/audit");
   if (params.authentication_key != authentication_key) {
     res.send(401);
@@ -352,7 +304,7 @@ exports.audit = function(req, res, params) {
   var gamejson = gamemanager.getGame();
   gamemanager.getAnswers(params.user_mail, {
     error: function(data) {
-      res.send(400, {}, data);
+      res.send(400);
     },
     success: function(answers) {
       var audit = {};
@@ -372,6 +324,7 @@ exports.audit = function(req, res, params) {
 };
 
 exports.auditN = function(req, res, n, params) {
+  // TODO 350 ms
   if (params.authentication_key != authentication_key) {
     res.send(401);
   }
@@ -379,7 +332,7 @@ exports.auditN = function(req, res, n, params) {
   var gamejson = gamemanager.getGame();
   gamemanager.getAnswer(params.user_mail, n, {
     error: function(data) {
-      res.send(400, {}, data);
+      res.send(400);
     },
     success: function(answer) {
       var audit = {};

@@ -74,7 +74,6 @@ subscriber.on('message', function(channel, message) {
 // state 5: ??
 function GameState() {
   this.game = {};
-  this.gameFragments = {};
   this.nbusersthreshold = 0;
   this.logintimeout = 0;
   this.questiontimeframe = 0;
@@ -83,27 +82,30 @@ function GameState() {
   this.warmupStartDate = 0;
   this.warmupEndDate = 0;
   this.sessions = [];
+  this.pendings = {};
+  this.timers = [];
 
   this.initGame = function(newGame) {
     // Force init game
     // reload data after crash
     logger.log('State changed state: ' + this.state + ' -> ' + 1);
     this.state = 1;
+    this.pendings = {
+      "1":[],"2":[],"3":[],"4":[],"5":[],"6":[],"7":[],"8":[],"9":[],"10":[],
+      "11":[],"12":[],"13":[],"14":[],"15":[],"16":[],"17":[],"18":[],"19":[],
+      "20":[]
+    };
+
+    this.sessions = [];
+    for (var t = 0; t < this.timers; t++) {
+      clearTimeout(this.timers[t]);
+    }
     redis.hset("context", "state", this.state);
     this.game = newGame;
     this.nbusersthreshold = parseInt(this.game.gamesession.parameters.nbusersthreshold);
     this.logintimeout = parseInt(this.game.gamesession.parameters.logintimeout) * 1000;
     this.questiontimeframe = parseInt(this.game.gamesession.parameters.questiontimeframe) * 1000;
     this.synchrotime = parseInt(this.game.gamesession.parameters.synchrotime) * 1000;
-
-    for(var i = 0; i < numberOfQuestions; i++) {
-      var q = this.game.gamesession.questions.question[i];
-      this.gameFragments[i] = {};
-      this.gameFragments[i].question = q.label;
-      for (var j = 0; j < q.choice.length; j++) {
-        this.gameFragments[i]['answer_' + (j+1)] = q.choice[j];
-      }
-    }
   };
 
   this.warmupStarts = function(now1) {
@@ -132,9 +134,14 @@ function GameState() {
 
       logger.log('sessions0: ' + this.sessions[0] + ' / ' + new Date(this.sessions[0]));
       logger.log('sessions1: ' + this.sessions[1] + ' / ' + new Date(this.sessions[1]));
-      for (i = 2; i <= numberOfQuestions + 1; i++) {
+      for (var i = 2; i <= numberOfQuestions + 1; i++) {
         this.sessions[i] = this.sessions[i - 1] + this.questiontimeframe + this.synchrotime;
         logger.log('sessions' + i + ': ' + this.sessions[i] + ' / ' + new Date(this.sessions[i]));
+      }
+      // Creating timers question N > 1
+      for (var k = 2; k <= numberOfQuestions; k++) {
+        var timerId = setTimeout(questionTimer, this.sessions[k] - now, k);
+        this.timers.push(timerId);
       }
     } else {
       logger.log('Already in state 3');
@@ -151,6 +158,11 @@ function GameState() {
     }
   };
 
+  this.pushQuestion = function(ctx) {
+    this.pendings[ctx.n].push(ctx);
+  };
+
+// TODO
 //  this.persist = function() {
 //  };
 
@@ -244,6 +256,7 @@ function warmupLoop () {
           'warmupEnd': now
         };
         publisher.publish(channel, JSON.stringify(message));
+        questionTimer(1);
       }
     } else {
       // TODO : timeout ?
@@ -252,65 +265,122 @@ function warmupLoop () {
   });
 };
 
-/** Callback getQuestion **/
-function questionTimeFrame(timeout, login, n, success, fail) {
-  switch (gameState.state) {
-    case 1:
-      logger.log('[' + login + ']' + ' failed for bad state ' + gameState.state);
-      fail();
-      break;
-    case 2:
-      // warmup
-      if (n == 1) {
-        setTimeout(questionTimeFrame, 20, timeout, login, n, success, fail);
-      } else {
-        logger.log('[' + login + ']' + ' failed for bad state ' + gameState.state + ' and question is ' + n);
-        fail();
-      }
-      break;
-    case 3:
-      // questions
-      if (n == 1) {
-        success();
-      } else {
-        // TODO latence: timeout - xx ms ?
-        setTimeout(success, timeout);
-      }
-      break;
-    default:
-      logger.log('[' + login + ']' + ' failed for bad state ' + gameState.state);
-      fail();
+/** Timer Question K **/
+function questionTimer(k) {
+  var start = Date.now();
+  // logger.log('Fire question: ' + k);
+  // logger.log('Pendings: ' + gameState.pendings[k].length + " " + sys.inspect(gameState.pendings[k], false));
+  var count = gameState.pendings[k].length;
+  for (var i = 0; i < count; i++) {
+    var ctx = gameState.pendings[k][i];
+    // logger.log('Fire question: ' + k + ' ' + ctx.req.jsonUser.login);
+    // TODO ctx.req.resume();
+    ctx.res.send(200, {}, ctx.question);
+    // TODO ctx.res.end();
   }
+  // TODO gameState.pendings[k] = [];
+  logger.log('Fire question: ' + k + ' (' + count + ') in ' + (Date.now() - start) + ' ms.');
 }
 
-/** Get question N **/
-exports.getQuestion = function(n, login, success, fail) {
+/** get question N **/
+exports.getQuestion = function(req, res, n) {
   var now = Date.now();
   var sessionNMoins1 = gameState.sessions[n - 1];
   var sessionN = gameState.sessions[n];
 
   if (now >= sessionNMoins1 && now <= sessionN) {
-    questionTimeFrame(sessionN - now, login, n, success, fail);
+    if (n == 1) {
+      var q = gameState.game.gamesession.questions.question[n - 1];
+      var question = {};
+      question.question = q.label;
+      for (var j = 0; j < q.choice.length; j++) {
+        question['answer_' + (j+1)] = q.choice[j];
+      }
+      question.score = "" + 0 + "";
+      var ctx = {
+          n: n,
+          timestamp: now,
+          req: req,
+          res: res,
+          question: question
+      };
+      gameState.pushQuestion(ctx);
+      var t = Date.now() - now;
+      if (t > 350) {
+        logger.log('getQuestion ' + n + ' tooks ' + (Date.now() - now) + ' ms. ' + '[' + req.jsonUser.login + ']');
+      }
+    } else {
+      var that = this;
+      this.getScore(req.jsonUser.login, {
+        error: function(err) {
+          res.send(400);
+        },
+        success: function(score) {
+          var q = gameState.game.gamesession.questions.question[n - 1];
+          var question = {};
+          question.question = q.label;
+          for (var j = 0; j < q.choice.length; j++) {
+            question['answer_' + (j+1)] = q.choice[j];
+          }
+          question.score = "" + score + "";
+          var ctx = {
+              n: n,
+              timestamp: now,
+              req: req,
+              res: res,
+              question: question
+          };
+          gameState.pushQuestion(ctx);
+          // TODO
+          //req.connection.setTimeout(gameState.questiontimeframe + gameState.synchrotime);
+          //req.connection.on('timeout', function() {
+          //    ctx = {};
+          //});
+          // req.pause();
+          var t = Date.now() - now;
+          if (t > 100) {
+            logger.log('getQuestion ' + n + ' tooks ' + (Date.now() - now) + ' ms. ' + '[' + req.jsonUser.login + ']');
+          }
+        }
+      });
+    }
   } else {
-    logger.log('getQuestion ' + n + ', missing time frame for: ' + (now - sessionNMoins1) + ' ms. ' + '[' + login + ']');
-    fail();
+    logger.log('getQuestion ' + n + ', missing time frame for: ' + (now - sessionNMoins1) + ' ms. ' + '[' + req.jsonUser.login + ']');
+    res.send(400);
   }
 };
 
-/** Answer Question N **/
-exports.answerQuestion = function(n, login, success, fail) {
+/** answer question N **/
+exports.answerQuestion = function(req, res, n, params) {
   var now = Date.now();
+  var login = req.jsonUser.login;
   var sessionN = gameState.sessions[n];
   var sessionNplus1 = gameState.sessions[n + 1];
 
   if (now >= sessionN && now <= (sessionNplus1 - gameState.synchrotime)) {
-    // logger.log(login + " answers question : " + n)
-    success();
+    var q = gameState.game.gamesession.questions.question[n-1]
+    this.updatingScore(req.jsonUser.lastname, req.jsonUser.firstname, login, n, params.answer, q.goodchoice, q.qvalue, {
+      error: function(data) {
+        res.send(400);
+      },
+      success: function(score) {
+        var answer = {};
+        answer.are_u_right= "" + (q.goodchoice == params.answer) + "";
+        answer.good_answer = q.choice[q.goodchoice - 1];
+        answer.score = "" + score + "";
+          var t = Date.now() - now;
+          if (t > 100) {
+            logger.log('answerQuestion ' + n + ' tooks ' + (Date.now() - now) + ' ms. ' + '[' + login + ']');
+          }
+        res.send(201, {}, answer);
+      }
+    });
   } else {
     logger.log('answerQuestion ' + n + ' missing for ' + (now - (sessionNplus1 - gameState.synchrotime)) + ' ms. ' + '[' + login + ']');
-    fail();
+    res.send(400);
   }
 };
+
 
 /** Get Score **/
 exports.getScore = function(login, options) {
@@ -332,7 +402,7 @@ exports.getScore = function(login, options) {
   });
 }
 
-/** Updationg Score with good/bad answer question and bonus **/
+/** Updating Score with good/bad answer question and bonus **/
 exports.updatingScore = function(lastname, firstname, login, question, reponse, correct, questionValue, options) {
   redis.hmget("players", login + ":score", login + ':lastbonus', function(err, replies) {
     if (err) {
@@ -370,10 +440,6 @@ exports.updatingScore = function(lastname, firstname, login, question, reponse, 
 
 exports.getGame = function() {
   return gameState.game;
-};
-
-exports.getGameFragment = function(q) {
-  return gameState.gameFragments[q - 1];
 };
 
 exports.getAnswer = function(login, n, options) {

@@ -1,3 +1,14 @@
+1.1
+
+rsync dans tmp de vfabric1 + ./deploy.sh
+stop/start node
+remettre la conf Redis avec les IPs / plugger le settings.js
+verifier que les couchdb soit up / vor pq plusieurs instances ?
+npm install http-proxy
+
+---------------------------------------------
+1.0
+
 ps aux | grep -E "(redis|couchdb|node)"
 
 # vi ~/.bashrc
