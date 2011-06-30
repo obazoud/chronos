@@ -59,19 +59,23 @@ exports.createUser = function(req, res, params) {
 //  } else {
     chronosCouch.head(params.mail, {
       error: function(data) {
+        logger.log("FAILED(400)");
         res.send(400, {}, data);
       },
       success: function(data, id) {
         if (id != null) {
+          logger.log("FAILED(400)");
           res.send(400, {}, data);
         } else {
           var player = {_id:params.mail, firstname:params.firstname || '', lastname:params.lastname || '', password:params.password || ''};
           players.unshift(player);
           ranking.addUser(params.lastname,params.firstname,params.mail,function(err,added) {
             if (err) {
+              logger.log("FAILED(400)");
               res.send(400, {}, err);
             } else {
               if (added == 0) {
+                logger.log("FAILED(400)");
                 res.send(400, {}, "user already exist in redis");
               } else {
                 res.send(201);
@@ -85,9 +89,9 @@ exports.createUser = function(req, res, params) {
 };
 
 setInterval(function() {
-  //console.log("Bulk players ?");
+  //logger.log("Bulk players ?");
   if (players.length > 0) {
-    //console.log("Read to bulk players");
+    //logger.log("Read to bulk players");
     var playerIndex = Math.max(0, players.length - playerBatch);
     var playerNumber = Math.min(players.length, playerBatch);
     var playersToBatch = players.splice(playerIndex, playerNumber);
@@ -95,10 +99,10 @@ setInterval(function() {
     chronosCouch.bulk(playersToBatch, {
       error: function(data) {
         players.unshift(playersToBatch);
-        //console.log("Error" + data);
+        //logger.log("Error" + data);
       },
       success: function(data) {
-        //console.log("Error" + data);
+        //logger.log("Error" + data);
       }
     });
   }
@@ -127,11 +131,11 @@ function putGame(req, res, params, paramsJSON) {
   if (message) {
     res.send(401, {}, message);
   } else {
-    console.log(tools.toISO8601(new Date()) + ": a new game is coming.");
-    console.log(tools.toISO8601(new Date()) + ": game successfully added.");
+    logger.log("A new game is coming.");
+    logger.log("Game successfully added.");
     gamemanager.initGame(paramsJSON, {
       error: function(err) {
-        //console.log("Err: " + err);
+        //logger.log("Err: " + err);
         res.send(400, {}, err);
       },
       success: function(exist) {
@@ -142,7 +146,7 @@ function putGame(req, res, params, paramsJSON) {
         res.send(400, {}, err);
       }
       else {
-        //console.log(tools.toISO8601(new Date()) + ": Redis: score to 0: OK " + (updated == 0));
+        //logger.log("Redis: score to 0: OK " + (updated == 0));
         res.send(201);
       }
     });
@@ -177,32 +181,34 @@ exports.login = function(req, res, params) {
   chronosCouch.getDoc(params.mail, {
     error: function(data) {
       if (JSON.parse(data).error == 'not_found') {
-        console.log('user not found, ' + params.mail);
+        logger.log('user not found, ' + params.mail);
         res.send(401);
       } else {
-        console.log("Login" + err);
+        logger.log(params.mail + ":" + err);
         res.send(400);
       }
     },
     success: function(data) {
       var userDocjson = JSON.parse(data);
       if (userDocjson.password != params.password) {
+        logger.log(params.mail + ": password does not match");
         res.send(401);
       } else {
         gamemanager.isLogin(params.mail, {
           error: function(err) {
-            //console.log("Login" + err);
+            logger.log(params.mail + ": failed !!" + err);
             res.send(400);
           },
           success: function(exist) {
             if (exist) {
-              //console.log("Login" + exist);
+              logger.log(params.mail + ": exists !!");
               res.send(400);
             } else {
               var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
               logger.log("Login: " + params.mail);
               gamemanager.login(params.mail, {
                 error: function(err) {
+                  logger.log("Login: " + params.mail + ", " + err);
                   res.send(400);
                 },
                 success: function(exist) {
@@ -226,6 +232,7 @@ exports.getQuestion = function(req, res, n) {
   // First score is too slow, do not know why !?
   if (n > numberOfQuestions) {
     logger.log(n + "< Http /api/question/" + n + ", login:" + req.jsonUser.login);
+    logger.log("FAILED(400)");
     res.send(400);
   } else {
     var q = gamejson.gamesession.questions.question[n-1];
@@ -239,8 +246,8 @@ exports.getQuestion = function(req, res, n) {
         // logger.log("> Calling score q " + n + ", login:" + req.jsonUser.login);
         if (n == 1) {
             // logger.log("< Calling score q " + n + ", login:" + req.jsonUser.login);
-            question.score = "\"0\"";
-            // logger.log("< Http /api/question/" + n + ", login:" + req.jsonUser.login);
+            question.score = "0";
+            logger.log("< Http /api/question/" + n + ", login:" + req.jsonUser.login + ", " + JSON.stringify(question));
             res.send(200, {}, question);
         } else {
           gamemanager.getScore(req.jsonUser.login, {
@@ -300,6 +307,7 @@ exports.tweetHttp = function(req, res, params) {
 };
 
 exports.getRanking = function(req, res) {
+  logger.log("> Http /api/ranking, login:" + req.jsonUser.login);
   gamemanager.logged(req.jsonUser.login, {
     error: function(data) {
       res.send(400, {}, data);
@@ -323,12 +331,14 @@ exports.getRanking = function(req, res) {
       res.send(400, {}, err);
     }
     else {
+      logger.log("< Http /api/ranking, login:" + req.jsonUser.login);
       res.send(200, {}, ranking);
     }
   });
 };
 
 exports.getScore = function(req, res, params) {
+  logger.log("> Http /api/score , login:" + params.user_mail);
   if (params.authentication_key != authentication_key) {
     res.send(401);
   }
@@ -343,6 +353,7 @@ exports.getScore = function(req, res, params) {
           res.send(400, {}, err);
         }
         else {
+          logger.log("< Http /api/score , login:" + params.user_mail);
           res.send(200, {}, ranking);
         }
       });

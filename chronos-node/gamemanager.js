@@ -3,6 +3,9 @@ var events = require('events');
 var emitter = new events.EventEmitter();
 var logger = require('util');
 
+// TODO Think about multiples nodes instances
+// TODO Think about multiples servers
+
 // TODO integrer le mecanisme de fail-over
 var redis = require("redis").createClient();
 var subscriber = require("redis").createClient();
@@ -355,7 +358,7 @@ exports.getScore = function(login, options) {
         options.error(err);
       }
     } else {
-      logger.log("Get score: " + reply)
+      // logger.log("Get score: " + reply)
       if (options && options.success) {
         if (reply == null) {
           options.success(0);
