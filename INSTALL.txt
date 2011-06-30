@@ -106,3 +106,71 @@ sudo vi /etc/security/limits.conf
 user      hard    nofile             65535
 user      soft    nofile             65535
 sysctl -p
+
+####################
+# High-Availability
+####################
+# enable virtual server support in kernel 
+sudo echo ip_vs_dh >> /etc/modules
+sudo echo ip_vs_ftp >> /etc/modules
+sudo echo ip_vs >> /etc/modules
+sudo echo ip_vs_lblc >> /etc/modules
+sudo echo ip_vs_lblcr >> /etc/modules
+sudo echo ip_vs_lc >> /etc/modules
+sudo echo ip_vs_nq >> /etc/modules
+sudo echo ip_vs_rr >> /etc/modules
+sudo echo ip_vs_sed >> /etc/modules
+sudo echo ip_vs_sh >> /etc/modules
+sudo echo ip_vs_wlc >> /etc/modules
+sudo echo ip_vs_wrr >> /etc/modules
+
+sudo modprobe ip_vs_dh
+sudo modprobe ip_vs_ftp
+sudo modprobe ip_vs
+sudo modprobe ip_vs_lblc
+sudo modprobe ip_vs_lblcr
+sudo modprobe ip_vs_lc
+sudo modprobe ip_vs_nq
+sudo modprobe ip_vs_rr
+sudo modprobe ip_vs_sed
+sudo modprobe ip_vs_sh
+sudo modprobe ip_vs_wlc
+sudo modprobe ip_vs_wrr
+
+# enable packet forwarding in /etc/sysctl.conf
+net.ipv4.ip_forward = 1
+
+# reload sysctl.conf
+sysctl -p
+
+# install heartbeat + ldirectord + all virtual server dependencies
+sudo apt-get install heartbeat ldirectord
+
+# disable IPVS at boot time, since it is managed from heartbeat
+sudo dpkg-reconfigure ipvsadm
+"Do you want to automatically load IPVS rules on boot?"
+<-- No
+
+"Select a daemon method."
+<-- none
+
+# copy the config from repo (authkeys, ha.cf, haresources, ldirectord.cf) :
+sudo cp -r ~/deploiement/install/ha.d/* /etc/ha.d/.
+
+# add heartbeat to rc init and remove ldirectord one (started by heartbeat)
+update-rc.d heartbeat start 75 2 3 4 5 . stop 05 0 1 6 .
+update-rc.d -f ldirectord remove
+
+# stop ldirectord and start heartbeat
+/etc/init.d/ldirectord stop
+/etc/init.d/heartbeat start
+
+# the virtual IP is 192.168.1.150 (can be modify) on port 80
+# to work properly, http front service must run on port 80 and serve the /api/ping with a "pong" text content in response.
+# first started heartbeat node will create the virtual interface, check this with
+ip addr sh eth0
+# check the lb with (always run on the heartbeat master node)
+ldirectord ldirectord.cf status
+# check the arp routing table from VIP to local IPs with :
+ipvsadm -L -n
+

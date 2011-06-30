@@ -16,7 +16,7 @@ router.post(/^api\/answer\/(\d+)$/).filter(security.authorize).bind(api.answerQu
 router.get('/api/ranking').filter(security.authorize).bind(api.getRanking);
 router.get('/api/score').bind(api.getScore);
 router.get('/api/audit').bind(api.audit);
-router.get(/^api\/audit\/(\d+)$/).bind(api.audit);
+router.get(/^api\/audit\/(\d+)$/).bind(api.auditN);
 router.post('/api/tweet').bind(api.tweetHttp);
 
 var responses = [];
