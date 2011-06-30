@@ -214,7 +214,7 @@ changesStream = function(query, options) {
   var stream = new process.EventEmitter();
   var client = http.createClient(port, host, false);
   var path = '/thechallenge/_changes?' + querystring.stringify(query);
-  console.log('Will call Couchdb changes: ' + path);
+  console.log('Couchdb changes url : ' + couchdbaseburl + '/' + path);
   var request = client.request('GET', path);
   var buffer = '';
 
