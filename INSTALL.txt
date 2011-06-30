@@ -199,6 +199,9 @@ net.ipv4.ip_nonlocal_bind=1
 # reload sysctl.conf
 sudo sysctl -p
 
+# Redis
+vm.overcommit_memory=1
+
 # install heartbeat + haproxy + all virtual server dependencies
 sudo apt-get install ipvsadm heartbeat haproxy
 
