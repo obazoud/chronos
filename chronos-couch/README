@@ -18,3 +18,10 @@ les soumetteurs de joueurs recoivent :
     * start : pour le premier joueur pris en compte
     * continue : pour signaler que le nombre de joueurs n'est pas encore atteint et que le timeout de la phse de warmup
     n'as pas encore etait dépassé.
+
+
+TIPS
+
+http://wiki.apache.org/couchdb/Performance
+
+Configuration: /etc/couchdb/local.ini
