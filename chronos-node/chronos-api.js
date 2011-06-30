@@ -70,7 +70,7 @@ exports.login = function(req, res, params) {
       if (userDocjson.password != params.password) {
         res.send(401);
       } else {
-        var sessionkey = security.encode({ "login": params.mail, "password": params.password });
+        var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
         res.send(201, {"session_key":sessionkey}, '');
       }
     }
