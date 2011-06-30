@@ -35,14 +35,14 @@ exports.newGame = function(req, res, params) {
   gameXML = gameXML.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"");
 
   var paramsJSON = xml2json.parse(gameXML);
-  paramsJSON['type'] = 'game';
-  paramsJSON['authentication_key'] = params.authentication_key || '';
-  delete paramsJSON['value'];
+  paramsJSON.type = 'game';
+  paramsJSON.authentication_key = params.authentication_key || '';
+  delete paramsJSON.value;
   for(i=0;i<paramsJSON.gamesession.questions.question.length;i++) {
     if (i<5) {
       paramsJSON.gamesession.questions.question[i].qvalue=1;
     } else {
-      paramsJSON.gamesession.questions.question[i].qvalue=parseInt(i/5)*5;
+      paramsJSON.gamesession.questions.question[i].qvalue=parseInt(i/5,10)*5;
     }
   }
   
