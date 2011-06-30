@@ -1,1 +1,1 @@
-vfabric1 IPaddr2::192.168.1.150/24/eth0/192.168.1.255 haproxy 
+usi1 IPaddr2::192.168.1.150/24/eth0/192.168.1.255 haproxy 

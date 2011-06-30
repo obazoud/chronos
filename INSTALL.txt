@@ -196,10 +196,10 @@ net.ipv4.ip_forward = 1
 net.ipv4.ip_nonlocal_bind=1
 
 # reload sysctl.conf
-sysctl -p
+sudo sysctl -p
 
 # install heartbeat + haproxy + all virtual server dependencies
-sudo apt-get install heartbeat haproxy
+sudo apt-get install ipvsadm heartbeat haproxy
 
 # disable IPVS at boot time, since it is managed from heartbeat
 sudo dpkg-reconfigure ipvsadm
@@ -211,6 +211,7 @@ sudo dpkg-reconfigure ipvsadm
 
 # copy the heartbeat config from repo (authkeys, ha.cf, haresources) :
 sudo cp -r ~/deploiement/install/ha.d/* /etc/ha.d/.
+sudo chmod 600 /etc/ha.d/authkeys
 
 # copy the haproxy config from repo (haproxy.cfg) :
 sudo cp -r ~/deploiement/install/haproxy/* /etc/haproxy/.
