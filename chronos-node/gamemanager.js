@@ -352,7 +352,7 @@ exports.answerQuestion = function(req, res, n, params) {
 
     res.send(201, {}, answer);
   } else {
-    logger.log('answerQuestion ' + n + ' missing for ' + (now - maxTime) + ' ms. ' + '[' + login + ']');
+    logger.log('answerQuestion ' + n + ' missing for ' + (now - maxTime) + ' ms. ' + '[' + req.jsonUser.login + ']');
     res.send(400);
   }
 };
