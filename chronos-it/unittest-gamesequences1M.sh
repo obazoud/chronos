@@ -1,6 +1,6 @@
 #!/bin/bash 
 set -e
-set -x
+#set -x
 
 CHRONOS_HOST=localhost
 CHRONOS_PORT=8080
@@ -32,13 +32,13 @@ curl -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d
 sleep 2
 
 
-curl --cookie $COOKIE --cookie-jar $COOKIE -ivX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"mail" : "abbott.adams@yahoo.com", "password" : "o1rufd3efty5fd3e"}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/login
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"mail" : "abbott.adams@yahoo.com", "password" : "o1rufd3efty5fd3e"}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/login
 
 sleep 2 
-curl --cookie $COOKIE --cookie-jar $COOKIE -ivX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/1
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/1
 
 sleep 2
-curl --cookie $COOKIE --cookie-jar $COOKIE -ivX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/1
+curl --cookie $COOKIE --cookie-jar $COOKIE -iX POST -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/1
 
 sleep 1 
 curl --cookie $COOKIE --cookie-jar $COOKIE -iX GET http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/2
