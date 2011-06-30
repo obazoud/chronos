@@ -2,8 +2,8 @@
 set -e
 #set -x
 
-./createdb.sh localhost 5984
-redis-cli flushdb
+#./createdb.sh localhost 5984
+#redis-cli flushdb
 
 CHRONOS_HOST=localhost
 CHRONOS_PORT=8080
@@ -92,7 +92,7 @@ curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json
 
 curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/question/20
 curl -iX POST -H "Cookie: session_key=${sessionkey}" -H "Accept:application/json" -H "Content-Type:application/json" -d '{"answer":2}' http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/answer/20   2>&1 | awk '{ if ($1 == "HTTP/1.1") { print $2 } } END { print }' | sed ':a;N;$!ba;s/\n/ /g' | while read httpcode data; do
-  assertEquals "Answer, http code" 200 $httpcode
+  assertEquals "Answer, http code" 201 $httpcode
   assertEquals "Score " 95 $(echo "$data" | json -C score)
 done
 
