@@ -1,12 +1,6 @@
 var crypto = require('crypto');
 var key = '1hv4pmT';
 
-Unauthorized = function (msg) {
-    this.status = 401;
-    this.headers = {};
-    this.body = { error: msg || 'Unauthorized' };
-};
-
 exports.authorize = function(req, res) {
   if (!req.headers['cookie']) {
     res.send(401, {}, {error: 'Unauthorized'});
@@ -43,11 +37,25 @@ exports.decrypt = function(text) {
   return dec;
 };
 
+exports.randomString = function randomString(stringLength) {
+  var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz";
+  var string = '';
+  for (var i = 0; i < stringLength; i++) {
+      var rnum = Math.floor(Math.random() * chars.length);
+      string += chars.substring(rnum,rnum+1);
+  }
+  return string;
+};
+
+
 /*
 var text = "{'test':'crypto'}";
 var crypted = exports.crypt(text);
 console.log(crypted);
 var decypted = exports.decrypt(crypted);
 console.log(decypted);
+*/
+/*
+console.log(exports.randomString(8));
 */
 
