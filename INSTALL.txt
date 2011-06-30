@@ -4,7 +4,7 @@
 # http_proxy
 alias proxyon='export http_proxy=http://10.200.1.44:8080;echo $http_proxy'
 alias proxyoff='export http_proxy=;echo $http_proxy'
-export PATH=/home/user/node-v0.4.4/bin:$PATH
+export PATH=/home/user/node-v0.4.5/bin:$PATH
 export PATH=/opt/redis:$PATH
 
 # sudo vi /etc/apt/apt.conf.d/proxy
@@ -76,6 +76,28 @@ OK
 redis-cli hget "test" toto
 
 # node.js
+sudo apt-get install gcc
+sudo apt-get install g++
+sudo apt-get install python
+sudo apt-get install openssl
+wget http://nodejs.org/dist/node-v0.4.5.tar.gz
+tar -zxf node-v0.4.5.tar.gz
+mv node-v0.4.5 node-v0.4.5-src
+cd node-v0.4.5-src/
+./configure --prefix=~/node-v0.4.5
+make
+make install
+source ~/.bashrc
+node --version
+curl http://npmjs.org/install.sh | npm_install=rc sh
+npm --version
+npm install cluster
+npm install journey
+npm install node-uuid
+npm install redis
+npm install restler
+npm install twitter
+
 ln -s /home/user/deploiement/install/etc/init.d/nodejs /etc/init.d/nodejs
 update-rc.d -f nodejs defaults
 
