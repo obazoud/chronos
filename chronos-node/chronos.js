@@ -3,7 +3,7 @@ var journey = require('journey');
 var api = require('./chronos-api.js');
 
 // Create a router
-var router = new(journey.Router);
+var router = new(journey.Router)();
 
 // Create the routes
 router.get('/api/drop').bind(api.dropDatabase);
