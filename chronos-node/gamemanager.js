@@ -133,7 +133,7 @@ function GameState() {
       // TODO really need ?
       for (i = 2; i <= numberOfQuestions + 1; i++) {
         this.sessions[i] = this.sessions[i - 1] + this.questiontimeframe + this.synchrotime;
-        logger.log('sessions' + i + ': ' + this.sessions[i]);
+        logger.log('sessions' + i + ': ' + this.sessions[i] + ' / ' + new Date(this.sessions[i]));
       }
     } else {
       logger.log('Already in state 3');
