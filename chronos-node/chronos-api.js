@@ -230,14 +230,9 @@ exports.getQuestion = function(req, res, n) {
                 question['answer_' + (i+1)] = q.choice[i];
               }
               if (userDocjson.score[gamejson.game_id] == null) {
-                question.score = userDocjson.score[gamejson.game_id];
+                question.score = "0";
               } else {
-                question.score = 0;
-              }
-              if (userDocjson.lastbonus[gamejson.game_id] == null) {
-                question.lastbonus = userDocjson.lastbonus[gamejson.game_id];
-              } else {
-                question.lastbonus = 0;
+                question.score = "" + userDocjson.score[gamejson.game_id] + "";
               }
               res.send(200, {}, question);
             }
