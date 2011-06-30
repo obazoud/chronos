@@ -205,7 +205,7 @@ exports.login = function(req, res, params) {
               res.send(400);
             } else {
               var sessionkey = security.encode({ "login": params.mail, "password": params.password, "firstname": userDocjson.firstname, "lastname": userDocjson.lastname });
-              logger.log("Login: " + params.mail);
+              // logger.log("Login: " + params.mail);
               gamemanager.login(params.mail, {
                 error: function(err) {
                   logger.log("Login: " + params.mail + ", " + err);
