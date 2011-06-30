@@ -150,6 +150,7 @@ exports.warmup = function() {
   redis.hincrby("context", "numberOfPlayers", 1);
 };
 
+// TODO : 'once' works with a 2nd game ?
 emitter.once("warmupStarted", function() {
   var now = new Date().getTime();
   logger.log("Warmup started... ");
@@ -255,57 +256,60 @@ function setTimeoutForTimeFrame1(timeout, login,  n, success, fail) {
 
 function setTimeoutForTimeFrameCB(login, n, success, fail) {
   logger.log("------> time out for answering question : (" + login + ") " + n);
-  redis.hincrby("context", "questionEncours", 1, function(err, params) {
-    emitter.emit("sendQuestions", login, n, success, fail);
-  });
+  emitter.emit("questionEncours" + n, n);
+  emitter.emit("sendQuestions", login, n, success, fail);
 };
 
 function setTimeoutForTimeFrameCB1(login, n, success, fail) {
   emitter.emit("warmupEnd", success, fail);
 };
 
-emitter.on("sendQuestions", function(login, n, success, fail) {
-  redis.hmget("context","questionEncours", function(err,params) {
-    var questionEncours = parseInt(params[0]);
-    logger.log(login + ": sending question (" + n + ") : " + questionEncours + "/" + numberOfQuestions);
-
-    if (questionEncours > numberOfQuestions) {
-      logger.log(login + ": emitting event for end of game (no more questions)");
-      emitter.emit("endOfGame");
-      fail();
-    } else {
-      success();
-    }
+// TODO with a new game, register again ?
+for (var k = 1; k <= 20; k++) {
+  emitter.once("questionEncours" + k, function (n) {
+    gameState.questionEncours = n;
+    logger.log('Once questionEncours ' + n);
+    // TODO and others node do that ?
+    redis.hincrby("context", "questionEncours", 1);
   });
+}
+
+emitter.on("sendQuestions", function(login, n, success, fail) {
+  logger.log(login + ": sending question (" + n + ") : " + gameState.questionEncours + "/" + numberOfQuestions);
+
+  if (gameState.questionEncours > numberOfQuestions) {
+    logger.log(login + ": emitting event for end of game (no more questions)");
+    emitter.emit("endOfGame");
+    fail();
+  } else {
+    success();
+  }
+
 });
 
 /** Get question N **/
 exports.getQuestion = function(n, login, success, fail) {
   var now = new Date().getTime();
   logger.log("getQuestion " + n + " -> " + login);
+  // TODO check questEncours value ?
+  var sessionNMoins1 = gameState.sessions[n - 1];
+  var sessionN = gameState.sessions[n];
 
-  redis.hmget("context",
-    "questionEncours",
-    function(err, params) {
-      var questionEncours = parseInt(params[0]);
-      var sessionNMoins1 = gameState.sessions[n - 1];
-      var sessionN = gameState.sessions[n];
-
-      logger.log(login + ": sessionNMoins1: " + new Date(sessionNMoins1));
-      logger.log(login + ": sessionN: " + new Date(sessionN));
-      if (n <= numberOfQuestions && now >= sessionNMoins1 && now < sessionN) {
-        timeout = sessionN - now;
-        logger.log(login + ": is waiting for question : " + n + ', timeout ' + timeout + ' ms.');
-        if (n == 1) {
-          setTimeoutForTimeFrame1(timeout, login, n, success, fail);
-        } else {
-          setTimeoutForTimeFrame(timeout, login, n, success, fail);
-        }
-      } else {
-        logger.log("failed for question : " + n);
-        fail();
+  logger.log(login + ": sessionNMoins1: " + new Date(sessionNMoins1));
+  logger.log(login + ": sessionN: " + new Date(sessionN));
+  if (n <= numberOfQuestions && now >= sessionNMoins1 && now < sessionN) {
+    timeout = sessionN - now;
+    logger.log(login + ": is waiting for question : " + n + ', timeout ' + timeout + ' ms.');
+    if (n == 1) {
+      setTimeoutForTimeFrame1(timeout, login, n, success, fail);
+    } else {
+      setTimeoutForTimeFrame(timeout, login, n, success, fail);
     }
-  });
+  } else {
+    logger.log("failed for question : " + n);
+    fail();
+  }
+
 }
 
 /*
