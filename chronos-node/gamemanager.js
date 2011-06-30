@@ -106,7 +106,10 @@ function GameState() {
     }
   };
 
-  this.warmupStarts = function(now) {
+  this.warmupStarts = function(now1) {
+    // Force to use local time
+    // ntp sucks
+    var now = new Date().getTime();
     if (this.state == 1) {
       logger.log('State changed state: ' + this.state + ' -> ' + 2);
       this.state = 2;
