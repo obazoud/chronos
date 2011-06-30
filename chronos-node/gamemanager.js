@@ -201,50 +201,13 @@ function warmupLoop () {
   });
 };
 
-/**
-gere l evenement d arret de la phase de warmup en :
-    1. arretant le timer
-    2. repondant a tout les utilisateurs
-    3. definitions des fenetres de sessions de reponses
-*/
+/** warmupEnd **/
 emitter.on('warmupEnd', function(success) {
   if (gameState.state == 2) {
     var now = new Date().getTime();
     logger.log("warmup timer stopped");
-    // logger.log("initialize timeFrames.");
     gameState.warmupEnds(now);
 
-    // logger.log("timeFrames:" + gameState.sessions);
-    // TODO : hsetnx ? exception is for index 1
-    // Really need in redis ? -> recompute locally !
-    //redis.hmset("context",
-    //  "session_1", gameState.sessions[1],
-    //  "session_2", gameState.sessions[2],
-    //  "session_3", gameState.sessions[3],
-    //  "session_4", gameState.sessions[4],
-    //  "session_5", gameState.sessions[5],
-    //  "session_6", gameState.sessions[6],
-    //  "session_7", gameState.sessions[7],
-    //  "session_8", gameState.sessions[8],
-    //  "session_9", gameState.sessions[9],
-    //  "session_10", gameState.sessions[10],
-    //  "session_11", gameState.sessions[11],
-    //  "session_12", gameState.sessions[12],
-    //  "session_13", gameState.sessions[13],
-    //  "session_14", gameState.sessions[14],
-    //  "session_15", gameState.sessions[15],
-    //  "session_16", gameState.sessions[16],
-    //  "session_17", gameState.sessions[17],
-    //  "session_18", gameState.sessions[18],
-    //  "session_19", gameState.sessions[19],
-    //  "session_20", gameState.sessions[20],
-    //  "session_21", gameState.sessions[21],
-    //  function() {
-    //    logger.log("Initialize timeFrames done.");
-    //    redis.save();
-    //});
-
-    logger.log("warmupEnd: First success.");
     success();
 
     var message = {
@@ -254,7 +217,6 @@ emitter.on('warmupEnd', function(success) {
 
     publisher.publish(channel, JSON.stringify(message));
   } else {
-    // logger.log("warmupEnd: success.");
     if (success) {
       success();
     }
@@ -269,10 +231,9 @@ function setTimeoutForTimeFrame(timeout, login, n, success, fail) {
 function setTimeoutForTimeFrameCB(login, n, success, fail) {
   gameState.questionEncours = n;
   if (n == 1) {
-    // logger.log("------> time out for answering question : (" + login + ") " + n);
     emitter.emit("warmupEnd", success, fail);
   } else {
-    // logger.log("------> time out for answering question : (" + login + ") " + n);
+    // TODO questionEncours
     // emitter.emit("questionEncours" + n, n);
     // emitter.emit("sendQuestions", login, n, success, fail);
     success();
@@ -284,8 +245,10 @@ function setTimeoutForTimeFrameCB(login, n, success, fail) {
 //   emitter.once("questionEncours" + k, function (n) {
 //     gameState.questionEncours = n;
 //     logger.log('Once questionEncours ' + n);
+
     // TODO and others node do that ?
     // redis.hincrby("context", "questionEncours", 1);
+
 //   });
 // }
 
@@ -308,22 +271,17 @@ function setTimeoutForTimeFrameCB(login, n, success, fail) {
 /** Get question N **/
 exports.getQuestion = function(n, login, success, fail) {
   var now = new Date().getTime();
-  // logger.log("getQuestion " + n + " -> " + login);
+
   // TODO check questEncours value ?
   var sessionNMoins1 = gameState.sessions[n - 1];
   var sessionN = gameState.sessions[n];
 
-  // logger.log(login + ": sessionNMoins1: " + new Date(sessionNMoins1));
-  // logger.log(login + ": sessionN: " + new Date(sessionN));
+
   if (n <= numberOfQuestions && now >= sessionNMoins1 && now <= sessionN) {
-    // logger.log(login + ": is waiting for question : " + n + ', timeout ' + timeout + ' ms.');
     setTimeoutForTimeFrame(sessionN - now, login, n, success, fail);
   } else {
     logger.log("failed for question : " + n + ', login:' + login);
     logger.log("questionEncours = " + gameState.questionEncours);
-    // logger.log("  now = " + now);
-    // logger.log("  sessions[n-1] = " + sessionNMoins1);
-    // logger.log("  sessions[n] = " + sessionN);
     logger.log("  Missing for " + (now - sessionNMoins1) + ' ms.');
     fail();
   }
@@ -341,21 +299,9 @@ exports.answerQuestion = function(n, login, success, fail) {
     success();
   } else {
     logger.log("n = " + n + ', login:' + login);
-    // logger.log("questionEncours = " + gameState.questionEncours);
-    // logger.log("  now = " + now);
-    // logger.log("  sessions[n] = " + sessionN);
-    // logger.log("  sessions[n+1] = " + sessionNplus1);
-    // logger.log("  sessions[n+1] - synchro  = " + sessionNplus1 - gameState.synchrotime);
     logger.log("  Missing for " + (now - (sessionNplus1 - gameState.synchrotime)) + ' ms.');
 
     fail();
-//    if (n =! questionEncours) {
-//      logger.log("answered question is not the current one.");
-//    } else if (now > sessionN - gameState.synchrotime) {
-//      logger.log("time for answering question is finished.");
-//    } else {
-//      logger.log("unexpected problem on answerQuestion.");
-//    }
   }
 };
 
