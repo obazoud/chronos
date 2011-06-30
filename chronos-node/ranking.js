@@ -9,8 +9,8 @@ client.on("error", function (err) {
 exports.addUser = function addUser(lastname,firstname,mail){
     var token = JSON.stringify({"lastname":lastname,"firstname":firstname,"mail":mail});
     client.zadd("scores",0,token,function(err,reply){
-        console.log("user : " + token + " added");
-        client.save();
+        // console.log("user : " + token + " added");
+        // TODO: client.save();
     });
 };
 
