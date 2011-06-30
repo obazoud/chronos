@@ -36,6 +36,8 @@ ln -s apache-maven-3.0.3 apache-maven
 deb http://ppa.launchpad.net/git-core/ppa/ubuntu lucid main 
 deb-src http://ppa.launchpad.net/git-core/ppa/ubuntu lucid main 
 
+# redis
+http://library.linode.com/databases/redis/ubuntu-10.04-lucid
 
 # Optim systeme
 http://www.ubuntu-unleashed.com/2008/04/howto-harden-ubuntu-linux-kernel-with.html
