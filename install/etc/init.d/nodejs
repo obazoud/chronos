@@ -1,5 +1,5 @@
 #! /bin/bash
-set -x
+#set -x
 # https://gist.github.com/715255
 # ------------------------------------------------------------------------------ 
 # SOME INFOS : fairly standard (debian) init script.
