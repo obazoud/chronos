@@ -255,7 +255,7 @@ emitter.once('warmupEnd',function(timerId){
                 var n = parseInt(params[0]);
                 var numberOfQuestions = parseInt(params[1]);
 
-                //logger.log("checking end of time for question : " + n);
+                // logger.log("checking end of time for question : " + n);
                 var now = new Date().getTime();
                 redis.hget("context","session_"+n,function(err,sessionN){    // FIXME une charge en plus pour redis
                     if(now >= sessionN){
@@ -270,7 +270,7 @@ emitter.once('warmupEnd',function(timerId){
         }
         ,null);
         
-    },20);// TODO redefinir cette periode 
+    },100);// TODO redefinir cette periode 
    
 });
 
