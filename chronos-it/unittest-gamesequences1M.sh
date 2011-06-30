@@ -177,10 +177,10 @@ curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHR
 sleep 1
 curl -iX GET -H "Cookie: session_key=${sessionkey}" http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/ranking
 sleep 1
-curl -iX GET "http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/score?user_mail=null@gmail.com&authentication_key=12IndR6r5V5618"
-curl -iX GET "http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/audit/1?user_mail=null@gmail.com&authentication_key=12IndR6r5V5618"
-curl -iX GET "http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/audit/2?user_mail=null@gmail.com&authentication_key=12IndR6r5V5618"
-curl -iX GET "http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/audit?user_mail=null@gmail.com&authentication_key=12IndR6r5V5618"
+curl -iX GET "http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/score?user_mail=abbott.adams@yahoo.com&authentication_key=12IndR6r5V5618"
+curl -iX GET "http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/audit/1?user_mail=abbott.adams@yahoo.com&authentication_key=12IndR6r5V5618"
+curl -iX GET "http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/audit/2?user_mail=abbott.adams@yahoo.com&authentication_key=12IndR6r5V5618"
+curl -iX GET "http://${CHRONOS_HOST}:${CHRONOS_PORT}/api/audit?user_mail=abbott.adams@yahoo.com&authentication_key=12IndR6r5V5618"
 
 
 
