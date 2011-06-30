@@ -345,10 +345,10 @@ exports.audit = function(req, res, params) {
       audit.user_answers = new Array();
       audit.good_answers = new Array();
       var question = gamejson.gamesession.questions.question;
-      for (i=0; i<question.length; i++) {
+      for (i = 0; i < question.length; i++) {
         audit.good_answers.push("" + question[i].goodchoice + "");
       }
-      for (j=0; j<answers.length; j++) {
+      for (j = 0; j < answers.length; j++) {
         audit.user_answers.push("" + answers[j] + "");
       }
       // logger.log(Date.now() + " < Http /api/audit");
