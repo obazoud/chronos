@@ -1,104 +1,132 @@
 package com.chronos.netty.service;
 
 import java.io.OutputStream;
+import java.net.URLDecoder;
+import java.util.HashMap;
 import java.util.Map;
 
+import org.codehaus.jackson.JsonEncoding;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.JsonParser;
+import org.codehaus.jackson.JsonToken;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.CookieEncoder;
-
-import com.chronos.biz.App;
-import com.chronos.biz.QuizzApi;
+import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponse;
 
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.CREATED;
 import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
+import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 /**
  * @author bazoud
  * @version $Id$
  */
 public class ChronosDispatcher {
-    QuizzApi quizzApi = App.get();
+    JsonFactory jsonFactory = new JsonFactory();
 
-    public ServiceResponse dispatcher(ServiceResquest serviceResquest) throws Exception {
+    public HttpResponse dispatcher(HttpRequest httpRequest) throws Exception {
         // TODO : reflection scale ?
         // TODO : send to a delegate
-        if ("user".equals(serviceResquest.method)) {
-            return user(serviceResquest);
+        String method = getMethod(httpRequest);
+        if ("question".equals(method)) {
+            return question(httpRequest);
         }
 
-        if ("audit".equals(serviceResquest.method)) {
-            return audit(serviceResquest);
+        if ("user".equals(method)) {
+            return user(httpRequest);
         }
 
-        if ("login".equals(serviceResquest.method)) {
-            return login(serviceResquest);
-        }
-
-        ServiceResponse serviceResponse = new ServiceResponse();
-        serviceResponse.httpResponseStatus = NOT_FOUND;
-        return serviceResponse;
+        HttpResponse httpResponse = new DefaultHttpResponse(HTTP_1_1, NOT_FOUND);
+        return httpResponse;
     }
 
-    private ServiceResponse user(ServiceResquest serviceResquest) {
+    private HttpResponse question(HttpRequest httpRequest) {
         try {
-            // TODO : throw exception costs !
-            Map<String, String> args = serviceResquest.args;
-            quizzApi.addUser(args.get("lastname"), args.get("firstname"), args.get("mail"), args.get("password"));
-            ServiceResponse serviceResponse = new ServiceResponse();
-            serviceResponse.httpResponseStatus = CREATED;
-            return serviceResponse;
-        } catch (Exception e) {
-            ServiceResponse serviceResponse = new ServiceResponse();
-            serviceResponse.httpResponseStatus = BAD_REQUEST;
-            return serviceResponse;
-        }
-    }
+            String uri = URLDecoder.decode(httpRequest.getUri(), "UTF-8");
+            String question = uri.substring(uri.lastIndexOf("/") + 1);
 
-    private ServiceResponse audit(ServiceResquest serviceResquest) {
-        try {
-            // TODO : throw exception costs !?
-            Map<String, String> args = serviceResquest.args;
-            // TODO : size !?
-            final ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer(512);
+            // TODO: Business stuff!
+
+            final ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer(128);
             final OutputStream stream = new ChannelBufferOutputStream(channelBuffer);
 
-            quizzApi.audit(stream, args.get("user_mail"), args.get("authentication_key"));
+            JsonGenerator generator = jsonFactory.createJsonGenerator(stream, JsonEncoding.UTF8);
+            generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
+            generator.disable(JsonGenerator.Feature.AUTO_CLOSE_JSON_CONTENT);
+            generator.writeStartObject();
+            generator.writeStringField("question", question);
+            generator.writeStringField("answer_1", "string");
+            generator.writeStringField("answer_2", "string");
+            generator.writeStringField("answer_3", "string");
+            generator.writeStringField("answer_4", "string");
+            generator.writeNumberField("score", 100);
+            generator.writeEndObject();
+            generator.close();
 
-            ServiceResponse serviceResponse = new ServiceResponse();
-            serviceResponse.httpResponseStatus = CREATED;
-            serviceResponse.channelBuffer = channelBuffer;
-            return serviceResponse;
+            HttpResponse httpResponse = new DefaultHttpResponse(HTTP_1_1, OK);
+            httpResponse.setContent(ChannelBuffers.wrappedBuffer(channelBuffer));
+            return httpResponse;
         } catch (Exception e) {
-            ServiceResponse serviceResponse = new ServiceResponse();
-            serviceResponse.httpResponseStatus = BAD_REQUEST;
-            return serviceResponse;
+            HttpResponse httpResponse = new DefaultHttpResponse(HTTP_1_1, BAD_REQUEST);
+            return httpResponse;
         }
     }
 
-    private ServiceResponse login(ServiceResquest serviceResquest) {
+    private HttpResponse user(HttpRequest httpRequest) {
         try {
-            Map<String, String> args = serviceResquest.args;
-            boolean auth = quizzApi.login(args.get("mail"), args.get("password"));
-            if (auth) {
-                ServiceResponse serviceResponse = new ServiceResponse();
-                serviceResponse.httpResponseStatus = CREATED;
-                CookieEncoder encoder = new CookieEncoder(true);
-                encoder.addCookie("session_key", "1234");
-                // serviceResponse.cookie = encoder.new DefaultCookie();
-                return serviceResponse;
-            } else {
-                ServiceResponse serviceResponse = new ServiceResponse();
-                serviceResponse.httpResponseStatus = BAD_REQUEST;
-                return serviceResponse;
-            }
+            Map<String, String> args = getArgs(httpRequest);
+            // TODO: Business stuff!
+            HttpResponse httpResponse = new DefaultHttpResponse(HTTP_1_1, CREATED);
+            return httpResponse;
         } catch (Exception e) {
-            ServiceResponse serviceResponse = new ServiceResponse();
-            serviceResponse.httpResponseStatus = BAD_REQUEST;
-            return serviceResponse;
+            HttpResponse httpResponse = new DefaultHttpResponse(HTTP_1_1, BAD_REQUEST);
+            return httpResponse;
         }
     }
 
+    private Map<String, String> getArgs(HttpRequest request) throws Exception {
+        Map<String, String> map = new HashMap<String, String>();
+
+        // using "raw" Jackson Streaming API
+        // basic implementation
+        // only key/value input here
+        JsonParser jp = jsonFactory.createJsonParser(request.getContent().array());
+        jp.nextToken();
+        while (jp.nextToken() != JsonToken.END_OBJECT) {
+            jp.nextToken();
+            map.put(jp.getCurrentName(), jp.getText());
+        }
+
+        return map;
+    }
+
+    private String getMethod(HttpRequest request) throws Exception {
+        String delimiter = "/";
+        String uri = URLDecoder.decode(request.getUri(), "UTF-8");
+        int offset = uri.indexOf(delimiter);
+        if (offset < 0) {
+            return null;
+        }
+        
+        String next = uri.substring(offset + 1, uri.length());
+        offset = next.indexOf(delimiter);
+        if (offset < 0) {
+            return null;
+        }
+        
+        String service = next.substring(offset + 1, next.length());
+        offset = service.indexOf(delimiter);
+        if (offset < 0) {
+            return service;
+        } else {
+            return service.substring(0, offset);
+        }
+        
+    }
 }
