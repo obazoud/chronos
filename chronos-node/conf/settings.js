@@ -44,7 +44,7 @@ exports.create = function() {
 
   // ubuntu
   for (var u = 1; u < 5; u++) {
-   chronosSettings.['ubuntu' + u] = {
+   chronosSettings['ubuntu' + u] = {
       hostname: '172.16.111.129',
       port: 8080 + u,
       uncaughtException: false,
