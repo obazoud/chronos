@@ -28,10 +28,24 @@ exports.putDoc = function(name, json, options) {
   })
   .on('complete', function(data) {
     if (keys[name]) {
-      this.store[name] = data;
-    }
-    if (options.success) {
-      options.success(data);
+      restler.get(couchdburl + '/' + name, {
+        data: ''
+      })
+      .on('error', function(alldata) {
+        if (options.error) {
+          options.error(data);
+        }
+      })
+      .on('complete', function(alldata) {
+        store[name] = alldata;
+        if (options.success) {
+          options.success(data);
+        }
+      });
+    } else {
+      if (options.success) {
+        options.success(data);
+      }
     }
   });
 };
