@@ -19,7 +19,7 @@ done
 
 # updating ubuntu
 sudo apt-get update && sudo apt-get upgrade --yes --fix-broken
-
+sudo apt-get install curl
 
 # sur usi1
 cd /usr/local
@@ -30,3 +30,24 @@ ln -s apache-maven-3.0.3 apache-maven
 deb http://ppa.launchpad.net/git-core/ppa/ubuntu lucid main 
 deb-src http://ppa.launchpad.net/git-core/ppa/ubuntu lucid main 
 
+
+# Optim systeme
+http://redmine.lighttpd.net/wiki/1/Docs:Performance
+http://www.metabrew.com/article/a-million-user-comet-application-with-mochiweb-part-1
+http://www.acc.umu.se/~maswan/linux-netperf.txt
+
+ulimit -a
+ulimit -Hn
+ulimit -Sn
+sudo bash
+ulimit -n 999999
+
+cat /proc/sys/fs/file-max
+sudo vi /etc/sysctl.conf
+fs.file-max=583570
+
+
+sudo vi /etc/security/limits.conf
+user      hard    nofile             65535
+user      soft    nofile             65535
+sysctl -p

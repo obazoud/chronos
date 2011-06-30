@@ -1,0 +1,20 @@
+warmup:
+
+il s agit d une fonctionnalité qui permet de gerer le nombre de joueurs participants a un jeu.
+
+1- ./createdb.sh
+  * cree la base thechallenge
+  * cree le document de design warmup
+
+2- curl -X PUT 'http://localhost:5984/thechallenge/_design/warmup/_update/warmup/game1?warmupDuration=350&maxGamers=5'
+
+  * annonce du debut de la phase de warmup pour la creatio d'un jeu game1 de 5 joueurs durant 350ms
+
+3- curl -X PUT 'http://localhost:5984/thechallenge/_design/warmup/_update/warmup/game1
+
+  * annonce des joueurs
+
+les soumetteurs de joueurs recoivent :
+    * start : pour le premier joueur pris en compte
+    * continue : pour signaler que le nombre de joueurs n'est pas encore atteint et que le timeout de la phse de warmup
+    n'as pas encore etait dépassé.
