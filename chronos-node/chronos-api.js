@@ -157,12 +157,17 @@ exports.login = function(req, res, params) {
   // logger.log(Date.now() + " > Http /api/login/" + params.mail);
   chronosCouch.getDoc(params.mail, {
     error: function(data) {
-      if (JSON.parse(data).error == 'not_found') {
-        logger.log('user not found, ' + params.mail);
-        res.send(401);
-      } else {
-        logger.log(params.mail + ":" + err);
-        res.send(400);
+      try {
+        if (JSON.parse(data).error == 'not_found') {
+          logger.log('user not found, ' + params.mail);
+          res.send(401);
+        } else {
+          logger.log(params.mail + ":" + err);
+          res.send(400);
+        }
+      } catch(err) {
+          logger.log("Something wrong here, is couchbd up ? " + err);
+          res.send(400);
       }
     },
     success: function(data) {
