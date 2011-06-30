@@ -27,7 +27,7 @@ check host couchdb with address 127.0.0.1
         then restart
 
 # redis
-check host redis with pidfile /var/run/redis.pid
+check process redis with pidfile /var/run/redis.pid
     start program = "/usr/bin/sudo /etc/init.d/redis start"
     stop program = "/usr/bin/sudo /etc/init.d/redis stop"
     if failed host 127.0.0.1 port 6379 then restart
