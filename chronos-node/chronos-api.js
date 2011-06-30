@@ -3,7 +3,7 @@ var querystring = require('querystring');
 
 var host = '127.0.0.1';
 var port = 5984;
-var couchdburl = 'http://' + host + ':' + port;
+var couchdburl = 'http://' + host + ':' + port + '/thechallenge';
 var couchdAdminburl = 'http://' + host + ':' + port + '/_config/admins/';
 var username = 'superadmin';
 var password = 'supersecret';
@@ -21,8 +21,14 @@ exports.createUser = function(req, res, params) {
       res.send(400, {}, data);
     })
     .on('complete', function (data) {
-      var url = couchdAdminburl + params.mail;
-      res.send(201);
+      var url = couchdburl + '/' + params.mail;
+      restler.put(url, params.toJSON()).on('error', function(data) {
+        console.log('data: ' + data);
+        res.send(400);
+      })
+      .on('complete', function (data) {
+        res.send(201);
+      });
     });
 
   // Si un utilisateur ayant la même adresse mail existe déjà, une erreur est retournée
