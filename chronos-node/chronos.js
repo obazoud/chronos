@@ -50,7 +50,7 @@ router.get('/api/couchdb').bind(api.couchdb);
 // Create the http server
 logger.log('Creating Http server');
 var http = require('http');
-var server = http.createServer(function(req, res) {
+module.exports = http.createServer(function(req, res) {
   var body = '';
 
   req.on('data', function(chunk) { 
@@ -71,19 +71,4 @@ var server = http.createServer(function(req, res) {
     });
   });
 });
-
-// Node Cluster ?
-if (chronosSettings.cluster.activate) {
-  logger.log('Configure Node.js with cluster module (' + chronosSettings.cluster.workers + ' workers).');
-  var cluster = require('cluster');
-  cluster(server)
-    .set('workers', chronosSettings.cluster.workers)
-    .listen(chronosSettings.port, chronosSettings.hostname);
-  logger.log('Server running at http://' + chronosSettings.hostname + ':' + chronosSettings.port);
-} else {
-  logger.log('Configure Node.js with *no* workers.');
-  server.listen(chronosSettings.port, chronosSettings.hostname);
-  logger.log('Server running at http://' + chronosSettings.hostname + ':' + chronosSettings.port);
-}
-
 
