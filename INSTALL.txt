@@ -19,7 +19,7 @@ done
 
 # updating ubuntu
 sudo apt-get update && sudo apt-get upgrade --yes --fix-broken
-
+sudo apt-get install curl
 
 # sur usi1
 cd /usr/local
