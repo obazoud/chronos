@@ -39,8 +39,6 @@ function validateField(field, mandatory, minlength, maxlength, value) {
 
 var players = [];
 var playerBatch = 15000;
-// TODO: clean timer when game begins
-var playersId;
 
 exports.createUser = function(req, res, params) {
 //  if (validateField(params.firstname, true, 2, 50) || validateField(params.lastname, true, 2, 50) || validateField(params.mail, true, 2, 50) || validateField(params.password, true, 2, 50)) {
@@ -65,25 +63,25 @@ exports.createUser = function(req, res, params) {
 //  }
 };
 
-playersId = setInterval(function() {
-    //console.log("Bulk players ?");
-    if (players.length > 0) {
-      //console.log("Read to bulk players");
-      var playerIndex = Math.max(0, players.length - playerBatch);
-      var playerNumber = Math.min(players.length, playerBatch);
-      var playersToBatch = players.splice(playerIndex, playerNumber);
+setInterval(function() {
+  //console.log("Bulk players ?");
+  if (players.length > 0) {
+    //console.log("Read to bulk players");
+    var playerIndex = Math.max(0, players.length - playerBatch);
+    var playerNumber = Math.min(players.length, playerBatch);
+    var playersToBatch = players.splice(playerIndex, playerNumber);
 
-      chronosCouch.bulk(playersToBatch, {
-        error: function(data) {
-          players.unshift(playersToBatch);
-          //console.log("Error" + data);
-        },
-        success: function(data) {
-          //console.log("Error" + data);
-        }
-      });
-    }
-  }, 10000);
+    chronosCouch.bulk(playersToBatch, {
+      error: function(data) {
+        players.unshift(playersToBatch);
+        //console.log("Error" + data);
+      },
+      success: function(data) {
+        //console.log("Error" + data);
+      }
+    });
+  }
+}, 10000);
 
 exports.mail = function(req, res, mail) {
   chronosCouch.getDoc(mail, {
