@@ -81,12 +81,6 @@ DAEMON=/home/user/deploiement/install/bin/$NAME     # this SHOULD POINT TO where
 #                (Nothing else to modify from this point on...)                #
 # ------------------------------------------------------------------------------ 
 
-
-
-if [ ! -d "$LOCAL_VAR_LOGS_DIR" ]; then
-  mkdir "$LOCAL_VAR_LOGS_DIR" -p
-fi
-
 # Do NOT "set -e"
 
 [ $UID -eq "0" ] && LOCAL_VAR_RUN=/var/run # in case this script is run by root, override user setting
